@@ -143,7 +143,7 @@ Config หลักอยู่ที่ `~/.config/opencode/` — ใช้ **p
       "models": {
         "your-model-id": {
           "name": "แสดงชื่ออะไรก็ได้",
-          "limit": { "context": 131072, "output": 8192 }
+          "limit": { "context": 131072, "output": 32768 }
         }
       }
     }
@@ -155,6 +155,9 @@ Config หลักอยู่ที่ `~/.config/opencode/` — ใช้ **p
 - `home-llamacpp` — ชื่อ provider ตั้งเองได้ (จะใช้เรียกผ่าน `-m home-llamacpp/your-model-id`)
 - `https://your-server/v1` — URL จริงของเซิร์ฟเวอร์คุณ
 - `your-model-id` — ชื่อ model ตามที่ server รายงาน (เช็คได้จาก `curl https://your-server/v1/models`)
+
+> [!tip] ทำไม output = 32768
+> ถ้าโมเดลเป็น reasoning model (มี thinking mode เช่น Qwen3) เพดาน output ที่ต่ำเกินไปทำให้ agent "หยุดกลางคัน" ระหว่างคิดได้ — 32768 ตรงกับคำแนะนำของ Qwen เองสำหรับงานทั่วไป รายละเอียดเต็มดูที่ [[gotchas]] ข้อ 8
 
 > [!warning] อย่าฝัง API key ตรงๆ ในไฟล์
 > ใช้ `{env:VAR_NAME}` แทนการพิมพ์ค่า API key ตรงๆ ในไฟล์เสมอ — OpenCode จะไปดึงค่าจาก environment variable ที่ตั้งไว้แทน วิธีตั้ง env var:
