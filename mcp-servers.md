@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-08-20
+updated: 2026-08-21
 summary: รายละเอียด MCP server แต่ละตัวที่ตั้งไว้ใน OpenCode — ขั้นตอนติดตั้ง, config, วิธีทดสอบ, ข้อควรระวัง
 ---
 
@@ -204,6 +204,75 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 
 ---
 
+## memory — จำ context ข้าม session (official reference server)
+
+[`@modelcontextprotocol/server-memory`](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) — เก็บ knowledge graph แบบ persistent ให้ agent จำ fact/context ของคุณข้าม session ได้ (เทียบเท่าฟีเจอร์ memory ของ Claude Code) ทำงานฝั่งเครื่องล้วนๆ ไม่มีการส่งข้อมูลออกไปไหน
+
+### ขั้นตอนติดตั้ง
+
+1. ไม่ต้องติดตั้งอะไรล่วงหน้า (`npx -y` ดึงให้เองตอนเรียกครั้งแรก)
+
+2. เพิ่ม config ใน `opencode.jsonc` — ระบุ `MEMORY_FILE_PATH` เป็น path แบบ absolute เพื่อให้ไฟล์ความจำอยู่ตำแหน่งเดียวแน่นอนไม่ว่าจะเปิด opencode จากโปรเจกต์ไหน:
+
+   ```jsonc
+   "memory": {
+     "type": "local",
+     "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+     "environment": {
+       "MEMORY_FILE_PATH": "C:/Users/<user>/.config/opencode/memory.jsonl"
+     },
+     "timeout": 30000
+   }
+   ```
+
+3. ทดสอบ:
+
+   ```bash
+   opencode mcp list      # ควรเห็น memory connected ทันที ไม่ต้องตั้งค่าอะไรเพิ่ม
+   ```
+
+> [!note] เก็บข้อมูลแบบไหน
+> เก็บเป็น entities + observations ในไฟล์ `.jsonl` ธรรมดา (อ่าน/แก้ด้วยมือได้ถ้าจำเป็น) ไม่ใช่ vector database หรือ cloud service ใดๆ
+
+---
+
+## github — จัดการ issues/PR/code search ผ่าน structured tool (ปิดไว้ก่อน จนกว่าจะมี token)
+
+GitHub MCP server อย่างเป็นทางการ (ทำโดย GitHub เอง) — ให้ agent เรียก issues, pull requests, code search ผ่าน tool ที่มีโครงสร้างชัดเจน แทนการสั่ง `git`/`gh` ผ่าน bash แบบ freeform
+
+### ขั้นตอนติดตั้ง
+
+1. สร้าง GitHub Personal Access Token ที่ **https://github.com/settings/personal-access-tokens/new** — แนะนำใช้ **Fine-grained token** (จำกัด scope ได้ละเอียดกว่า classic token) เลือก repository access และ permission ตามงานที่จะใช้ (เช่น Contents, Issues, Pull requests: Read and write)
+
+2. ตั้ง environment variable `GITHUB_PERSONAL_ACCESS_TOKEN` เป็นค่า token ที่ได้ (ดู [[setup]] Part 2 สำหรับวิธีตั้ง env var แต่ละ OS)
+
+3. เพิ่ม config ใน `opencode.jsonc`:
+
+   ```jsonc
+   "github": {
+     "type": "remote",
+     "url": "https://api.githubcopilot.com/mcp/",
+     "oauth": false,
+     "headers": {
+       "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+     },
+     "enabled": false
+   }
+   ```
+
+   `oauth: false` บอก OpenCode ให้ใช้ PAT ผ่าน header แทนการพยายาม auto-discover OAuth (ซึ่งต้องมี GitHub Copilot subscription) — `enabled: false` ไว้ก่อนจนกว่าจะพร้อมใช้จริง (ตั้งไว้แบบเดียวกับ postgres/mysql เพื่อไม่ให้ error รบกวนตอนยังไม่มี token)
+
+4. พร้อมใช้เมื่อไหร่ เปลี่ยน `"enabled": false` → `true` แล้วทดสอบ:
+
+   ```bash
+   opencode mcp list      # ควรเห็น github connected
+   ```
+
+> [!warning] กิน context เยอะ
+> เอกสารทางการของ GitHub เตือนไว้ว่า MCP นี้ "can add a lot of tokens to your context" — ถ้าเปิดใช้งานจริง ควรจำกัด toolset ที่เปิดไว้ให้แคบลงถ้า opencode รองรับ ไม่ใช่เปิดทุก capability พร้อมกัน
+
+---
+
 ## postgres / mysql — query database (ปิดไว้ก่อน, เปิดต่อโปรเจกต์)
 
 ทั้งคู่เป็น local MCP ที่ต้องมี database server รันอยู่แล้ว (local หรือ remote) — MCP แค่เป็นสะพานเชื่อม ไม่ได้ติดตั้ง DB ให้
@@ -293,7 +362,7 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 opencode mcp list
 ```
 
-ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (5 เปิด + 2 ปิด):
+ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (6 เปิด + 3 ปิด):
 
 ```
 ✓ context7        connected
@@ -301,6 +370,8 @@ opencode mcp list
 ✓ chrome-devtools  connected
 ✓ graft            connected
 ✓ open-design      connected
+✓ memory           connected
+○ github           disabled
 ○ postgres         disabled
 ○ mysql            disabled
 ```

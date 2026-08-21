@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-08-20
+updated: 2026-08-21
 summary: Home page คู่มือการติดตั้งและใช้งาน OpenCode CLI พร้อม MCP servers และ Plugins สำหรับ vibe coding
 ---
 
@@ -8,7 +8,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 
 **OpenCode** คือ AI coding agent แบบ CLI (แนวเดียวกับ Claude Code) ที่รองรับการต่อ model provider เองได้อิสระ — รวมถึง self-hosted model บนเซิร์ฟเวอร์ของตัวเอง — และมีระบบ **MCP (Model Context Protocol)** กับ **Plugin** แบบเปิดให้ขยายได้เต็มรูปแบบ
 
-เอกสารชุดนี้บันทึกการตั้งค่าจริงที่ใช้งานอยู่ — ตั้งแต่ติดตั้ง CLI บนเครื่องเปล่า จนถึงต่อโมเดลบ้าน (self-hosted llama.cpp) + MCP servers 5 ตัว + Plugin 2 ตัว พร้อมบันทึกปัญหาที่เจอจริงระหว่างทางและวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
+เอกสารชุดนี้บันทึกการตั้งค่าจริงที่ใช้งานอยู่ — ตั้งแต่ติดตั้ง CLI บนเครื่องเปล่า จนถึงต่อโมเดลบ้าน (self-hosted llama.cpp) + MCP servers 9 ตัว (6 เปิดใช้งาน, 3 รอเปิดต่อโปรเจกต์/รอ token) + Plugin 2 ตัว พร้อมบันทึกปัญหาที่เจอจริงระหว่างทางและวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
 
 ---
 
@@ -19,7 +19,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **OpenCode CLI** | v1.18.18+ ติดตั้งผ่าน `npm install -g opencode-ai` (global) |
 | **Model provider หลัก** | `home-llamacpp` — self-hosted llama.cpp server (URL เฉพาะของแต่ละคน), โมเดล `qwen3.8-27b` (Q4_K, context 131k) ผ่าน OpenAI-compatible endpoint |
 | **Model สำรอง (เร็ว)** | `opencode/deepseek-v4-flash-free` — built-in ของ OpenCode เอง ไม่ต้องตั้ง API key เพิ่ม ตอบเร็ว (~10 วินาที) |
-| **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
+| **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), memory (จำ context ข้าม session), github (issues/PR — ปิดไว้จนกว่าจะมี PAT), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
 | **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-rebuild graph + auto-inject context) |
 | **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (เขียนอัตโนมัติโดย `od mcp install`) |
 
