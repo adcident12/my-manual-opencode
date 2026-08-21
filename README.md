@@ -14,6 +14,7 @@
 | [plugins.md](plugins.md) | superpowers และ custom plugin `graft-deep` (โค้ดเต็ม + Plugin Hook API ของ OpenCode) |
 | [USER-MANUAL.md](USER-MANUAL.md) | วิธีใช้งานจริงวันต่อวัน — vibe coding, graft workflow, OpenDesign → OpenCode workflow |
 | [gotchas.md](gotchas.md) | ปัญหาที่เจอจริง 8 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, native module ABI mismatch, reasoning model output cap, ฯลฯ) |
+| [updating.md](updating.md) | วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว |
 
 ## Stack ที่ครอบคลุม
 

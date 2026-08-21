@@ -6,7 +6,7 @@ summary: คู่มือใช้งาน OpenCode วันต่อวั�
 
 # 📘 คู่มือการใช้งาน OpenCode สำหรับ Vibe Coding
 
-> ตั้งค่าครบแล้วดู [[setup]] · รายละเอียด MCP/Plugin ดู [[mcp-servers]] และ [[plugins]] · ปัญหาที่เจอบ่อยดู [[gotchas]]
+> ตั้งค่าครบแล้วดู [[setup]] · รายละเอียด MCP/Plugin ดู [[mcp-servers]] และ [[plugins]] · ปัญหาที่เจอบ่อยดู [[gotchas]] · อัปเดต/อัปเกรดดู [[updating]]
 
 ---
 
