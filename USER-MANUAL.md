@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-08-20
+updated: 2026-08-21
 summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft และ OpenDesign
 ---
 
@@ -12,7 +12,7 @@ summary: คู่มือใช้งาน OpenCode วันต่อวั�
 
 ## 📋 สารบัญ
 
-- ภาพรวม — สถาปัตยกรรมของ setup นี้
+- ภาพรวม — สถาปัตยกรรมของ setup นี้ + วงจรการทำงานระดับโปรเจกต์และระดับ agent
 - เริ่มงานในโปรเจกต์ใหม่ — checklist ต่อ repo
 - Vibe coding ทั่วไปกับ opencode
 - ใช้ graft ให้เข้าใจโค้ดเร็วขึ้น
@@ -40,6 +40,46 @@ graph LR
 
 1. **เปิด opencode terminal ตรงๆ** ในโปรเจกต์โค้ดจริง — ใช้ตอนพัฒนา backend/full-stack เต็มรูปแบบ
 2. **เปิดแอป OpenDesign** — ใช้ตอนอยากได้หน้าเว็บ/prototype เร็วๆ พร้อม live preview (OpenDesign เรียก opencode เป็น "เครื่องยนต์" เบื้องหลังให้เอง ไม่ต้องพิมพ์ opencode terminal เอง)
+
+### วงจรการทำงานระดับโปรเจกต์ (macro)
+
+ภาพรวมแบบวนซ้ำตั้งแต่ได้โจทย์จนถึง deploy แล้ววนกลับมารับโจทย์ใหม่/ปรับปรุงต่อ:
+
+```mermaid
+graph LR
+    A["Brief<br/>โจทย์ที่อยากได้"] --> B["ออกแบบ/สร้างต้นแบบ<br/>OpenDesign Studio"]
+    B --> C["ดึงเข้าโปรเจกต์จริง<br/>open-design MCP"]
+    C --> D["พัฒนา backend/DB<br/>opencode + postgres/mysql MCP"]
+    D --> E["ทดสอบ<br/>playwright / chrome-devtools MCP"]
+    E --> F["Deploy"]
+    F -->|โจทย์ใหม่ / ปรับปรุง| A
+```
+
+ใช้ดูภาพรวมว่า "งานหนึ่งชิ้น" ควรไหลผ่านเครื่องมือไหนบ้างตามลำดับ — รายละเอียดแต่ละขั้นดูที่หัวข้อ 5 ด้านล่าง
+
+### วงจรการทำงานของ agent ต่อ 1 คำสั่ง (micro)
+
+ภายในแต่ละ turn ที่คุณพิมพ์คำสั่งให้ opencode เกิดอะไรขึ้นบ้างเบื้องหลัง (อิงจาก [[plugins]] และ [[mcp-servers]]):
+
+```mermaid
+graph LR
+    A["User พิมพ์คำสั่ง"] --> B["graft-deep<br/>แทรก context ที่เกี่ยวข้อง"]
+    B --> C["superpowers<br/>เลือก skill ที่เหมาะสม"]
+    C --> D{"ต้องใช้ tool เพิ่มไหม?"}
+    D -->|ค้น docs| E["context7"]
+    D -->|เข้าใจโครงสร้างโค้ด| F["graft"]
+    D -->|ทดสอบ/debug UI| G["playwright /<br/>chrome-devtools"]
+    D -->|จำ context เก่า| H["memory"]
+    E --> I["แก้ไข/เขียนโค้ด"]
+    F --> I
+    G --> I
+    H --> I
+    I --> J["graft-deep<br/>auto-rebuild กราฟ (background)"]
+    J -->|คำสั่งถัดไป| A
+```
+
+> [!note] ไม่ใช่ทุก turn จะครบทุกขั้น
+> ถ้าคำสั่งสั้น/ไม่เกี่ยวกับโค้ด (เช่น "อธิบาย X ให้ฟัง") บาง node อาจถูกข้ามไป — แผนภาพนี้แสดง**เส้นทางที่เป็นไปได้ทั้งหมด** ไม่ใช่ทุก turn จะวิ่งผ่านทุกกล่อง
 
 ---
 
