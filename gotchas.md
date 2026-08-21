@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-08-20
+updated: 2026-08-21
 summary: ปัญหาที่เจอจริงระหว่างตั้งค่า OpenCode + MCP + Plugin บน Windows และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
 ---
 
@@ -163,6 +163,9 @@ od --no-open
 
 1. **[Qwen's own recommendation](https://qwen.readthedocs.io/)** — output length แนะนำ 32,768 token สำหรับงานทั่วไป, สูงถึง 38,912 สำหรับงานซับซ้อน (คณิตศาสตร์/แข่งเขียนโค้ด) — ค่า default ที่ตั้งไว้ตอนแรก (8,192) ต่ำกว่าคำแนะนำทางการมาก
 2. **[Known bug ของ opencode](https://github.com/anomalyco/opencode/issues/29363)** — opencode **cap `limit.output` ไว้ที่ 32,000 token เสมอ** ไม่ว่าจะตั้งในไฟล์ config สูงแค่ไหนก็ตาม (ยืนยันว่า "systemic design flaw" ยังไม่ถูกแก้ ใช้กับ opencode 1.18.18 จริง) — ตั้งสูงกว่า 32k ไปก็ไม่มีประโยชน์เพิ่ม
+
+> [!important] ยืนยันด้วยตัวเองแล้ว (opencode 1.18.19)
+> ทดสอบจริงโดยตั้ง local capture proxy แทน `baseURL` ชั่วคราวเพื่อดักดู request จริงที่ opencode ส่งออกไป — พบว่า field `max_tokens` ใน HTTP request จริงมีค่า **32000 เป๊ะ** (ไม่ใช่ 32768 ที่ตั้งไว้ใน `limit.output`) ยืนยันว่า bug ยังทำงานอยู่จริงบน opencode 1.18.19 ไม่ใช่แค่รายงานจาก community เฉยๆ
 
 > [!tip] วิธีแก้ที่ยืนยันแล้ว
 > เพิ่ม `limit.output` เป็น `32768` ใน config ของโมเดล (ตรงกับทั้งคำแนะนำของ Qwen และเพดานจริงที่ opencode ยอมรับได้):
