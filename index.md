@@ -31,7 +31,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 - [[mcp-servers]] — รายละเอียด MCP server แต่ละตัว ขั้นตอนติดตั้ง config และวิธีทดสอบ
 - [[plugins]] — superpowers และ custom plugin graft-deep แบบละเอียด (โค้ดเต็ม + Plugin Hook API)
 - [[USER-MANUAL]] — วิธีใช้งานจริงวันต่อวัน: vibe coding, graft workflow, OpenDesign workflow
-- [[gotchas]] — ปัญหาที่เจอจริง 7 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, ฯลฯ)
+- [[gotchas]] — ปัญหาที่เจอจริง 8 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, reasoning model output cap, ฯลฯ)
 
 ---
 
