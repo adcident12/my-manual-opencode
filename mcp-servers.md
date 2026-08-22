@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-08-21
+updated: 2026-08-22
 summary: รายละเอียด MCP server แต่ละตัวที่ตั้งไว้ใน OpenCode — ขั้นตอนติดตั้ง, config, วิธีทดสอบ, ข้อควรระวัง
 ---
 
@@ -273,6 +273,135 @@ GitHub MCP server อย่างเป็นทางการ (ทำโดย
 
 ---
 
+## sonarqube — code quality + security scan แบบ self-hosted (ผ่าน Docker)
+
+[SonarSource/sonarqube-mcp-server](https://github.com/SonarSource/sonarqube-mcp-server) อย่างเป็นทางการ — ให้ agent เรียกดู quality gate, security hotspot, code smell, coverage ของโค้ดผ่าน tool call ตรงๆ ต่างจาก MCP ตัวอื่นในหน้านี้ตรงที่ **ต้องมี SonarQube server รันอยู่จริงก่อน** (self-hosted หรือ SonarCloud) — เลือกทาง self-hosted เพราะไม่ต้องพึ่ง service ภายนอก ข้อมูลโค้ดไม่ออกจากเครื่อง
+
+> [!info] ทำไมไม่ใช้ Semgrep MCP แทน
+> Semgrep เบากว่าและไม่ต้องมีเซิร์ฟเวอร์ แต่เจาะจงด้าน security scan อย่างเดียว — SonarQube ให้ทั้ง code quality (code smell, coverage, duplication) และ security hotspot ในตัวเดียว เลือกใช้ตามที่ต้องการความครอบคลุมมากกว่า
+
+### Prerequisite — Docker Desktop
+
+ต้องมี Docker Desktop ติดตั้งและ **engine กำลังรันอยู่** (ไม่ใช่แค่ติดตั้งแอปไว้เฉยๆ) เช็คได้ด้วย:
+
+```powershell
+docker version
+```
+
+ถ้าขึ้น error `open //./pipe/dockerDesktopLinuxEngine` แปลว่าแอปยังไม่ได้เปิด — เปิด Docker Desktop ทิ้งไว้ก่อน (ใช้เวลา bootstrap engine ~30-90 วินาทีหลังเปิดแอป)
+
+> [!warning] `docker` อาจไม่อยู่บน PATH
+> ตัวติดตั้ง Docker Desktop **ไม่ได้เพิ่ม path ของ `docker.exe` เข้า System PATH เสมอไป** (พบจริงว่าเครื่องที่ติดตั้งไว้นานแล้วบางเครื่องไม่มี) เช็คด้วย `Get-Command docker` — ถ้าไม่เจอ ให้ใช้ full path ตรงๆ แทนทั้งตอนทดสอบและใน MCP config: `C:\Program Files\Docker\Docker\resources\bin\docker.exe`
+
+### ขั้นตอนที่ 1 — รัน SonarQube Server container
+
+```bash
+docker run -d --name sonarqube -p 9000:9000 \
+  -v sonarqube_data:/opt/sonarqube/data \
+  -v sonarqube_extensions:/opt/sonarqube/extensions \
+  -v sonarqube_logs:/opt/sonarqube/logs \
+  sonarqube:community
+```
+
+ใช้ named volume 3 ตัวให้ข้อมูล/extension/log อยู่ถาวรข้าม container restart — **ไม่ใส่ `--rm`** เพราะต้องการให้ container คงอยู่ถาวร ไม่ใช่แบบ ephemeral เหมือน MCP server
+
+รอจน bootstrap เสร็จ (ปกติ 1-2 นาที) เช็คได้จาก log:
+
+```bash
+docker logs sonarqube | grep "SonarQube is operational"
+```
+
+ทดสอบว่าเว็บขึ้นแล้ว: เปิด **http://localhost:9000**
+
+> [!note] Embedded H2 database พอสำหรับใช้คนเดียว
+> SonarQube เตือนว่า "Embedded database should be used for evaluation purposes only" — สำหรับใช้งานคนเดียว/โปรเจกต์ส่วนตัวไม่มีปัญหา แต่ถ้าจะใช้กับทีมหรือ production จริงต้องเปลี่ยนไปต่อ PostgreSQL แยกตามเอกสารทางการของ SonarQube
+
+### ขั้นตอนที่ 2 — Login ครั้งแรก + สร้าง User Token
+
+1. เข้า **http://localhost:9000** login ด้วย `admin` / `admin` (default) — ระบบบังคับตั้งรหัสผ่านใหม่ทันที
+2. ไปที่ **My Account → Security**
+3. ที่ **Generate Tokens**: ตั้งชื่อ (เช่น `opencode-mcp`), Expires in `No expiration` (หรือกำหนดเองถ้าต้องการ)
+
+> [!danger] Type ต้องเป็น "User Token" เท่านั้น — จุดที่พลาดง่ายที่สุด
+> Dropdown **Type** มีให้เลือก 3 แบบ: Global Analysis Token, Project Analysis Token, User Token — MCP server **ใช้ได้แค่ User Token** เท่านั้น เพราะต้องเรียก Web API เต็มรูปแบบ (ดู issues, quality gate, project list) ไม่ใช่แค่ส่งผลสแกนแบบที่ Analysis Token ทำได้ ถ้าเลือกผิดจะได้ 401/403 ตอนเรียก tool จริง แม้ MCP server จะ "connected" เฉยๆ ก็ตาม (เพราะ connection ตรวจแค่ว่าต่อ server ได้ ไม่ได้ตรวจสิทธิ์ token ตอนนั้น)
+
+4. กด Generate → คัดลอก token ทันที (โชว์ครั้งเดียว)
+
+### ขั้นตอนที่ 3 — ตั้ง env var
+
+ตั้ง `SONARQUBE_TOKEN` เป็นค่า token ที่ได้ (System Environment Variable บน Windows หรือ shell profile บน macOS/Linux — ดู [[setup]] Part 2)
+
+> [!danger] อย่าใส่ token ตรงๆ ในไฟล์ config หรือแชท
+> ใช้ `{env:SONARQUBE_TOKEN}` แทนเสมอ แม้จะเป็น server ที่รันบน localhost เท่านั้นก็ตาม — เป็นนิสัยที่ดีกว่าและกัน token หลุดไปอยู่ใน git history/session log โดยไม่ตั้งใจ
+
+### ขั้นตอนที่ 4 — เพิ่ม config ใน `opencode.jsonc`
+
+```jsonc
+"sonarqube": {
+  "type": "local",
+  "command": [
+    "C:/Program Files/Docker/Docker/resources/bin/docker.exe",
+    "run", "--init", "--rm", "-i",
+    "-e", "SONARQUBE_TOKEN",
+    "-e", "SONARQUBE_URL",
+    "sonarsource/sonarqube-mcp"
+  ],
+  "environment": {
+    "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
+    "SONARQUBE_URL": "http://host.docker.internal:9000"
+  },
+  "timeout": 30000,
+  "enabled": true
+}
+```
+
+จุดสำคัญที่ต่างจาก config ตัวอย่างทั่วไปในเอกสารของ SonarQube เอง:
+
+- **ใช้ full path ของ `docker.exe`** แทนชื่อ `docker` เปล่าๆ ตามเหตุผลใน prerequisite ด้านบน
+- **`SONARQUBE_URL` ต้องเป็น `http://host.docker.internal:9000`** ไม่ใช่ `http://localhost:9000` — เพราะตัว MCP server รันอยู่**ใน container แยก** `localhost` ข้างในนั้นหมายถึงตัว container เอง ไม่ใช่เครื่องจริง `host.docker.internal` คือ DNS พิเศษที่ Docker Desktop ให้มาเพื่อชี้กลับไปที่เครื่อง host เสมอ
+- `-e SONARQUBE_TOKEN` (ไม่มี `=value` ต่อท้าย) บอก Docker ให้ forward ค่าจาก environment ของ process ที่เรียก `docker run` (คือ opencode เอง) เข้า container — ทำงานคู่กับ `"environment"` block ด้านบนที่ resolve `{env:SONARQUBE_TOKEN}` ให้ opencode เห็นค่าจริงก่อนส่งต่อ
+
+**pre-pull image ก่อนใช้งานจริงครั้งแรก** (กัน timeout 30 วินาทีไม่พอตอนต้องดาวน์โหลด image ~500MB+):
+
+```bash
+docker pull sonarsource/sonarqube-mcp
+```
+
+### ขั้นตอนที่ 5 — ทดสอบ
+
+**ทดสอบ docker command ตรงๆ ก่อน** (แยกปัญหา MCP config ออกจากปัญหา docker/network):
+
+```powershell
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9000 sonarsource/sonarqube-mcp
+```
+
+ควรเห็น log แบบนี้ (รอ input อยู่เพราะเป็น stdio transport — ปกติ, กด Ctrl+C ออกได้):
+
+```
+INFO SonarQube MCP Server - Starting backend service
+INFO SonarQube MCP Server - SonarQube MCP Server Started:
+INFO SonarQube MCP Server - Transport: stdio
+INFO SonarQube MCP Server - Status: Server ready - tools loading in background
+```
+
+ถ้าผ่าน ค่อยเช็คผ่าน opencode:
+
+```bash
+opencode mcp list      # ควรเห็น sonarqube connected
+```
+
+> [!important] "connected" ใน opencode mcp list แต่ agent เรียก tool ไม่ได้ — เช็ค VS Code ก่อน
+> ปัญหาที่เจอจริงระหว่างตั้งค่า: ทดสอบ docker command ตรงๆ ผ่านหมด แต่ `opencode mcp list` ที่รันจาก **terminal ข้างใน VS Code** ยัง fail อยู่ดี — สาเหตุคือ terminal ใน VS Code เป็น child process ของตัว VS Code (`Code.exe`) ที่เปิดค้างมาตั้งแต่ก่อนตั้ง `SONARQUBE_TOKEN` เปิด terminal tab ใหม่ในนั้นไม่ช่วย เพราะ clone environment เดิมของ VS Code เอง ไม่ได้ไปอ่านค่าใหม่จาก Windows ต้อง**ปิด VS Code ทั้งแอปจริงๆ แล้วเปิดใหม่** (เช็ค Task Manager ว่าไม่มี `Code.exe` ค้างด้วย) ถึงจะเห็นค่าใหม่ — นี่คือกรณีที่ยืนยันจริงของ [[gotchas]] ข้อ 2 ตรงๆ ไม่ใช่ปัญหา config
+
+### CLI/Tool ที่ได้
+
+MCP server นี้ expose tool สำหรับ: analyze code, list issues, check quality gate status, get security hotspots, measure coverage — agent เรียกเองอัตโนมัติเวลาถูกขอให้ตรวจโค้ด/หา vulnerability
+
+> [!note] โปรเจกต์ต้อง "Analyze" ก่อนถึงจะมีข้อมูล
+> SonarQube server เปล่าๆ ไม่มีข้อมูลอะไรจนกว่าจะสแกนโปรเจกต์เข้าไปครั้งแรก (ผ่านหน้าเว็บ "Analyze new project" หรือให้ agent เรียก MCP tool สแกนให้) — ก่อนสแกน tool ส่วนใหญ่จะตอบว่าไม่มีข้อมูล ไม่ใช่ error
+
+---
+
 ## postgres / mysql — query database (ปิดไว้ก่อน, เปิดต่อโปรเจกต์)
 
 ทั้งคู่เป็น local MCP ที่ต้องมี database server รันอยู่แล้ว (local หรือ remote) — MCP แค่เป็นสะพานเชื่อม ไม่ได้ติดตั้ง DB ให้
@@ -362,7 +491,7 @@ GitHub MCP server อย่างเป็นทางการ (ทำโดย
 opencode mcp list
 ```
 
-ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (6 เปิด + 3 ปิด):
+ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (7 เปิด + 3 ปิด):
 
 ```
 ✓ context7        connected
@@ -371,6 +500,7 @@ opencode mcp list
 ✓ graft            connected
 ✓ open-design      connected
 ✓ memory           connected
+✓ sonarqube        connected
 ○ github           disabled
 ○ postgres         disabled
 ○ mysql            disabled
