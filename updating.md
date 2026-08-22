@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-08-21
+updated: 2026-08-22
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว
 ---
 
@@ -113,6 +113,49 @@ opencode debug skill
 
 ---
 
+## sonarqube (self-hosted, ผ่าน Docker)
+
+ต่างจาก MCP อื่นทั้งหมดในหน้านี้ตรงที่มี**สองส่วนที่ต้องอัปเดตแยกกัน** และ**ไม่มีตัวไหน auto-update แบบ npx เลย** — เพราะรันผ่าน Docker image ที่ pull มาเก็บ cache ไว้ในเครื่อง ไม่ใช่ดึงจาก registry สดทุกครั้งเหมือน `npx -y package@latest`
+
+### ส่วนที่ 1 — SonarQube MCP wrapper (image `sonarsource/sonarqube-mcp`)
+
+Config ที่ตั้งไว้ (ดู [[mcp-servers]] หัวข้อ sonarqube) ไม่ได้ pin เวอร์ชัน แต่ก็ไม่ได้ใส่ `--pull=always` ด้วย — ผลคือ Docker จะใช้ image ตัวเดิมที่ cache ไว้ซ้ำไปเรื่อยๆ แม้ tag จะชื่อ `latest` ก็ตาม **ต้องสั่ง pull เองเป็นระยะถ้าอยากได้เวอร์ชันใหม่:**
+
+```bash
+docker pull sonarsource/sonarqube-mcp
+```
+
+> [!tip] ถ้าอยากให้เช็คอัตโนมัติทุกครั้งที่เปิด
+> เพิ่ม `"--pull=always"` เข้าไปใน `"command"` array ของ config (ต่อจาก `docker run`) — แลกกับ startup ช้าลงทุกครั้งเพราะต้องเช็ค registry ก่อน ไม่แนะนำถ้าเปิด/ปิด opencode บ่อย
+
+### ส่วนที่ 2 — SonarQube Server container (image `sonarqube:community`)
+
+Container นี้เป็น service ที่รันค้างอยู่ตลอด (ไม่ใช่ spawn ต่อครั้งแบบ MCP) การอัปเดตคือ pull image ใหม่แล้ว recreate container — ข้อมูลไม่หายเพราะเก็บอยู่ใน named volume แยกต่างหาก:
+
+```bash
+docker pull sonarqube:community
+docker stop sonarqube
+docker rm sonarqube
+docker run -d --name sonarqube -p 9000:9000 \
+  -v sonarqube_data:/opt/sonarqube/data \
+  -v sonarqube_extensions:/opt/sonarqube/extensions \
+  -v sonarqube_logs:/opt/sonarqube/logs \
+  sonarqube:community
+```
+
+ตรวจสอบว่าขึ้นเวอร์ชันใหม่จริงหลัง container รันสำเร็จ:
+
+```bash
+docker logs sonarqube | grep "SonarQube is operational"
+```
+
+เข้า **http://localhost:9000 → Administration → System** เพื่อดูเลขเวอร์ชันที่ยืนยันจากหน้าเว็บอีกที
+
+> [!danger] ข้ามเวอร์ชันหลักหลายเวอร์ชันพร้อมกันอาจพัง
+> SonarQube (เหมือน database ทั่วไป) มักรองรับแค่การอัปเกรดข้าม major version ทีละ 1 ขั้น ถ้าปล่อยไว้นานแล้วอยากอัปเดตทีเดียวข้ามหลาย version ต้องเช็ค [Upgrade Guide ทางการ](https://docs.sonarsource.com/sonarqube-server/upgrading/) ก่อนเสมอ — บางครั้งต้อง upgrade ทีละขั้นตามลำดับ ไม่ใช่กระโดดตรงไปเวอร์ชันล่าสุด
+
+---
+
 ## สรุปเช็คลิสต์อัปเดตทั้งหมด
 
 | ส่วนประกอบ | ต้องทำเองไหม | คำสั่ง |
@@ -124,3 +167,5 @@ opencode debug skill
 | superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
 | graft-deep.js | ➖ ไม่มีอัปเดต (เขียนเอง) | แก้ไฟล์ตรงๆ |
 | OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
+| sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |
+| sonarqube Server (container) | ✅ ต้องสั่งเอง | pull → stop → rm → recreate (เก็บ volume เดิม) |

@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-08-21
+updated: 2026-08-22
 summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft และ OpenDesign
 ---
 
@@ -51,7 +51,8 @@ graph LR
     B --> C["ดึงเข้าโปรเจกต์จริง<br/>open-design MCP"]
     C --> D["พัฒนา backend/DB<br/>opencode + postgres/mysql MCP"]
     D --> E["ทดสอบ<br/>playwright / chrome-devtools MCP"]
-    E --> F["Deploy"]
+    E --> Q["ตรวจคุณภาพ/ความปลอดภัย<br/>sonarqube MCP (quality gate)"]
+    Q --> F["Deploy"]
     F -->|โจทย์ใหม่ / ปรับปรุง| A
 ```
 
@@ -70,10 +71,12 @@ graph LR
     D -->|เข้าใจโครงสร้างโค้ด| F["graft"]
     D -->|ทดสอบ/debug UI| G["playwright /<br/>chrome-devtools"]
     D -->|จำ context เก่า| H["memory"]
+    D -->|ตรวจ quality/security| K["sonarqube"]
     E --> I["แก้ไข/เขียนโค้ด"]
     F --> I
     G --> I
     H --> I
+    K --> I
     I --> J["graft-deep<br/>auto-rebuild กราฟ (background)"]
     J -->|คำสั่งถัดไป| A
 ```
@@ -205,3 +208,4 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 - **ตั้ง env var/PATH ใหม่แล้วยังไม่เห็นผล** → restart แอปที่เกี่ยวข้องแบบเต็มรูปแบบ ไม่ใช่แค่ปิดหน้าต่าง (ข้อ 2)
 - **MCP `open-design` connected แต่เรียก tool ไม่ได้** → เช็คว่า daemon ของ OpenDesign รันอยู่จริงที่ port 7456 ไหม (ข้อ 4)
 - **คำสั่งเดียวกันได้ผลไม่ตรงกันระหว่าง terminal** → ทดสอบผ่าน PowerShell แทน Git Bash บน Windows (ข้อ 5)
+- **MCP `sonarqube` ขึ้น connected แต่เรียก tool แล้ว 401/403** → เช็คว่า token ที่ใช้เป็น "User Token" ไม่ใช่ "Global/Project Analysis Token" (ดู [[mcp-servers]] หัวข้อ sonarqube) — connection ตรวจแค่ว่าต่อ server ได้ ไม่ได้ตรวจสิทธิ์ token ตอนนั้น
