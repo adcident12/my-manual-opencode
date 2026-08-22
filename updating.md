@@ -156,6 +156,32 @@ docker logs sonarqube | grep "SonarQube is operational"
 
 ---
 
+## trivy (CLI + MCP plugin)
+
+มี 3 ส่วนที่อัปเดตคนละกลไกกัน:
+
+**1. ตัว Trivy CLI เอง** — อัปเดตผ่าน package manager เดียวกับตอนติดตั้ง:
+
+```powershell
+winget upgrade AquaSecurity.Trivy
+```
+
+macOS: `brew upgrade trivy`
+
+**2. Plugin `mcp`** — แยกเวอร์ชันจากตัว CLI หลัก ต้องอัปเดตเองอีกชั้น:
+
+```bash
+trivy plugin update      # รีเฟรช plugin index ก่อน
+trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั้งไว้ (รวม mcp) เป็นเวอร์ชันล่าสุด
+```
+
+**3. Vulnerability database** — **auto-update ในตัว ไม่ต้องทำอะไรเลย** เช็คความสดของ DB เองทุกครั้งที่สแกน ดาวน์โหลดใหม่อัตโนมัติถ้า cache เก่าเกินไป (ต่างจาก 2 ส่วนบนที่ต้องสั่งเอง)
+
+> [!note] Trivy ไม่มี "server" ให้ต้องอัปเดตแยก
+> ต่างจาก sonarqube ที่มี 2 ส่วน (MCP wrapper + server container) — trivy เป็น CLI เดี่ยว ไม่มี long-running service ให้ดูแล อัปเดตแค่ 2 คำสั่งข้างต้นก็ครบ
+
+---
+
 ## สรุปเช็คลิสต์อัปเดตทั้งหมด
 
 | ส่วนประกอบ | ต้องทำเองไหม | คำสั่ง |
@@ -169,3 +195,6 @@ docker logs sonarqube | grep "SonarQube is operational"
 | OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
 | sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |
 | sonarqube Server (container) | ✅ ต้องสั่งเอง | pull → stop → rm → recreate (เก็บ volume เดิม) |
+| trivy CLI | ✅ ต้องสั่งเอง | `winget upgrade AquaSecurity.Trivy` |
+| trivy plugin (mcp) | ✅ ต้องสั่งเอง (แยกจาก CLI) | `trivy plugin update && trivy plugin upgrade` |
+| trivy vulnerability DB | ❌ อัตโนมัติ | — |

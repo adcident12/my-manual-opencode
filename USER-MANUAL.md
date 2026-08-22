@@ -51,7 +51,7 @@ graph LR
     B --> C["ดึงเข้าโปรเจกต์จริง<br/>open-design MCP"]
     C --> D["พัฒนา backend/DB<br/>opencode + postgres/mysql MCP"]
     D --> E["ทดสอบ<br/>playwright / chrome-devtools MCP"]
-    E --> Q["ตรวจคุณภาพ/ความปลอดภัย<br/>sonarqube MCP (quality gate)"]
+    E --> Q["ตรวจคุณภาพ/ความปลอดภัย<br/>sonarqube + trivy MCP (quality gate)"]
     Q --> F["Deploy"]
     F -->|โจทย์ใหม่ / ปรับปรุง| A
 ```
@@ -71,7 +71,7 @@ graph LR
     D -->|เข้าใจโครงสร้างโค้ด| F["graft"]
     D -->|ทดสอบ/debug UI| G["playwright /<br/>chrome-devtools"]
     D -->|จำ context เก่า| H["memory"]
-    D -->|ตรวจ quality/security| K["sonarqube"]
+    D -->|ตรวจ quality/security| K["sonarqube /<br/>trivy"]
     E --> I["แก้ไข/เขียนโค้ด"]
     F --> I
     G --> I
@@ -209,3 +209,4 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 - **MCP `open-design` connected แต่เรียก tool ไม่ได้** → เช็คว่า daemon ของ OpenDesign รันอยู่จริงที่ port 7456 ไหม (ข้อ 4)
 - **คำสั่งเดียวกันได้ผลไม่ตรงกันระหว่าง terminal** → ทดสอบผ่าน PowerShell แทน Git Bash บน Windows (ข้อ 5)
 - **MCP `sonarqube` ขึ้น connected แต่เรียก tool แล้ว 401/403** → เช็คว่า token ที่ใช้เป็น "User Token" ไม่ใช่ "Global/Project Analysis Token" (ดู [[mcp-servers]] หัวข้อ sonarqube) — connection ตรวจแค่ว่าต่อ server ได้ ไม่ได้ตรวจสิทธิ์ token ตอนนั้น
+- **`trivy` ขึ้น `command not found` ทั้งที่ winget บอกติดตั้งสำเร็จ** → restart terminal (VS Code ต้องปิดทั้งแอป) — เจอ PATH staleness เดียวกับข้อ 2 (ดู [[mcp-servers]] หัวข้อ trivy)

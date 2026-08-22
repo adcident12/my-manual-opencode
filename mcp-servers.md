@@ -402,6 +402,75 @@ MCP server นี้ expose tool สำหรับ: analyze code, list issues, 
 
 ---
 
+## trivy — vulnerability/secret/misconfig scan (standalone CLI, ไม่ต้องมี server)
+
+[aquasecurity/trivy](https://github.com/aquasecurity/trivy) — scanner หา vulnerability ใน dependency, secret ที่ hardcode ไว้ในโค้ด, และ misconfiguration ใน config file (Terraform, Dockerfile, Kubernetes ฯลฯ) ต่างจาก sonarqube ตรงที่**เป็น CLI เดี่ยวๆ ไม่ต้องมี server รันอยู่เลย** — MCP ต่อกับตัว binary ตรงๆ ผ่าน plugin ที่ Aqua Security ทำเอง
+
+> [!info] ทำไมมีทั้ง sonarqube และ trivy
+> คาบเกี่ยวกันบ้างเรื่อง security hotspot แต่ trivy ครอบคลุมมากกว่าในมุม supply-chain — สแกน dependency CVE ตรงจาก lockfile, สแกน container image, และหา secret ที่หลุดในโค้ด (API key, token) ได้ดีกว่า sonarqube ใช้คู่กันได้ ไม่ซ้ำซ้อนขนาดต้องเลือกอย่างใดอย่างหนึ่ง
+
+### ขั้นตอนติดตั้ง
+
+1. ติดตั้ง Trivy CLI (Windows ผ่าน winget, เร็วและไม่ต้องหา installer เอง):
+
+   ```powershell
+   winget install --id AquaSecurity.Trivy -e
+   ```
+
+   macOS: `brew install trivy` · Linux: ดูวิธีตาม distro ที่ [เอกสารทางการ](https://trivy.dev/latest/getting-started/installation/)
+
+   > [!warning] ต้อง restart terminal หลังติดตั้ง
+   > winget แจ้งเองว่า "Path environment variable modified; restart your shell" — ปัญหาเดียวกับ [[gotchas]] ข้อ 2 เป๊ะๆ ถ้ายังเจอ `trivy: command not found` ทั้งที่ winget บอกว่าติดตั้งสำเร็จ ให้ปิด-เปิด terminal ใหม่ก่อน (VS Code ต้องปิดทั้งแอปเหมือนเคย)
+
+2. ติดตั้ง MCP plugin อย่างเป็นทางการจาก Aqua Security เอง (**"mcp" ไม่ใช่ subcommand ในตัวเปล่า trivy — ต้องติดตั้ง plugin นี้ก่อนถึงจะมี**):
+
+   ```bash
+   trivy plugin install mcp
+   ```
+
+   > [!danger] อย่าเชื่อผลค้นหาที่บอกว่า `trivy mcp` ใช้ได้เลยทันที
+   > มี MCP wrapper ของ third-party หลายเจ้าที่ไม่เป็นทางการ (ไม่ใช่จาก aquasecurity org) โผล่มาตามผลค้นหาทั่วไป ก่อนติดตั้ง plugin ตรวจว่า repo คือ [aquasecurity/trivy-mcp](https://github.com/aquasecurity/trivy-mcp) ให้แน่ใจ (source ของ official plugin index เชื่อถือได้กว่า MCP server แยกที่ไม่มีใครดูแลต่อ)
+
+3. เพิ่ม config ใน `opencode.jsonc`:
+
+   ```jsonc
+   "trivy": {
+     "type": "local",
+     "command": ["trivy", "mcp"],
+     "timeout": 30000
+   }
+   ```
+
+   > [!note] ถ้า `trivy` ไม่อยู่บน PATH ของ opencode
+   > บางเครื่องที่ winget ติดตั้งไว้นานแล้วอาจไม่เห็น `trivy` ผ่านชื่อเปล่าๆ (เจอปัญหาคล้าย `docker`/`od` ก่อนหน้านี้) — เช็คด้วย `Get-Command trivy` ถ้าไม่เจอให้ใช้ full path ของ `trivy.exe` แทนใน `"command"` โดยตรง
+
+4. ทดสอบ:
+
+   ```bash
+   opencode mcp list      # ควรเห็น trivy connected
+   ```
+
+   ทดสอบ CLI ตรงๆ ก่อนก็ได้ (ดาวน์โหลด vulnerability DB ~100MB ครั้งแรกที่รัน):
+
+   ```bash
+   trivy fs --scanners vuln,secret,misconfig .
+   ```
+
+> [!warning] ต้องมี `docker-credential-desktop` บน PATH ตอนดาวน์โหลด DB ครั้งแรก
+> Trivy เก็บ vulnerability database เป็น OCI artifact บน `mirror.gcr.io` — ตอนดึงครั้งแรกจะพยายามเช็ค credential ผ่าน Docker's credential helper แม้จะไม่ได้ต้องมี Docker server รันอยู่เลยก็ตาม ถ้าเจอ error `docker-credential-desktop: executable file not found` ให้เพิ่มโฟลเดอร์ Docker Desktop's `resources/bin` เข้า PATH ชั่วคราว (ดู [[gotchas]] ข้อ 4 เรื่อง Docker path pattern เดียวกัน) — **นี่ไม่ใช่ dependency ถาวร** พอ DB cache ไว้แล้วครั้งต่อไปไม่ต้องพึ่ง Docker อีกเลย
+
+### CLI commands ที่มีประโยชน์
+
+| คำสั่ง | ใช้ทำอะไร |
+| --- | --- |
+| `trivy fs .` | สแกน dependency vulnerability + secret ในโฟลเดอร์ปัจจุบัน |
+| `trivy fs --scanners secret .` | สแกนหา secret ที่ hardcode ไว้อย่างเดียว (เร็วกว่า) |
+| `trivy image <name>` | สแกน container image หา CVE |
+| `trivy config .` | สแกนหา misconfiguration ใน Dockerfile/Terraform/K8s manifest |
+| `trivy repository <url>` | สแกน remote git repository โดยไม่ต้อง clone เอง |
+
+---
+
 ## postgres / mysql — query database (ปิดไว้ก่อน, เปิดต่อโปรเจกต์)
 
 ทั้งคู่เป็น local MCP ที่ต้องมี database server รันอยู่แล้ว (local หรือ remote) — MCP แค่เป็นสะพานเชื่อม ไม่ได้ติดตั้ง DB ให้
@@ -491,7 +560,7 @@ MCP server นี้ expose tool สำหรับ: analyze code, list issues, 
 opencode mcp list
 ```
 
-ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (7 เปิด + 3 ปิด):
+ผลลัพธ์ตัวอย่างตอนตั้งค่าครบ (8 เปิด + 3 ปิด):
 
 ```
 ✓ context7        connected
@@ -501,6 +570,7 @@ opencode mcp list
 ✓ open-design      connected
 ✓ memory           connected
 ✓ sonarqube        connected
+✓ trivy            connected
 ○ github           disabled
 ○ postgres         disabled
 ○ mysql            disabled
