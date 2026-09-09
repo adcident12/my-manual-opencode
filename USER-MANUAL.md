@@ -73,11 +73,12 @@ graph LR
     D -->|ทดสอบ/debug UI| G["playwright /<br/>chrome-devtools"]
     D -->|จำ context เก่า| H["memory"]
     D -->|ตรวจ quality/security| K["sonarqube /<br/>trivy"]
-    E --> I["แก้ไข/เขียนโค้ด"]
-    F --> I
-    G --> I
-    H --> I
-    K --> I
+    E --> L["ponytail<br/>เช็ค decision ladder ก่อนเขียนโค้ด"]
+    F --> L
+    G --> L
+    H --> L
+    K --> L
+    L --> I["แก้ไข/เขียนโค้ด"]
     I --> J["graft-deep<br/>auto-rebuild กราฟ (background)"]
     J -->|คำสั่งถัดไป| A
 ```
@@ -86,7 +87,7 @@ graph LR
 > ถ้าคำสั่งสั้น/ไม่เกี่ยวกับโค้ด (เช่น "อธิบาย X ให้ฟัง") บาง node อาจถูกข้ามไป — แผนภาพนี้แสดง**เส้นทางที่เป็นไปได้ทั้งหมด** ไม่ใช่ทุก turn จะวิ่งผ่านทุกกล่อง
 
 > [!note] Plugin ponytail
-> plugin ponytail (ดู [[plugins]]) ฉีด ruleset เข้าไปที่ขั้น "แก้ไข/เขียนโค้ด" (โหนด I) ทุกครั้ง — บังคับให้ agent ไล่ decision ladder (ไม่จำเป็นก็ไม่เขียน → reuse ของเดิม → standard library → native feature → dependency ที่มีอยู่ → one-liner → ค่อยเขียนใหม่ขั้นต่ำ) ก่อนจะลงมือเขียนโค้ดใหม่จริง ทำงานคู่กับ superpowers/graft-deep โดยไม่ทับซ้อนกัน (superpowers เลือก workflow, graft-deep หา context, ponytail คุมปริมาณโค้ดที่เขียนออกมา)
+> plugin ponytail (ดู [[plugins]]) เป็นด่านสุดท้ายก่อนลงมือเขียนโค้ดจริง (โหนด L) — บังคับให้ agent ไล่ decision ladder (ไม่จำเป็นก็ไม่เขียน → reuse ของเดิม → standard library → native feature → dependency ที่มีอยู่ → one-liner → ค่อยเขียนใหม่ขั้นต่ำ) ทำงานคู่กับ superpowers/graft-deep โดยไม่ทับซ้อนกัน (superpowers เลือก workflow, graft-deep หา context, ponytail คุมปริมาณโค้ดที่เขียนออกมา)
 
 ---
 
