@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-08-20
-summary: superpowers (skill library) และ graft-deep (custom plugin ที่เขียนเอง) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
+updated: 2026-09-09
+summary: superpowers (skill library), graft-deep (custom plugin ที่เขียนเอง) และ ponytail (code minimization ruleset) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
 ---
 
 # Plugins
@@ -236,3 +236,50 @@ console.log(output.messages[0].parts); // ควรมี 2 parts ถ้า inje
 
 > [!warning] อย่ารัน rebuild กับ ask พร้อมกันตอนทดสอบ
 > เจอ race condition จริง: ถ้า `graft build` (background) ยังไม่เสร็จตอน `graft ask` ยิงไป จะเกิด contention แล้ว `graft ask` fail แบบเงียบๆ (by design, "fail soft") ทำให้ดูเหมือน bug ทั้งที่จริงๆ ทำงานถูกต้องถ้าทดสอบแยกกัน
+
+---
+
+## ponytail — code minimization ruleset
+
+[dietrichgebert/ponytail](https://github.com/dietrichgebert/ponytail) เป็น ruleset/skill ที่บังคับให้ agent คิดแบบ "senior dev ขี้เกียจที่สุดในห้อง" ก่อนเขียนโค้ดใหม่ทุกครั้งต้องไล่ decision ladder ตามลำดับ: ไม่จำเป็นก็ไม่เขียน → มีอยู่แล้วในโปรเจกต์ก็ reuse → standard library มีไหม → native platform feature มีไหม → dependency ที่ติดตั้งอยู่แล้วมีไหม → เขียนบรรทัดเดียวได้ไหม → ค่อยเขียนโค้ดใหม่เท่าที่จำเป็นจริงๆ (validation/security/accessibility ยังต้องทำเสมอ ไม่ลดทอนเพราะ minimal)
+
+### ติดตั้งบน OpenCode
+
+เพิ่ม plugin เข้า `opencode.json`/`opencode.jsonc` (ใส่รวมกับ plugin อื่นที่มีอยู่แล้วในลิสต์เดียวกันได้เลย):
+
+```jsonc
+{ "plugin": ["@dietrichgebert/ponytail"] }
+```
+
+รีสตาร์ท OpenCode แล้วลองรัน `/ponytail-help` เพื่อเช็คว่า activate สำเร็จ
+
+> [!note] Requirement
+> ต้องมี Node.js อยู่บน PATH สำหรับ lifecycle hooks เต็มรูปแบบ — ถ้าไม่มี ตัว skill core ยังทำงานได้ แต่บาง activation feature จะเงียบไป (ดูวิธีติดตั้ง Node ที่ [[setup]] Part 0)
+
+### คำสั่งที่ใช้ได้
+
+| คำสั่ง | หน้าที่ |
+| --- | --- |
+| `/ponytail [lite\|full\|ultra\|off]` | ปรับความเข้ม/ปิดการทำงาน |
+| `/ponytail-review` | ตรวจ diff ปัจจุบันว่า over-engineer ไหม |
+| `/ponytail-audit` | สแกนทั้ง repo หา code ที่ไม่จำเป็น |
+| `/ponytail-debt` | บันทึกจุดที่เลื่อนการ simplify ไว้ |
+| `/ponytail-gain` | ดู benchmark ผลลัพธ์ |
+| `/ponytail-help` | อ้างอิงคำสั่งเร็ว |
+
+### Config เพิ่มเติม (optional)
+
+- Env var: `PONYTAIL_DEFAULT_MODE=lite|full|ultra|off`
+- หรือไฟล์ config: `~/.config/ponytail/config.json` (Windows: `%APPDATA%\ponytail\config.json`) — ใส่ field `defaultMode`
+- จำกัดการ inject ruleset เข้าเฉพาะ subagent บางตัว: ตั้ง `PONYTAIL_SUBAGENT_MATCHER` เป็น regex (ไม่ตั้ง = inject ทุก subagent)
+
+### Uninstall
+
+ต้องรัน uninstall script ก่อนถอด plugin เพื่อล้าง config ให้หมด ไม่งั้นไฟล์ config จะค้างอยู่:
+
+```bash
+node scripts/uninstall.js
+```
+
+> [!info] Benchmark ที่ผู้พัฒนาอ้างไว้ใน README
+> ทดสอบบน FastAPI + React repo จริง: โค้ดน้อยลง ~54% (สูงสุดถึง 94% ในบาง task เดี่ยว), cost ลดลง ~20%, เร็วขึ้น ~27%, ความปลอดภัยคงเดิมที่ 100% — เป็นตัวเลขจากฝั่งผู้พัฒนา ยังไม่ได้ verify ซ้ำเองในงานจริง
