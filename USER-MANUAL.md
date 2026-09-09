@@ -32,6 +32,7 @@ graph LR
     B -->|MCP| E[open-design - ดึงไฟล์]
     B -->|plugin| F[superpowers - skills]
     B -->|plugin| G[graft-deep - auto rebuild/context]
+    B -->|plugin| L[ponytail - code minimization]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
     E -.->|pull ไฟล์ที่ generate ไว้| I[โปรเจกต์จริงหน้าบ้าน+หลังบ้าน]
 ```
@@ -83,6 +84,9 @@ graph LR
 
 > [!note] ไม่ใช่ทุก turn จะครบทุกขั้น
 > ถ้าคำสั่งสั้น/ไม่เกี่ยวกับโค้ด (เช่น "อธิบาย X ให้ฟัง") บาง node อาจถูกข้ามไป — แผนภาพนี้แสดง**เส้นทางที่เป็นไปได้ทั้งหมด** ไม่ใช่ทุก turn จะวิ่งผ่านทุกกล่อง
+
+> [!note] Plugin ponytail
+> plugin ponytail (ดู [[plugins]]) ฉีด ruleset เข้าไปที่ขั้น "แก้ไข/เขียนโค้ด" (โหนด I) ทุกครั้ง — บังคับให้ agent ไล่ decision ladder (ไม่จำเป็นก็ไม่เขียน → reuse ของเดิม → standard library → native feature → dependency ที่มีอยู่ → one-liner → ค่อยเขียนใหม่ขั้นต่ำ) ก่อนจะลงมือเขียนโค้ดใหม่จริง ทำงานคู่กับ superpowers/graft-deep โดยไม่ทับซ้อนกัน (superpowers เลือก workflow, graft-deep หา context, ponytail คุมปริมาณโค้ดที่เขียนออกมา)
 
 ---
 

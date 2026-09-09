@@ -237,6 +237,21 @@ opencode debug skill
 >
 > รายละเอียดวิธีแก้ทั้งสองแบบเต็มๆ อยู่ที่ [[plugins]]
 
+### Plugin จาก npm package (ตัวอย่าง: ponytail)
+
+ไม่ใช่ทุก plugin ต้องมาจาก git URL — บางตัวเป็น npm package ธรรมดา ติดตั้งง่ายกว่าเพราะไม่มีปัญหาเรื่อง GitHub บล็อก/SSL cert แบบ superpowers:
+
+```jsonc
+{
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "@dietrichgebert/ponytail"
+  ]
+}
+```
+
+รีสตาร์ท OpenCode แล้วลองรัน `/ponytail-help` เพื่อเช็คว่า activate สำเร็จ — รายละเอียด command/config ทั้งหมดดูที่ [[plugins]]
+
 ### Plugin ที่เขียนเอง (custom .js)
 
 วางไฟล์ `.js` ที่ไหนก็ได้ (แนะนำ `~/.config/opencode/plugin/<name>.js` สำหรับใช้ทุกโปรเจกต์) แล้วเพิ่ม path ใน `plugin` array:

@@ -96,6 +96,23 @@ opencode debug skill
 
 ---
 
+## ponytail plugin (ติดตั้งผ่าน npm)
+
+ติดตั้งแบบ `@dietrichgebert/ponytail` (npm package ธรรมดา ไม่ใช่ git URL) — opencode/Bun จะ resolve เวอร์ชันล่าสุดที่ตรงกับ range ให้เองตาม lockfile ปกติ ไม่มีปัญหา git cache ค้างแบบ superpowers
+
+**อัปเดตเวอร์ชัน:** รีสตาร์ท OpenCode เฉยๆ มักไม่พอถ้า lockfile pin เวอร์ชันไว้ — ลบ cache ที่ resolve ไว้แล้วบังคับดึงใหม่:
+
+```bash
+rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
+```
+
+แล้วรีสตาร์ท OpenCode ตรวจสอบด้วย `/ponytail-help`
+
+> [!tip] ถอน plugin ให้ล้าง config ด้วย
+> ก่อนเอา `@dietrichgebert/ponytail` ออกจาก `plugin` array ควรรัน `node scripts/uninstall.js` (จากซอร์สของ ponytail) ก่อนเสมอ ไม่งั้นไฟล์ config ที่ `~/.config/ponytail/config.json` จะค้างอยู่
+
+---
+
 ## graft-deep.js (custom plugin ที่เขียนเอง)
 
 ไม่มีต้นทางให้ "อัปเดต" เพราะเขียนเอง — ถ้าอยากปรับปรุง แก้ไฟล์ `~/.config/opencode/plugin/graft-deep.js` ตรงๆ ได้เลย (ดูโค้ดเต็มที่ [[plugins]]) ไม่ต้องรีสตาร์ทอะไรเพิ่มนอกจากเปิด session ใหม่ของ opencode
@@ -191,6 +208,7 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | context7 (remote) | ❌ อัตโนมัติ (ฝั่งเซิร์ฟเวอร์) | — |
 | graft | ✅ ต้องสั่งเอง | `graft upgrade` |
 | superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
+| ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
 | graft-deep.js | ➖ ไม่มีอัปเดต (เขียนเอง) | แก้ไฟล์ตรงๆ |
 | OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
 | sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |
