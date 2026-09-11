@@ -27,6 +27,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 
 ## 📖 Wiki Pages
 
+- [[sdlc]] — ภาพรวม Software Development Life Cycle ทั้ง 7 กระบวนการ พร้อมชี้ว่าคู่มือนี้ครอบคลุม phase ไหนบ้าง (และช่องว่างที่ยังไม่มี)
 - [[setup]] — คู่มือติดตั้งแบบละเอียด ตั้งแต่**เครื่องเปล่า**ที่ยังไม่มี Node.js/Git จนถึงต่อ provider/MCP/plugin ครบ
 - [[mcp-servers]] — รายละเอียด MCP server แต่ละตัว ขั้นตอนติดตั้ง config และวิธีทดสอบ
 - [[plugins]] — superpowers, custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น)
