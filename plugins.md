@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-09
-summary: superpowers (skill library), graft-deep (custom plugin ที่เขียนเอง) และ ponytail (code minimization ruleset) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
+updated: 2026-09-11
+summary: superpowers (skill library), graft-deep (custom plugin ที่เขียนเอง), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
 ---
 
 # Plugins
@@ -283,3 +283,52 @@ node scripts/uninstall.js
 
 > [!info] Benchmark ที่ผู้พัฒนาอ้างไว้ใน README
 > ทดสอบบน FastAPI + React repo จริง: โค้ดน้อยลง ~54% (สูงสุดถึง 94% ในบาง task เดี่ยว), cost ลดลง ~20%, เร็วขึ้น ~27%, ความปลอดภัยคงเดิมที่ 100% — เป็นตัวเลขจากฝั่งผู้พัฒนา ยังไม่ได้ verify ซ้ำเองในงานจริง
+
+---
+
+## i-have-adhd — บังคับตอบตรงประเด็น ไม่อ้อมค้อม
+
+[ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (39k+ stars, MIT) เป็น skill ที่เปลี่ยน **สไตล์การตอบของ agent** ไม่ใช่ code ruleset แบบ ponytail — บังคับ 10 กฎ: บอก next action ก่อนเสมอ, เลข step ให้ชัด, จบด้วย concrete next step เดียว, ตัด tangent/preamble/closer ("Hope this helps!"), list ไม่เกิน 5 ข้อ, บอกเวลาเป็นตัวเลขจริง, error พูดตรงๆ ไม่มีน้ำ รองรับ Claude Code, Cursor, Gemini, Kimi, Qwen และ OpenCode ในตัวเดียวกัน
+
+### ติดตั้งบน OpenCode
+
+ไม่มีบน npm — ใช้วิธี clone ซอร์สมาไว้ในเครื่องแล้วชี้ `plugin` ไปที่ path ของไฟล์ `.opencode/plugins/i-have-adhd.mjs` ตรงๆ:
+
+```bash
+git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have-adhd
+```
+
+```jsonc
+{ "plugin": ["C:/Users/<user>/.config/opencode/vendor/i-have-adhd/.opencode/plugins/i-have-adhd.mjs"] }
+```
+
+รีสตาร์ท OpenCode แล้วพิมพ์ `/i-have-adhd` ในเซสชันเพื่อเปิดใช้ (toggle ต่อ session เท่านั้น — พิมพ์ `stop adhd mode` หรือ `normal mode` เพื่อปิด)
+
+> [!note] plugin นี้ทำอะไรจริงๆ
+> `config` hook ลงทะเบียน skill directory ของ repo (`skills/i-have-adhd/SKILL.md`) และ command `/i-have-adhd` เข้ากับ OpenCode เฉยๆ — อ่านไฟล์ในตัว repo ล้วนๆ ไม่มี network call/exec/eval ตรวจโค้ดแล้วปลอดภัย
+
+### Always-on (เปิดทุก session อัตโนมัติ)
+
+ปกติ toggle ต้องพิมพ์ `/i-have-adhd` ทุกครั้งที่เริ่ม session ใหม่ ถ้าอยากให้ ruleset ต่อท้าย system prompt ทุก turn โดยไม่ต้องพิมพ์เอง ให้สร้างไฟล์ flag เปล่าๆ ไว้:
+
+```bash
+touch ~/.config/opencode/.i-have-adhd-always
+```
+
+ปิดถาวรด้วยการลบไฟล์ flag:
+
+```bash
+rm ~/.config/opencode/.i-have-adhd-always
+```
+
+> [!warning] Always-on เปลี่ยน behavior ทุกเซสชันทันที
+> ต่างจาก toggle ที่จำกัดแค่ session เดียว — ก่อนเปิด always-on ให้แน่ใจว่าต้องการให้ agent ตอบสั้น/ตรงประเด็นแบบนี้ **ทุกงาน** ไม่ใช่แค่ตอนเร่งรีบ
+
+### อัปเดต / ถอด
+
+```bash
+# อัปเดตให้ตรง repo ล่าสุด
+git -C ~/.config/opencode/vendor/i-have-adhd pull
+
+# ถอด — ลบ path ออกจาก plugin array ใน opencode.jsonc ก็พอ (ไม่ต้องรัน uninstall script แบบ ponytail)
+```

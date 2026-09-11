@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-09
+updated: 2026-09-11
 summary: Home page คู่มือการติดตั้งและใช้งาน OpenCode CLI พร้อม MCP servers และ Plugins สำหรับ vibe coding
 ---
 
@@ -8,7 +8,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 
 **OpenCode** คือ AI coding agent แบบ CLI (แนวเดียวกับ Claude Code) ที่รองรับการต่อ model provider เองได้อิสระ — รวมถึง self-hosted model บนเซิร์ฟเวอร์ของตัวเอง — และมีระบบ **MCP (Model Context Protocol)** กับ **Plugin** แบบเปิดให้ขยายได้เต็มรูปแบบ
 
-เอกสารชุดนี้บันทึกการตั้งค่าจริงที่ใช้งานอยู่ — ตั้งแต่ติดตั้ง CLI บนเครื่องเปล่า จนถึงต่อโมเดลบ้าน (self-hosted llama.cpp) + MCP servers 11 ตัว (8 เปิดใช้งาน, 3 รอเปิดต่อโปรเจกต์/รอ token) + Plugin 3 ตัว พร้อมบันทึกปัญหาที่เจอจริงระหว่างทางและวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
+เอกสารชุดนี้บันทึกการตั้งค่าจริงที่ใช้งานอยู่ — ตั้งแต่ติดตั้ง CLI บนเครื่องเปล่า จนถึงต่อโมเดลบ้าน (self-hosted llama.cpp) + MCP servers 11 ตัว (8 เปิดใช้งาน, 3 รอเปิดต่อโปรเจกต์/รอ token) + Plugin 4 ตัว พร้อมบันทึกปัญหาที่เจอจริงระหว่างทางและวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
 
 ---
 
@@ -20,7 +20,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **Model provider หลัก** | `home-llamacpp` — self-hosted llama.cpp server (URL เฉพาะของแต่ละคน), โมเดล `qwen3.8-27b` (Q4_K, context 131k) ผ่าน OpenAI-compatible endpoint |
 | **Model สำรอง (เร็ว)** | `opencode/deepseek-v4-flash-free` — built-in ของ OpenCode เอง ไม่ต้องตั้ง API key เพิ่ม ตอบเร็ว (~10 วินาที) |
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), memory (จำ context ข้าม session), sonarqube (code quality/security — self-hosted ผ่าน Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — ปิดไว้จนกว่าจะมี PAT), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
-| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-rebuild graph + auto-inject context), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail) |
+| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-rebuild graph + auto-inject context), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
 | **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (เขียนอัตโนมัติโดย `od mcp install`) |
 
 ---
@@ -29,7 +29,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 
 - [[setup]] — คู่มือติดตั้งแบบละเอียด ตั้งแต่**เครื่องเปล่า**ที่ยังไม่มี Node.js/Git จนถึงต่อ provider/MCP/plugin ครบ
 - [[mcp-servers]] — รายละเอียด MCP server แต่ละตัว ขั้นตอนติดตั้ง config และวิธีทดสอบ
-- [[plugins]] — superpowers, custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API) และ ponytail (code minimization ruleset)
+- [[plugins]] — superpowers, custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น)
 - [[USER-MANUAL]] — วิธีใช้งานจริงวันต่อวัน: vibe coding, graft workflow, OpenDesign workflow
 - [[gotchas]] — ปัญหาที่เจอจริง 8 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, reasoning model output cap, ฯลฯ)
 - [[updating]] — วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว
