@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-08-22
+updated: 2026-09-11
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว
 ---
 
@@ -113,6 +113,21 @@ rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
 
 ---
 
+## i-have-adhd (ติดตั้งผ่าน local git clone)
+
+ต่างจาก superpowers/ponytail ตรงที่ไม่ได้ผ่าน `plugin` array แบบ git URL หรือ npm package เลย — `plugin` array ชี้ไปที่ path ไฟล์ `.mjs` ในซอร์สที่ clone ไว้ตรงๆ (ดู [[setup]] Part 4) ดังนั้นการอัปเดตคือแค่ `git pull` ซอร์สนั้น ไม่มีเรื่อง cache ของ opencode/Bun มาเกี่ยวข้องเลย:
+
+```bash
+git -C ~/.config/opencode/vendor/i-have-adhd pull
+```
+
+แล้วรีสตาร์ท OpenCode (plugin โหลดตอนเริ่ม session เท่านั้น) — ไม่ต้องตรวจสอบอะไรเพิ่มนอกจากลองพิมพ์ `/i-have-adhd` ดูว่ายัง activate ได้ปกติ
+
+> [!tip] ถอน plugin ไม่ต้องรัน script อะไร
+> ต่างจาก ponytail ที่ต้องรัน uninstall script ก่อนถอด — i-have-adhd ไม่มี config ที่ต้องล้าง เอา path ออกจาก `plugin` array แล้วลบโฟลเดอร์ `~/.config/opencode/vendor/i-have-adhd` ทิ้งได้เลย (ถ้าเคยเปิด always-on ไว้ อย่าลืมลบไฟล์ flag `~/.config/opencode/.i-have-adhd-always` ด้วย — ดู [[plugins]])
+
+---
+
 ## graft-deep.js (custom plugin ที่เขียนเอง)
 
 ไม่มีต้นทางให้ "อัปเดต" เพราะเขียนเอง — ถ้าอยากปรับปรุง แก้ไฟล์ `~/.config/opencode/plugin/graft-deep.js` ตรงๆ ได้เลย (ดูโค้ดเต็มที่ [[plugins]]) ไม่ต้องรีสตาร์ทอะไรเพิ่มนอกจากเปิด session ใหม่ของ opencode
@@ -209,6 +224,7 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | graft | ✅ ต้องสั่งเอง | `graft upgrade` |
 | superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
 | ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
+| i-have-adhd | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
 | graft-deep.js | ➖ ไม่มีอัปเดต (เขียนเอง) | แก้ไฟล์ตรงๆ |
 | OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
 | sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |

@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-08-22
+updated: 2026-09-11
 summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft และ OpenDesign
 ---
 
@@ -33,6 +33,7 @@ graph LR
     B -->|plugin| F[superpowers - skills]
     B -->|plugin| G[graft-deep - auto rebuild/context]
     B -->|plugin| L[ponytail - code minimization]
+    B -->|plugin, opt-in| M["i-have-adhd - terse output<br/>(/i-have-adhd ต่อ session)"]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
     E -.->|pull ไฟล์ที่ generate ไว้| I[โปรเจกต์จริงหน้าบ้าน+หลังบ้าน]
 ```
@@ -88,6 +89,9 @@ graph LR
 
 > [!note] Plugin ponytail
 > plugin ponytail (ดู [[plugins]]) เป็นด่านสุดท้ายก่อนลงมือเขียนโค้ดจริง (โหนด L) — บังคับให้ agent ไล่ decision ladder (ไม่จำเป็นก็ไม่เขียน → reuse ของเดิม → standard library → native feature → dependency ที่มีอยู่ → one-liner → ค่อยเขียนใหม่ขั้นต่ำ) ทำงานคู่กับ superpowers/graft-deep โดยไม่ทับซ้อนกัน (superpowers เลือก workflow, graft-deep หา context, ponytail คุมปริมาณโค้ดที่เขียนออกมา)
+
+> [!note] Plugin i-have-adhd — ไม่อยู่ในวงจรต่อ turn ด้านบน (จงใจ)
+> ต่างจาก superpowers/graft-deep/ponytail ที่ทำงานอัตโนมัติทุก turn — i-have-adhd (ดู [[plugins]]) เป็น **opt-in ต่อ session**: ต้องพิมพ์ `/i-have-adhd` เองก่อนถึงจะเริ่มมีผล (เปลี่ยนแค่สไตล์การตอบให้ตรงประเด็น/ไม่อ้อมค้อม ไม่แตะ tool orchestration) เหมาะตอนต้องการคำตอบไว ไม่ต้องการคำอธิบายยาว — ปิดด้วย `stop adhd mode` เมื่อไหร่ก็ได้
 
 ---
 

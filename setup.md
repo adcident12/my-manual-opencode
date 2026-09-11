@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-08-20
+updated: 2026-09-11
 summary: คู่มือติดตั้ง OpenCode แบบละเอียดตั้งแต่เครื่องเปล่า — Node.js, Git, CLI, provider, MCP servers และ plugins ครบทุกขั้นตอน
 ---
 
@@ -251,6 +251,26 @@ opencode debug skill
 ```
 
 รีสตาร์ท OpenCode แล้วลองรัน `/ponytail-help` เพื่อเช็คว่า activate สำเร็จ — รายละเอียด command/config ทั้งหมดดูที่ [[plugins]]
+
+### Plugin จาก local git clone (ตัวอย่าง: i-have-adhd)
+
+บาง plugin ไม่มีให้บน npm และไม่รองรับ `git+https://` ตรงๆ ผ่าน `plugin` array — ต้อง clone ซอร์สมาไว้ในเครื่องเองก่อน แล้วชี้ path ไปที่ไฟล์ `.mjs`/`.js` ของ plugin ข้างในนั้น:
+
+```bash
+git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have-adhd
+```
+
+```jsonc
+{
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "@dietrichgebert/ponytail",
+    "C:/Users/<user>/.config/opencode/vendor/i-have-adhd/.opencode/plugins/i-have-adhd.mjs"
+  ]
+}
+```
+
+รีสตาร์ท OpenCode แล้วพิมพ์ `/i-have-adhd` ในเซสชันเพื่อเปิดใช้ — รายละเอียด toggle/always-on ทั้งหมดดูที่ [[plugins]]
 
 ### Plugin ที่เขียนเอง (custom .js)
 
