@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, sdlc, opencode, reference, overview]
 updated: 2026-09-11
-summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 7 กระบวนการ อธิบายสำหรับผู้อ่านทั่วไป พร้อมลิงก์ไปยังส่วนที่คู่มือ OpenCode นี้ implement จริงในแต่ละ phase — และระบุชัดว่าส่วนไหนยังไม่ครอบคลุม
+summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 7 กระบวนการ อธิบายสำหรับผู้อ่านทั่วไป พร้อมลิงก์ไปยังส่วนที่คู่มือ OpenCode นี้ implement จริงในแต่ละ phase, ระบุชัดว่าส่วนไหนยังไม่ครอบคลุม และแนะนำเครื่องมือ/MCP ที่ควรเพิ่มเพื่อปิดช่องว่างแต่ละ phase (ยังไม่ได้ติดตั้งจริง)
 ---
 
 # Software Development Life Cycle (SDLC)
@@ -102,3 +102,119 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 | 7. Maintenance (production) | ❌ ไม่มี (มีแต่ tooling) | [[updating]] (tooling เท่านั้น) |
 
 **สรุปสั้น:** คู่มือนี้ครอบคลุมกลางวงจร (Design ฝั่ง UI, Development, Testing บางชั้น) ได้แน่นมาก แต่หัว-ท้ายของวงจร (Planning, Requirements, CI/CD Deployment, Production Monitoring) ยังเป็นช่องว่างที่ต้องพึ่งเครื่องมือ/กระบวนการนอกคู่มือนี้ทั้งหมด
+
+---
+
+## 🧰 เครื่องมือแนะนำเพิ่มเติม (ยังไม่ได้ติดตั้ง)
+
+> [!warning] หัวข้อนี้เป็นข้อเสนอแนะ ไม่ใช่สิ่งที่ตั้งค่าไว้แล้ว
+> ทุก config/MCP ในหัวข้อนี้**ยังไม่ได้เพิ่มเข้า `opencode.jsonc` จริง** — เขียนไว้เป็นตัวเลือกให้พิจารณา/คัดลอกไปใช้เมื่อพร้อม ต่างจากเนื้อหาในหัวข้อ 1-7 ด้านบนที่เป็นของที่ verify แล้วว่าใช้งานได้จริงบนเครื่องนี้
+
+เกณฑ์เลือกเครื่องมือในหัวข้อนี้: (1) **มี MCP ให้ agent เรียกใช้ตรงๆ ได้** ถ้ามี เพื่อให้ agent ช่วยงานในเฟสนั้นได้เต็มที่ ไม่ใช่แค่มนุษย์ใช้เอง (2) เข้ากับ pattern ที่คู่มือนี้ใช้อยู่แล้ว (self-hosted ผ่าน Docker เหมือน sonarqube, MCP แบบ remote/local เหมือนที่มีอยู่)
+
+### Planning
+
+ไม่มี MCP ที่จำเป็นตรงนี้ — เป็น phase ที่ควรอยู่ในมือ human เป็นหลัก แนะนำ **GitHub Projects** (ฟรี ผูกกับ repo ที่มีอยู่แล้ว ไม่ต้องเพิ่ม service ใหม่) เป็นตัวเลือกแรกก่อนไปหาเครื่องมือหนักกว่าอย่าง Linear/Jira
+
+### Requirements Analysis
+
+**ตัวเลือกที่ 1 (แนะนำ, ทำได้เลย):** เปิด `github` MCP ที่มีอยู่ใน `opencode.jsonc` แล้ว (ตอนนี้ `enabled: false`) — แค่สร้าง PAT แล้วเปิด flag รายละเอียดที่ [[mcp-servers#github — จัดการ issues/PR/code search ผ่าน structured tool (ปิดไว้ก่อน จนกว่าจะมี token)|mcp-servers]]
+
+**ตัวเลือกที่ 2 (ถ้าอยากใช้ Linear แทน GitHub Issues):** Linear มี MCP server ทางการ เป็น remote MCP เหมือน context7 — เพิ่มแบบนี้ใน `opencode.jsonc`:
+
+```jsonc
+{
+  "mcp": {
+    "linear": { "type": "remote", "url": "https://mcp.linear.app/mcp" }
+  }
+}
+```
+
+รองรับทั้ง read-only mode (`https://mcp.linear.app/mcp/readonly` — ปลอดภัยกว่าถ้าอยากให้ agent อ่านได้อย่างเดียว) และ OAuth/API key authentication
+
+### Design (System/Architecture)
+
+ไม่มี tool/MCP เฉพาะที่จำเป็น — ใช้ convention ที่เบาที่สุดคือ **ADR (Architecture Decision Record)**: เก็บเป็นไฟล์ markdown ธรรมดาที่ `docs/adr/NNNN-หัวข้อ.md` ต่อโปรเจกต์ ทุกครั้งที่ตัดสินใจสถาปัตยกรรมสำคัญ (เลือก database, เปลี่ยน pattern หลัก ฯลฯ) ให้ agent เขียนสรุปไว้ —ครั้งต่อไป agent จะอ่านของเก่าใน `docs/adr/` ก่อนเสนอของใหม่ได้เอง (คล้ายกับที่ [[plugins#graft-deep — custom plugin (auto-rebuild + auto-inject context)|graft-deep]] ทำกับโค้ด แต่เป็นระดับ decision ไม่ใช่ระดับ code)
+
+> [!tip] Diagram ใช้ mermaid ต่อได้เลย ไม่ต้องหา tool ใหม่
+> คู่มือนี้ใช้ mermaid inline ใน markdown อยู่แล้ว (ดู [[USER-MANUAL]]) — เขียน architecture diagram แบบเดียวกันได้เลยโดยไม่ต้องพึ่งเว็บ diagram แยก
+
+สำหรับ API contract แนะนำเก็บเป็น `openapi.yaml` ไว้ใน repo ให้ agent อ่าน/แก้ตรงๆ ได้เหมือนไฟล์โค้ดทั่วไป ไม่ต้องมี tool พิเศษ
+
+### Testing
+
+เติมชั้น unit/integration test ที่ยังขาด — **ไม่ต้องมี MCP เพิ่ม** เพราะ opencode เรียก test runner ผ่าน Bash tool ได้อยู่แล้ว สิ่งที่ต้องเพิ่มคือแค่ตัว test framework ในโปรเจกต์เอง (เช่น `pytest`/`pytest-cov` ฝั่ง Python, `vitest`/`jest` ฝั่ง JS/TS) แล้วให้ `test-driven-development` skill ของ [[plugins#superpowers — skill library|superpowers]] ที่มีอยู่แล้วช่วยคุม workflow
+
+> [!warning] Unit test ที่ agent รันเองไม่พอ ต้องผูกกับ CI ด้วย
+> ถ้า agent รัน test ให้ดูตอนพัฒนาอย่างเดียว แต่ไม่มีใครรันซ้ำตอน merge — regression ที่ agent มองข้ามจะหลุดเข้า main ได้ ดูหัวข้อ CI/CD ถัดไป
+
+### CI/CD & Deployment
+
+**CI (แนะนำ GitHub Actions)** เพราะ repo อยู่บน GitHub อยู่แล้ว ไม่ต้องเพิ่ม service ใหม่ — workflow พื้นฐานที่ควรมี:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on: [pull_request, push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci   # หรือ pip install -r requirements.txt แล้วแต่ stack
+      - run: npm test  # unit/integration test จากหัวข้อก่อนหน้า
+      - run: npx trivy fs .   # เพิ่ม security scan เข้า pipeline (มี trivy CLI อยู่แล้ว)
+```
+
+> [!tip] trivy มีอยู่แล้วบนเครื่อง แค่ยังไม่ได้ผูกเข้า CI
+> [[mcp-servers#trivy — vulnerability/secret/misconfig scan (standalone CLI, ไม่ต้องมี server)|trivy]] ที่ติดตั้งไว้แล้วสำหรับให้ agent เรียกตอน dev — เพิ่ม step เดียวกันเข้า GitHub Actions ก็ได้ security gate อัตโนมัติทุก PR โดยไม่ต้องติดตั้งอะไรใหม่เลย
+
+**Deployment target** เลือกตามสไตล์ที่ถนัด (คู่มือนี้เอนไปทาง self-hosted อยู่แล้ว จาก home-llamacpp/sonarqube):
+
+| ทางเลือก | เหมาะกับ | Trade-off |
+| --- | --- | --- |
+| Self-host ผ่าน Docker Compose + reverse proxy (Caddy/nginx) | ต่อยอด pattern เดิมที่ self-host sonarqube/llama.cpp อยู่แล้ว | ดูแล server เอง (patch, uptime) |
+| Vercel / Netlify / Cloudflare Pages | เว็บ frontend ล้วน deploy เร็วสุด | ผูกกับ platform, ต้นทุนเพิ่มถ้า traffic สูง |
+| Railway / Render / Fly.io | full-stack app แบบ container ไม่อยากดูแล infra เอง | ยังต้องจ่ายรายเดือน แต่ไม่ต้องดูแล server |
+
+### Maintenance (Production Monitoring)
+
+**Error tracking:** [Sentry](https://github.com/getsentry/sentry-mcp) มี MCP server ทางการ (`@sentry/mcp-server`) — agent เรียก query error/stack trace จาก production ได้ตรงๆ ปิด loop กลับไป requirement/bug fix ได้จริง มีทั้งแบบ remote hosted และ local:
+
+```jsonc
+{
+  "mcp": {
+    "sentry": {
+      "type": "remote",
+      "url": "https://mcp.sentry.dev/mcp",
+      "headers": { "Authorization": "Sentry-Bearer {env:SENTRY_ACCESS_TOKEN}" }
+    }
+  }
+}
+```
+
+รองรับ self-hosted Sentry ด้วย (ตั้ง `SENTRY_HOST` แทนถ้าไม่ใช้ Sentry cloud) เข้ากับ pattern self-host ของคู่มือนี้
+
+**Metrics/dashboard:** [Grafana](https://github.com/grafana/mcp-grafana) มี MCP server เช่นกัน (`mcp-grafana`) ให้ agent query dashboard/datasource/alert ได้ — รันเป็น Docker container ได้เหมือน sonarqube:
+
+```jsonc
+{
+  "mcp": {
+    "grafana": {
+      "type": "local",
+      "command": ["docker", "run", "--rm", "-i", "-e", "GRAFANA_URL", "-e", "GRAFANA_SERVICE_ACCOUNT_TOKEN", "grafana/mcp-grafana", "-t", "stdio"],
+      "environment": {
+        "GRAFANA_URL": "http://host.docker.internal:3000",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "{env:GRAFANA_SERVICE_ACCOUNT_TOKEN}"
+      },
+      "timeout": 30000,
+      "enabled": false
+    }
+  }
+}
+```
+
+**Dependency updates:** เปิด GitHub Dependabot (native, ไม่ต้องติดตั้งอะไร แค่เพิ่มไฟล์ `.github/dependabot.yml`) — ทำงานคู่กับ trivy ที่มีอยู่แล้ว (trivy สแกน vulnerability ที่มีอยู่ ณ ปัจจุบัน, Dependabot เตือนก่อนเมื่อมี patch ใหม่ออก)
+
+> [!info] ทำไมไม่แนะนำ Uptime Kuma
+> พิจารณาแล้วแต่ไม่ใส่ไว้ในนี้เพราะไม่มี MCP ให้ agent เรียกใช้ — เป็นแค่ dashboard ให้ human ดูเฉยๆ ถ้าต้องการ uptime monitoring ง่ายๆ ยังติดตั้งได้ (self-host ผ่าน Docker เหมือนกัน) แต่จะไม่ได้ประโยชน์จากการทำงานคู่กับ agent เหมือนตัวอื่นในหัวข้อนี้
