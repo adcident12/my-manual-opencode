@@ -31,7 +31,7 @@ graph LR
     B -->|MCP| D[graft - code graph]
     B -->|MCP| E[open-design - ดึงไฟล์]
     B -->|plugin| F[superpowers - skills]
-    B -->|plugin| G[graft-deep - auto rebuild/context]
+    B -->|plugin| G[graft-deep - inject context]
     B -->|plugin| L[ponytail - code minimization]
     B -->|plugin, opt-in| M["i-have-adhd - terse output<br/>(/i-have-adhd ต่อ session)"]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
@@ -80,9 +80,11 @@ graph LR
     H --> L
     K --> L
     L --> I["แก้ไข/เขียนโค้ด"]
-    I --> J["graft-deep<br/>auto-rebuild กราฟ (background)"]
-    J -->|คำสั่งถัดไป| A
+    I -->|คำสั่งถัดไป| A
 ```
+
+> [!note] ไม่มีขั้น "auto-rebuild กราฟ" แยกแล้ว
+> เดิม graft-deep มี hook คอย rebuild กราฟเองหลังแก้โค้ด — ตัดออกแล้วเพราะ graft CLI เวอร์ชันปัจจุบัน refresh กราฟให้เองก่อนตอบทุกคำถามอยู่แล้ว (verified ดู [[plugins]] หัวข้อ graft-deep) ไม่มีอะไรให้รอ ไม่มี node แยกในแผนภาพนี้อีกต่อไป — ความสดของกราฟเป็นเรื่องของ graft เอง ไม่ใช่ของ opencode
 
 > [!note] ไม่ใช่ทุก turn จะครบทุกขั้น
 > ถ้าคำสั่งสั้น/ไม่เกี่ยวกับโค้ด (เช่น "อธิบาย X ให้ฟัง") บาง node อาจถูกข้ามไป — แผนภาพนี้แสดง**เส้นทางที่เป็นไปได้ทั้งหมด** ไม่ใช่ทุก turn จะวิ่งผ่านทุกกล่อง
@@ -188,7 +190,7 @@ graft ask "auth ทำงานตรงไหน"                # หา entry
 ```
 
 > [!note] Plugin graft-deep
-> plugin graft-deep (ดู [[plugins]]) auto-rebuild กราฟให้เองหลังแก้ไฟล์ (debounce 3 วิ, background) และ auto-inject context ที่เกี่ยวข้องต่อ prompt ใหม่ทุกครั้ง — ทำงานเบื้องหลังโดยไม่ต้องทำอะไรเพิ่ม แต่ไม่รับประกัน 100% ว่าโมเดลจะเลือกใช้ context ที่ inject มาเสมอ (ขึ้นกับความสามารถของโมเดลแต่ละตัว)
+> plugin graft-deep (ดู [[plugins]]) auto-inject context ที่เกี่ยวข้องต่อ prompt ใหม่ทุกครั้ง — ทำงานเบื้องหลังโดยไม่ต้องทำอะไรเพิ่ม แต่ไม่รับประกัน 100% ว่าโมเดลจะเลือกใช้ context ที่ inject มาเสมอ (ขึ้นกับความสามารถของโมเดลแต่ละตัว) ส่วนความสดของกราฟเองไม่ต้องพึ่ง plugin นี้แล้ว — graft CLI ปัจจุบัน refresh ตัวเองก่อนตอบทุกคำถามอยู่แล้ว
 
 ---
 

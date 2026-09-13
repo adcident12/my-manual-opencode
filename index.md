@@ -20,7 +20,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **Model provider หลัก** | `home-llamacpp` — self-hosted llama.cpp server (URL เฉพาะของแต่ละคน), โมเดล `qwen3.8-27b` (Q4_K, context 131k) ผ่าน OpenAI-compatible endpoint |
 | **Model สำรอง (เร็ว)** | `opencode/deepseek-v4-flash-free` — built-in ของ OpenCode เอง ไม่ต้องตั้ง API key เพิ่ม ตอบเร็ว (~10 วินาที) |
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), memory (จำ context ข้าม session), sonarqube (code quality/security — self-hosted ผ่าน Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — ปิดไว้จนกว่าจะมี PAT), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
-| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-rebuild graph + auto-inject context), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
+| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-inject context; auto-rebuild graph เป็นของ graft CLI เองแล้ว), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, ไม่ใช่ plugin) | grill-me / grilling (จาก mattpocock/skills) — batch-interview สัมภาษณ์ผู้ใช้เป็นรอบก่อนเริ่มงาน ผูกเข้ากับ `brainstorming` ของ superpowers ไม่ให้ชนกัน |
 | **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (เขียนอัตโนมัติโดย `od mcp install`) |
 

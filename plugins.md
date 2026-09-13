@@ -205,26 +205,28 @@ if one is available and the lookup is heavy enough to warrant it.
 
 ---
 
-## graft-deep — custom plugin (auto-rebuild + auto-inject context)
+## graft-deep — custom plugin (auto-inject context)
 
-graft (ดู [[mcp-servers]]) ไม่มี "deep integration" ให้ OpenCode — คือ auto-rebuild กราฟหลังแก้ไฟล์ และ auto-inject context ที่เกี่ยวข้องต่อ prompt — ฟีเจอร์นี้มีให้แค่ Claude Code เท่านั้น (อยู่ใน `dist/claude/hooks.js` ของ package) plugin นี้ port พฤติกรรมนั้นมาโดยใช้ public CLI ของ graft (`graft build`, `graft ask --json`) แทนการ import internal module — ปลอดภัยกว่าและไม่พังตอน graft อัปเดตเวอร์ชัน
+graft (ดู [[mcp-servers]]) ไม่มี "deep integration" ให้ OpenCode — คือ auto-inject context ที่เกี่ยวข้องต่อ prompt — ฟีเจอร์นี้มีให้แค่ Claude Code เท่านั้น (ส่วน auto-rebuild หลังแก้ไฟล์ ตอนนี้ graft CLI เองทำให้ทุก agent อยู่แล้ว ดูกล่องด้านล่าง) plugin นี้ port พฤติกรรม auto-inject มาโดยใช้ public CLI ของ graft (`graft ask --json`) แทนการ import internal module — ปลอดภัยกว่าและไม่พังตอน graft อัปเดตเวอร์ชัน
+
+> [!info] เคยมี hook auto-rebuild ด้วย — ตัดออกแล้ว (2026-09-13)
+> เวอร์ชันแรกของ plugin นี้มี `tool.execute.after` hook คอย debounce 3 วิแล้วสั่ง `graft build` เองในพื้นหลังทุกครั้งที่แก้ไฟล์ ยืนยันด้วยการทดสอบสดแล้วว่า**ไม่จำเป็นอีกต่อไป**: แก้ไฟล์แล้วเรียก `graft ask` ทันทีโดยไม่รัน `graft build` เองเลย ได้ผลลัพธ์ `[graft] refreshed the graph (1 file changed) before answering` — แปลว่า graft CLI ปัจจุบัน auto-refresh กราฟก่อนตอบทุกคำถามในตัวอยู่แล้ว (ดู [[mcp-servers]]) hook ที่ตัดออกไม่ได้แค่ซ้ำซ้อนเฉยๆ แต่เป็นต้นเหตุของ race condition ที่เคยบันทึกไว้ที่ [[gotchas]] ข้อ 6 ด้วย — ตัดสาเหตุทิ้งแทนที่จะแก้ปลายเหตุ
 
 ### ติดตั้ง
 
 1. วางไฟล์ที่ `~/.config/opencode/plugin/graft-deep.js` (สร้างโฟลเดอร์ `plugin` เองถ้ายังไม่มี)
 2. เพิ่ม path นั้นใน `plugin` array ของ global config
-3. ไม่ต้องตั้งอะไรเพิ่มต่อโปรเจกต์ — ยกเว้น `graft build` ที่ยังต้องรันครั้งแรกต่อ repo เหมือนเดิม (ดู [[mcp-servers]])
+3. ไม่ต้องตั้งอะไรเพิ่มต่อโปรเจกต์ — ยกเว้น `graft build` ที่ยังต้องรันครั้งแรกต่อ repo เหมือนเดิม (ดู [[mcp-servers]]) หลังจากนั้น graft จะดูแลความสดของกราฟเองทุกครั้งที่ถูกถาม ไม่ต้องมีอะไรคอย rebuild ให้อีก
 
 ### OpenCode Plugin Hook API ที่ใช้
 
-Plugin คืน object ของ hooks ตาม type `Hooks` จาก `@opencode-ai/plugin` — สองตัวที่ใช้ในนี้:
+Plugin คืน object ของ hooks ตาม type `Hooks` จาก `@opencode-ai/plugin` — ตัวเดียวที่ใช้ในนี้ตอนนี้:
 
 | Hook | ทำงานตอนไหน | ใช้ทำอะไรใน graft-deep |
 | --- | --- | --- |
-| `tool.execute.after` | หลัง tool ใดๆ ถูกเรียก (รวม edit/write/bash) | เช็คว่าเป็น edit-like tool ไหม (`/edit\|write\|patch/i`) → debounce 3 วิ → รัน `graft build` แบบ background |
 | `experimental.chat.messages.transform` | ทุก agent step (ไม่ใช่แค่ทุก turn — เรียกบ่อยกว่าที่คิด) | รัน `graft ask` กับข้อความล่าสุดของ user → แปะผล top 3 ต่อท้าย prompt ถ้า coverage ผ่าน threshold |
 
-hook อื่นๆ ที่มีให้ใช้แต่ยังไม่ได้ใช้ในนี้: `tool.execute.before`, `chat.message`, `command.execute.before`, `session.compacting`, `event`, `tool.definition` — ดูชนิดเต็มที่ `node_modules/@opencode-ai/plugin/dist/index.d.ts`
+hook อื่นๆ ที่มีให้ใช้แต่ยังไม่ได้ใช้ในนี้: `tool.execute.before`, `tool.execute.after`, `chat.message`, `command.execute.before`, `session.compacting`, `event`, `tool.definition` — ดูชนิดเต็มที่ `node_modules/@opencode-ai/plugin/dist/index.d.ts`
 
 ### บทเรียนสำคัญตอนเขียน (Windows-specific)
 
@@ -235,51 +237,36 @@ hook อื่นๆ ที่มีให้ใช้แต่ยังไม�
 > [!danger] Security
 > ห้ามเอา free-text ที่มาจากผู้ใช้ไปต่อเป็น shell command string เด็ดขาด แม้จะเขียนฟังก์ชัน escape เองก็ตาม เพราะพลาดได้ง่ายและมักไม่ครอบคลุมทุก edge case
 
-**3. วิธีที่ถูกต้อง** ใช้ `cross-spawn` (dependency ที่ OpenCode มีอยู่แล้วใน `node_modules` ของตัวเอง) ซึ่งจัดการ argv quoting ของ Windows ถูกต้องโดยไม่ผ่าน shell — import แบบ dynamic เฉพาะตอน `process.platform === 'win32'` เท่านั้น ฝั่ง macOS/Linux ใช้ Node built-in (`execFileSync`/`spawn`) ตรงๆ ได้เลยเพราะ POSIX ไม่มีปัญหานี้ ทำให้ไฟล์นี้ไม่มี extra dependency บน non-Windows เลย
+**3. วิธีที่ถูกต้อง** ใช้ `cross-spawn` (dependency ที่ OpenCode มีอยู่แล้วใน `node_modules` ของตัวเอง) ซึ่งจัดการ argv quoting ของ Windows ถูกต้องโดยไม่ผ่าน shell — import แบบ dynamic เฉพาะตอน `process.platform === 'win32'` เท่านั้น ฝั่ง macOS/Linux ใช้ Node built-in `execFileSync` ตรงๆ ได้เลยเพราะ POSIX ไม่มีปัญหานี้ ทำให้ไฟล์นี้ไม่มี extra dependency บน non-Windows เลย
 
 ### โค้ดเต็ม
 
 ```js
 /**
  * Graft deep-integration plugin for OpenCode (global, cross-platform).
- * ...(ดู docstring ในไฟล์จริงสำหรับรายละเอียดเหตุผลทั้งหมด)
+ * Ports the auto-inject-context behavior that graft only ships natively
+ * for Claude Code, using graft's public CLI (`graft ask --json`) instead
+ * of internal modules.
+ *
+ * No longer does a manual auto-rebuild-on-edit: current graft CLI versions
+ * refresh the graph themselves before answering any query (verified live —
+ * an edit followed immediately by `graft ask`, no `graft build` in between,
+ * printed "[graft] refreshed the graph (1 file changed) before answering").
+ * The old debounced `graft build` hook here was therefore redundant, and
+ * was the direct cause of the rebuild/ask race condition documented in
+ * gotchas.md #6 — removing it fixes that race by removing its cause.
  */
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const isWin = process.platform === 'win32';
-const REBUILD_DEBOUNCE_MS = 3000;
 const MIN_PROMPT_CHARS = 12;
 const ASK_TIMEOUT_MS = 8000;
 const MIN_COVERAGE = 0.12;
-const EDIT_TOOL_PATTERN = /edit|write|patch/i;
 
 export const GraftDeepPlugin = async ({ directory }) => {
   const crossSpawn = isWin ? (await import('cross-spawn')).default : null;
-  const spawnFn = isWin ? crossSpawn : spawn;
 
-  let rebuildTimer = null;
-  let rebuilding = false;
   const injected = new Set();
-
-  function scheduleRebuild() {
-    if (rebuildTimer) clearTimeout(rebuildTimer);
-    rebuildTimer = setTimeout(() => {
-      if (rebuilding) return;
-      rebuilding = true;
-      try {
-        const child = spawnFn('npx', ['-y', '@nanonets/graft', 'build'], {
-          cwd: directory,
-          detached: true,
-          stdio: 'ignore',
-        });
-        child.on('exit', () => { rebuilding = false; });
-        child.on('error', () => { rebuilding = false; });
-        child.unref();
-      } catch {
-        rebuilding = false;
-      }
-    }, REBUILD_DEBOUNCE_MS);
-  }
 
   function graftAsk(prompt) {
     const args = ['-y', '@nanonets/graft', 'ask', prompt, '.', '--json', '-n', '3'];
@@ -308,10 +295,6 @@ export const GraftDeepPlugin = async ({ directory }) => {
   }
 
   return {
-    'tool.execute.after': async (input) => {
-      if (EDIT_TOOL_PATTERN.test(input?.tool ?? '')) scheduleRebuild();
-    },
-
     'experimental.chat.messages.transform': async (_input, output) => {
       if (process.env.GRAFT_AUTO_CONTEXT === '0') return;
       if (!output?.messages?.length) return;
@@ -345,8 +328,6 @@ export const GraftDeepPlugin = async ({ directory }) => {
 GRAFT_AUTO_CONTEXT=0 opencode
 ```
 
-ส่วน auto-rebuild ทำงานเบื้องหลังไม่บล็อกอะไรเลย เปิดไว้ตลอดได้ ไม่มีผลต่อความเร็ว
-
 ### วิธีทดสอบ plugin โดยไม่ต้องรอ agent loop ช้าๆ
 
 เรียก hook function ตรงๆ ผ่าน node script แทนที่จะรอผ่าน LLM (มีประโยชน์มากตอนโมเดลช้า):
@@ -356,17 +337,14 @@ import { pathToFileURL } from "node:url";
 const { GraftDeepPlugin } = await import(pathToFileURL("<path-to-graft-deep.js>").href);
 const hooks = await GraftDeepPlugin({ directory: "<project-path>" });
 
-// ทดสอบ auto-rebuild
-await hooks["tool.execute.after"]({ tool: "edit", sessionID: "s1", callID: "c1", args: {} });
-
-// ทดสอบ auto-inject context
+// ทดสอบ auto-inject context (hook เดียวที่มีตอนนี้)
 const output = { messages: [{ info: { id: "msg1", role: "user" }, parts: [{ type: "text", text: "คำถามจริง" }] }] };
 await hooks["experimental.chat.messages.transform"]({}, output);
 console.log(output.messages[0].parts); // ควรมี 2 parts ถ้า inject สำเร็จ
 ```
 
-> [!warning] อย่ารัน rebuild กับ ask พร้อมกันตอนทดสอบ
-> เจอ race condition จริง: ถ้า `graft build` (background) ยังไม่เสร็จตอน `graft ask` ยิงไป จะเกิด contention แล้ว `graft ask` fail แบบเงียบๆ (by design, "fail soft") ทำให้ดูเหมือน bug ทั้งที่จริงๆ ทำงานถูกต้องถ้าทดสอบแยกกัน
+> [!info] เคยมีคำเตือนเรื่อง race condition ตรงนี้ — ไม่เกี่ยวแล้วหลังตัด auto-rebuild hook ออก
+> ก่อนหน้านี้ plugin ยังมี `tool.execute.after` hook คอยสั่ง `graft build` เอง ทำให้ทดสอบพร้อมกับ `graft ask` แล้วชนกันได้ (`graft ask` fail แบบเงียบๆ) ตอนนี้ hook นั้นถูกตัดออกแล้ว (ดูกล่องด้านบน) เพราะ graft CLI เองก็ auto-refresh ก่อนตอบทุกคำถามอยู่แล้ว ปัญหานี้เลยหมดไปพร้อมกับสาเหตุของมัน — ดู [[gotchas]] ข้อ 6
 
 ---
 

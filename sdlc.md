@@ -51,7 +51,7 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 > [!tip] จุดแข็งที่สุดของคู่มือนี้
 > - [[plugins#superpowers — skill library|superpowers]] — บังคับ workflow ที่ดี (brainstorming, systematic-debugging, executing-plans, subagent-driven-development ฯลฯ)
 > - [[plugins#grill-me / grilling — batch-interview skill (เสริม superpowers, ไม่ใช่ plugin)|grill-me / grilling]] — เสริม `brainstorming` ด้วยการถามคำถามชี้แจงเป็น batch (เร็วกว่าถามทีละข้อ สำคัญกับ local model ที่แต่ละ turn ช้า) หรือใช้เดี่ยวๆ สัมภาษณ์ไอเดียแบบไม่ implement
-> - [[plugins#graft-deep — custom plugin (auto-rebuild + auto-inject context)|graft-deep]] + [[mcp-servers#graft — code-graph / context retrieval (per-project)|graft MCP]] — auto-rebuild code graph และ inject context ที่เกี่ยวข้องให้อัตโนมัติ
+> - [[plugins#graft-deep — custom plugin (auto-inject context)|graft-deep]] + [[mcp-servers#graft — code-graph / context retrieval (per-project)|graft MCP]] — inject context ที่เกี่ยวข้องให้อัตโนมัติ (auto-rebuild code graph เป็นของ graft CLI เองแล้ว ไม่ต้องพึ่ง plugin นี้อีก)
 > - [[plugins#ponytail — code minimization ruleset|ponytail]] — คุมไม่ให้ agent เขียนโค้ดเกินจำเป็น
 > - [[plugins#i-have-adhd — บังคับตอบตรงประเด็น ไม่อ้อมค้อม|i-have-adhd]] — คุมสไตล์การตอบให้ตรงประเด็น (opt-in)
 >
@@ -137,7 +137,7 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 
 ### Design (System/Architecture)
 
-ไม่มี tool/MCP เฉพาะที่จำเป็น — ใช้ convention ที่เบาที่สุดคือ **ADR (Architecture Decision Record)**: เก็บเป็นไฟล์ markdown ธรรมดาที่ `docs/adr/NNNN-หัวข้อ.md` ต่อโปรเจกต์ ทุกครั้งที่ตัดสินใจสถาปัตยกรรมสำคัญ (เลือก database, เปลี่ยน pattern หลัก ฯลฯ) ให้ agent เขียนสรุปไว้ —ครั้งต่อไป agent จะอ่านของเก่าใน `docs/adr/` ก่อนเสนอของใหม่ได้เอง (คล้ายกับที่ [[plugins#graft-deep — custom plugin (auto-rebuild + auto-inject context)|graft-deep]] ทำกับโค้ด แต่เป็นระดับ decision ไม่ใช่ระดับ code)
+ไม่มี tool/MCP เฉพาะที่จำเป็น — ใช้ convention ที่เบาที่สุดคือ **ADR (Architecture Decision Record)**: เก็บเป็นไฟล์ markdown ธรรมดาที่ `docs/adr/NNNN-หัวข้อ.md` ต่อโปรเจกต์ ทุกครั้งที่ตัดสินใจสถาปัตยกรรมสำคัญ (เลือก database, เปลี่ยน pattern หลัก ฯลฯ) ให้ agent เขียนสรุปไว้ —ครั้งต่อไป agent จะอ่านของเก่าใน `docs/adr/` ก่อนเสนอของใหม่ได้เอง (คล้ายกับที่ [[plugins#graft-deep — custom plugin (auto-inject context)|graft-deep]] ทำกับโค้ด แต่เป็นระดับ decision ไม่ใช่ระดับ code)
 
 > [!tip] Diagram ใช้ mermaid ต่อได้เลย ไม่ต้องหา tool ใหม่
 > คู่มือนี้ใช้ mermaid inline ใน markdown อยู่แล้ว (ดู [[USER-MANUAL]]) — เขียน architecture diagram แบบเดียวกันได้เลยโดยไม่ต้องพึ่งเว็บ diagram แยก

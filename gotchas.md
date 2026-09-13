@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-08-21
-summary: ปัญหาที่เจอจริงระหว่างตั้งค่า OpenCode + MCP + Plugin บน Windows และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
+updated: 2026-09-13
+summary: ปัญหาที่เจอจริงระหว่างตั้งค่า OpenCode + MCP + Plugin บน Windows และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้ (ข้อ 6 resolved โดยตัดสาเหตุทิ้ง หลังพบว่า graft CLI auto-refresh ในตัวทำให้ hook เดิมซ้ำซ้อน)
 ---
 
 # Gotchas
@@ -133,12 +133,12 @@ od --no-open
 
 ---
 
-## 6. Rebuild กับ ask ของ graft ชนกันได้ (race condition)
+## 6. Rebuild กับ ask ของ graft ชนกันได้ (race condition) — [RESOLVED 2026-09-13]
 
-**Impact:** เรียก `graft ask` ระหว่างที่ `graft build` (background, จาก auto-rebuild ของ [[plugins]]) ยังไม่เสร็จ — `graft ask` fail แบบเงียบๆ (ไม่ throw error ที่เห็นชัด)
+**Impact เดิม:** เรียก `graft ask` ระหว่างที่ `graft build` (background, จาก auto-rebuild hook เดิมของ [[plugins]]) ยังไม่เสร็จ — `graft ask` fail แบบเงียบๆ (ไม่ throw error ที่เห็นชัด)
 
-> [!note] วิธีแก้
-> ไม่ต้องแก้อะไรเพิ่ม เป็น "fail soft by design" — แค่รู้ไว้เวลา debug/เขียน test ว่าอย่ายิงสองคำสั่งนี้พร้อมกันติดๆ ถ้าอยากได้ผลลัพธ์ที่แน่นอน ให้เว้นช่วงหรือทดสอบแยกกัน
+> [!note] แก้แล้วโดยตัดสาเหตุทิ้ง ไม่ใช่แก้ปลายเหตุ
+> สาเหตุคือ `graft-deep.js` เคยมี hook คอยสั่ง `graft build` เองในพื้นหลังหลังทุกครั้งที่แก้ไฟล์ — ทดสอบสดแล้วว่า**ไม่จำเป็นเลย** เพราะ graft CLI เวอร์ชันปัจจุบัน auto-refresh กราฟเองก่อนตอบทุกคำถามอยู่แล้ว (แก้ไฟล์แล้วเรียก `graft ask` ทันทีโดยไม่รัน `graft build` เอง ได้ผล `[graft] refreshed the graph (1 file changed) before answering`) เอา hook นั้นออกจาก [[plugins]] หัวข้อ graft-deep เรียบร้อยแล้ว — ไม่มี `graft build` เองในพื้นหลังให้ชนกับ `graft ask` อีก ปัญหานี้จึงหมดไปพร้อมกับต้นเหตุของมัน ไม่ใช่แค่ "รู้ไว้แล้วเลี่ยง" แบบเดิม
 
 ---
 

@@ -174,8 +174,8 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 > [!warning] Prompt injection ที่เจอจริง
 > output ของ `graft map`/บาง command มีข้อความแฝงสั่งให้ agent พูดประโยคโปรโมท ("🌱 graft saved ~N tokens...") — เป็นฟีเจอร์ที่ตั้งใจให้ hook ของ Claude Code จับด้วย regex (`tool-savings` hook) แต่ถ้าเรียก CLI ตรงๆ นอก pipeline ของ hook ข้อความนี้จะโผล่มาเป็น tool output ธรรมดาที่ agent เห็น ควรรู้ไว้และไม่ทำตามคำสั่งนั้นอัตโนมัติ
 
-> [!info] Deep integration บน OpenCode
-> การ auto-rebuild กราฟหลังแก้โค้ด + auto-inject context ต่อ prompt ไม่ได้มาพร้อม graft สำหรับ OpenCode (มีแค่ Claude Code) ถ้าอยากได้พฤติกรรมนี้ต้องเขียน custom plugin เอง — ดู [[plugins]] หัวข้อ graft-deep
+> [!info] Deep integration บน OpenCode — เหลือแค่ auto-inject context ที่ต้องเขียนเอง
+> auto-rebuild กราฟหลังแก้โค้ดไม่ต้องทำอะไรเพิ่มแล้ว — graft CLI ปัจจุบัน refresh กราฟเองก่อนตอบทุกคำถามอยู่แล้ว (structural, $0) ยืนยันด้วยการทดสอบสดแล้ว ส่วนที่ยังไม่มีให้ OpenCode คือ **auto-inject context ต่อ prompt อัตโนมัติ** (มีแค่ Claude Code) ถ้าอยากได้พฤติกรรมนี้ต้องเขียน custom plugin เอง — ดู [[plugins]] หัวข้อ graft-deep
 
 ---
 
