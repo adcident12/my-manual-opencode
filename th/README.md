@@ -2,7 +2,7 @@
 
 คู่มือติดตั้งและใช้งาน [OpenCode](https://opencode.ai/) CLI แบบละเอียด — ตั้งแต่เครื่องเปล่าที่ยังไม่มีอะไรเลย จนถึง MCP servers, Plugins และวิธีใช้งานจริงสำหรับ vibe coding
 
-> [🇬🇧 Read in English](../en/README.md)
+> [🇬🇧 Read in English](../en/README.md) · [🇵🇭 Basahin sa Filipino](../fil/README.md)
 
 > เอกสารชุดนี้เขียนในรูปแบบ [Obsidian](https://obsidian.md/) vault (ใช้ `[[wikilink]]` เชื่อมหน้า) — เปิดด้วย Obsidian จะได้ประสบการณ์อ่านที่ดีที่สุด (ลิงก์คลิกได้, graph view) ลิงก์ด้านล่างเป็น markdown link ธรรมดาสำหรับอ่านบน GitHub
 
