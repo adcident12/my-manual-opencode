@@ -28,13 +28,13 @@ This set of docs records a real, working setup — from installing the CLI on a 
 
 ## 📖 Wiki Pages
 
-- [sdlc.md](sdlc.md) — an overview of all 7 Software Development Life Cycle phases, with pointers to which phases this manual actually covers (and the gaps that remain)
-- [setup.md](setup.md) — a detailed install guide, from a **blank machine** with no Node.js/Git all the way to a fully wired provider/MCP/plugin setup
-- [mcp-servers.md](mcp-servers.md) — details on every MCP server: install steps, config, and how to test each one
-- [plugins.md](plugins.md) — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and i-have-adhd (terse, to-the-point replies)
-- [USER-MANUAL.md](USER-MANUAL.md) — real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
-- [gotchas.md](gotchas.md) — 8 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, etc.)
-- [updating.md](updating.md) — how to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time
+- [[sdlc]] — an overview of all 7 Software Development Life Cycle phases, with pointers to which phases this manual actually covers (and the gaps that remain)
+- [[setup]] — a detailed install guide, from a **blank machine** with no Node.js/Git all the way to a fully wired provider/MCP/plugin setup
+- [[mcp-servers]] — details on every MCP server: install steps, config, and how to test each one
+- [[plugins]] — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and i-have-adhd (terse, to-the-point replies)
+- [[USER-MANUAL]] — real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
+- [[gotchas]] — 8 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, etc.)
+- [[updating]] — how to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time
 
 ---
 
@@ -55,7 +55,7 @@ cd my-project
 opencode
 ```
 
-Full provider/MCP/plugin setup from scratch is at [setup.md](setup.md)
+Full provider/MCP/plugin setup from scratch is at [[setup]]
 
 ---
 
@@ -66,4 +66,4 @@ The home model (`home-llamacpp/qwen3.8-27b`) automatically becomes OpenCode's **
 External tools with short timeouts (e.g. the OpenDesign wizard, which sets a 45-second timeout) fail outright if they hit this model — so a fast, free model is kept on hand as a fallback for exactly this situation.
 
 > [!tip] Read more
-> Full diagnosis and fix for this issue is in [gotchas.md](gotchas.md), item 1
+> Full diagnosis and fix for this issue is in [[gotchas]], item 1

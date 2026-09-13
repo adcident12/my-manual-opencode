@@ -6,7 +6,7 @@ summary: How to update/upgrade the OpenCode CLI, MCP servers, plugins, the grill
 
 # Updating & Upgrading
 
-Overview at [index.md](index.md) · Initial setup at [setup.md](setup.md)
+Overview at [[index]] · Initial setup at [[setup]]
 
 Each part of the stack has a different way to "update." Some already update automatically with nothing to do; others need a manual command. This page covers each one.
 
@@ -25,7 +25,7 @@ opencode upgrade 0.1.48
 ```
 
 > [!tip] Match the installation method to how it was first installed
-> If installed via `npm install -g opencode-ai` (as recommended in [setup.md](setup.md)), use:
+> If installed via `npm install -g opencode-ai` (as recommended in [[setup]]), use:
 > ```bash
 > opencode upgrade -m npm
 > ```
@@ -64,7 +64,7 @@ graft upgrade    # upgrade the global install to the latest version
 ```
 
 > [!warning] After upgrading, you may need to rebuild the graph
-> If a new version changes the graph/wiring format, re-run `graft build` in each project you use it in (see [mcp-servers.md](mcp-servers.md), the graft section) — check graft's [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) before upgrading if you're worried about breaking changes (the repo has moved to `trailhq/Graft` — see [mcp-servers.md](mcp-servers.md)).
+> If a new version changes the graph/wiring format, re-run `graft build` in each project you use it in (see [[mcp-servers]], the graft section) — check graft's [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) before upgrading if you're worried about breaking changes (the repo has moved to `trailhq/Graft` — see [[mcp-servers]]).
 
 ---
 
@@ -115,7 +115,7 @@ Then restart OpenCode and confirm with `/ponytail-help`.
 
 ## i-have-adhd (installed via a local git clone)
 
-Unlike superpowers/ponytail, this doesn't go through the `plugin` array as a git URL or npm package at all — the `plugin` array points directly at a `.mjs` file path inside the cloned source (see [setup.md](setup.md) Part 4). So updating it is just a `git pull` of that source, with none of opencode/Bun's caching involved at all:
+Unlike superpowers/ponytail, this doesn't go through the `plugin` array as a git URL or npm package at all — the `plugin` array points directly at a `.mjs` file path inside the cloned source (see [[setup]] Part 4). So updating it is just a `git pull` of that source, with none of opencode/Bun's caching involved at all:
 
 ```bash
 git -C ~/.config/opencode/vendor/i-have-adhd pull
@@ -124,31 +124,31 @@ git -C ~/.config/opencode/vendor/i-have-adhd pull
 Then restart OpenCode (plugins only load when a session starts) — nothing else to check besides trying `/i-have-adhd` to confirm it still activates normally.
 
 > [!tip] Removing the plugin needs no script
-> Unlike ponytail, which needs an uninstall script run first — i-have-adhd has no config to clean up. Just take the path out of the `plugin` array and delete the `~/.config/opencode/vendor/i-have-adhd` folder (if always-on was ever turned on, don't forget to also delete the `~/.config/opencode/.i-have-adhd-always` flag file — see [plugins.md](plugins.md)).
+> Unlike ponytail, which needs an uninstall script run first — i-have-adhd has no config to clean up. Just take the path out of the `plugin` array and delete the `~/.config/opencode/vendor/i-have-adhd` folder (if always-on was ever turned on, don't forget to also delete the `~/.config/opencode/.i-have-adhd-always` flag file — see [[plugins]]).
 
 ---
 
 ## grill-me / grilling skill (a vendored SKILL.md, no plugin manager updates it)
 
-Not installed through the `plugin` array at all (see [plugins.md](plugins.md)) — it's a plain `SKILL.md` file copied from [mattpocock/skills](https://github.com/mattpocock/skills), living at `~/.config/opencode/skills/grill-me/` and `~/.config/opencode/skills/grilling/`. **Nothing updates it automatically at all** — you have to periodically diff it against the original yourself:
+Not installed through the `plugin` array at all (see [[plugins]]) — it's a plain `SKILL.md` file copied from [mattpocock/skills](https://github.com/mattpocock/skills), living at `~/.config/opencode/skills/grill-me/` and `~/.config/opencode/skills/grilling/`. **Nothing updates it automatically at all** — you have to periodically diff it against the original yourself:
 
 ```bash
 curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md
 curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md
 ```
 
-Compare against the existing files — if upstream has changed, **don't just copy it over directly**: the `grilling/SKILL.md` actually in use has been changed from the original in 1 place (the fact-finding paragraph, to use `graft ask` inline instead of "dispatch a sub-agent" — see [plugins.md](plugins.md)). That change has to be merged back in every time you update from upstream, or you'll accidentally regress back to relying on a subagent again.
+Compare against the existing files — if upstream has changed, **don't just copy it over directly**: the `grilling/SKILL.md` actually in use has been changed from the original in 1 place (the fact-finding paragraph, to use `graft ask` inline instead of "dispatch a sub-agent" — see [[plugins]]). That change has to be merged back in every time you update from upstream, or you'll accidentally regress back to relying on a subagent again.
 
 > [!tip] No need to restart OpenCode
 > Unlike a plugin, which only loads when a session starts — a file-based skill is read through the native skill tool and can be called immediately after saving the file.
 
-**Removing it:** delete the `~/.config/opencode/skills/grill-me/` and `.../grilling/` folders. If a reconciliation rule was ever written into the global `AGENTS.md` (see [plugins.md](plugins.md)), don't forget to remove that too — otherwise `brainstorming` will keep trying to reference a skill that no longer exists.
+**Removing it:** delete the `~/.config/opencode/skills/grill-me/` and `.../grilling/` folders. If a reconciliation rule was ever written into the global `AGENTS.md` (see [[plugins]]), don't forget to remove that too — otherwise `brainstorming` will keep trying to reference a skill that no longer exists.
 
 ---
 
 ## graft-deep.js (a hand-written custom plugin)
 
-There's no upstream to "update" from, since it's hand-written — to improve it, just edit `~/.config/opencode/plugin/graft-deep.js` directly (full source is in [plugins.md](plugins.md)). Nothing else to restart besides opening a new OpenCode session.
+There's no upstream to "update" from, since it's hand-written — to improve it, just edit `~/.config/opencode/plugin/graft-deep.js` directly (full source is in [[plugins]]). Nothing else to restart besides opening a new OpenCode session.
 
 ---
 
@@ -159,7 +159,7 @@ An Electron app with a built-in updater (auto-updater) — it generally checks f
 To check yourself, go to **Settings → About** in the app (there's a "Check for updates" button or similar), or download the latest installer directly from [GitHub Releases](https://github.com/nexu-io/open-design/releases) and install it over the existing one.
 
 > [!warning] After updating, check the `od` shim again (Windows only)
-> If updating OpenDesign changes `daemon-cli.mjs`'s path (e.g. a version-folder change), the shim built in [gotchas.md](gotchas.md), item 4, may need its path updated to match the new location — check with `od --help` that it still works correctly after updating.
+> If updating OpenDesign changes `daemon-cli.mjs`'s path (e.g. a version-folder change), the shim built in [[gotchas]], item 4, may need its path updated to match the new location — check with `od --help` that it still works correctly after updating.
 
 ---
 
@@ -169,7 +169,7 @@ Unlike every other MCP on this page, this has **two separate parts to update**, 
 
 ### Part 1 — the SonarQube MCP wrapper (image `sonarsource/sonarqube-mcp`)
 
-The configured setup (see [mcp-servers.md](mcp-servers.md), the sonarqube section) doesn't pin a version, but also doesn't set `--pull=always` — so Docker keeps reusing the same cached image repeatedly, even though the tag is named `latest`. **You have to pull it yourself periodically to get a new version:**
+The configured setup (see [[mcp-servers]], the sonarqube section) doesn't pin a version, but also doesn't set `--pull=always` — so Docker keeps reusing the same cached image repeatedly, even though the tag is named `latest`. **You have to pull it yourself periodically to get a new version:**
 
 ```bash
 docker pull sonarsource/sonarqube-mcp

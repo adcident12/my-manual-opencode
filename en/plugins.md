@@ -6,10 +6,10 @@ summary: superpowers (skill library), grill-me/grilling (a batch-interview skill
 
 # Plugins
 
-Overview at [index.md](index.md) · MCP servers at [mcp-servers.md](mcp-servers.md)
+Overview at [[index]] · MCP servers at [[mcp-servers]]
 
 > [!note] Before you start
-> Git must already be installed (for plugins that come from `git+https://`) — see [setup.md](setup.md) Part 0.
+> Git must already be installed (for plugins that come from `git+https://`) — see [[setup]] Part 0.
 
 ---
 
@@ -76,11 +76,11 @@ rm -rf ~/.cache/opencode/packages/<plugin-name>@git+https_
 
 ## grill-me / grilling — batch-interview skill (complements superpowers, not a plugin)
 
-[mattpocock/skills](https://github.com/mattpocock/skills) is a community skill by Matt Pocock (Total TypeScript / AI Hero), distributed as standalone `SKILL.md` files following the open **Agent Skills** standard (the same spec Claude Code uses, and OpenCode supports natively with no changes needed) — **not a plugin**, so nothing needs to be added to the `plugin` array in `opencode.jsonc` at all. See the full standalone-skill mechanism at [setup.md](setup.md), the "Standalone skills following the Agent Skills open standard" section.
+[mattpocock/skills](https://github.com/mattpocock/skills) is a community skill by Matt Pocock (Total TypeScript / AI Hero), distributed as standalone `SKILL.md` files following the open **Agent Skills** standard (the same spec Claude Code uses, and OpenCode supports natively with no changes needed) — **not a plugin**, so nothing needs to be added to the `plugin` array in `opencode.jsonc` at all. See the full standalone-skill mechanism at [[setup]], the "Standalone skills following the Agent Skills open standard" section.
 
 Works as a pair of 2 files:
 
-- `grill-me` — just an entry point (has the frontmatter field `disable-model-invocation: true`, which is Claude-Code-specific — OpenCode doesn't recognize this field and will **silently ignore it, no harm done**; see [setup.md](setup.md)). It just forwards to `grilling`.
+- `grill-me` — just an entry point (has the frontmatter field `disable-model-invocation: true`, which is Claude-Code-specific — OpenCode doesn't recognize this field and will **silently ignore it, no harm done**; see [[setup]]). It just forwards to `grilling`.
 - `grilling` — the real logic: interviews the user as a "design tree" — every decision branches into sub-decisions. Asks in **rounds**, firing every question that's ready to be asked at once (called the frontier); each question always comes with a recommended answer (`➡️`). Ends when there are no questions left and the user confirms shared understanding.
 
 > [!info] How it differs from `superpowers brainstorming`
@@ -148,16 +148,16 @@ No need to restart OpenCode — file-based skills load through the native skill 
 
 ### Adjusting it for this setup (important — don't skip)
 
-The original `grilling` uses the phrase "dispatch a sub-agent to find [a fact]" in the "Finding facts is your job" paragraph — if your workflow relies little on subagents / mostly executes inline (like this setup), that paragraph should be changed to **always look up facts yourself, inline first**: call `graft ask` if the project has a graft index (see [mcp-servers.md](mcp-servers.md), the "graft" section), then fall back to grep/reading files directly if not — only dispatch a sub-agent when one is actually available and the task is heavy enough to warrant it (the code block above is already the adjusted version).
+The original `grilling` uses the phrase "dispatch a sub-agent to find [a fact]" in the "Finding facts is your job" paragraph — if your workflow relies little on subagents / mostly executes inline (like this setup), that paragraph should be changed to **always look up facts yourself, inline first**: call `graft ask` if the project has a graft index (see [[mcp-servers]], the "graft" section), then fall back to grep/reading files directly if not — only dispatch a sub-agent when one is actually available and the task is heavy enough to warrant it (the code block above is already the adjusted version).
 
 > [!tip] Why bother changing it
-> `graft`/subagents are optional — not every setup has or wants to use them the same way. Always adjust the instructions to match your actual tools/working style rather than copying the original verbatim. Every time you update from upstream, this adjustment has to be merged back in too (see [updating.md](updating.md)).
+> `graft`/subagents are optional — not every setup has or wants to use them the same way. Always adjust the instructions to match your actual tools/working style rather than copying the original verbatim. Every time you update from upstream, this adjustment has to be merged back in too (see [[updating]]).
 
 ### Wiring it to superpowers brainstorming (must do this if superpowers is already installed)
 
 `brainstorming` (section above) already has its own hard gate: **"MUST use this before any creative work"** — add `grilling` without writing a reconciliation rule first, and you get **two gates fighting over the same moment** ("before starting new work"), which is a high risk for a small/local model to pick the wrong one or ask two overlapping rounds.
 
-The fix is writing a rule in the **global** `~/.config/opencode/AGENTS.md` (see [setup.md](setup.md), "AGENTS.md — global vs project instructions," for why it must be global, not project-level) so that `grilling` **complements** `brainstorming` instead of competing with it:
+The fix is writing a rule in the **global** `~/.config/opencode/AGENTS.md` (see [[setup]], "AGENTS.md — global vs project instructions," for why it must be global, not project-level) so that `grilling` **complements** `brainstorming` instead of competing with it:
 
 ```markdown
 ## Grill me — complements superpowers brainstorming, doesn't duplicate it
@@ -192,7 +192,7 @@ if one is available and the lookup is heavy enough to warrant it.
 ```
 
 > [!warning] Why it has to be global, not a project AGENTS.md
-> Writing this rule only in a project-level AGENTS.md (the file `graft init` writes automatically — see [mcp-servers.md](mcp-servers.md)) would only work in that one repo. Any other project that hasn't run `graft init` yet, or has no `AGENTS.md`, would have no reconciliation rule at all — and `grilling` would go right back to colliding with `brainstorming` the moment you switch projects.
+> Writing this rule only in a project-level AGENTS.md (the file `graft init` writes automatically — see [[mcp-servers]]) would only work in that one repo. Any other project that hasn't run `graft init` yet, or has no `AGENTS.md`, would have no reconciliation rule at all — and `grilling` would go right back to colliding with `brainstorming` the moment you switch projects.
 
 ### Confirmed working in practice (2 live test cases)
 
@@ -207,16 +207,16 @@ if one is available and the lookup is heavy enough to warrant it.
 
 ## graft-deep — custom plugin (auto-inject context)
 
-graft (see [mcp-servers.md](mcp-servers.md)) has no "deep integration" for OpenCode — meaning automatically injecting relevant context into a prompt. This feature only exists for Claude Code (auto-rebuilding the graph after an edit is now graft CLI's own job for every agent — see the box below). This plugin ports the auto-inject behavior using graft's public CLI (`graft ask --json`) instead of importing an internal module — safer, and won't break when graft updates its version.
+graft (see [[mcp-servers]]) has no "deep integration" for OpenCode — meaning automatically injecting relevant context into a prompt. This feature only exists for Claude Code (auto-rebuilding the graph after an edit is now graft CLI's own job for every agent — see the box below). This plugin ports the auto-inject behavior using graft's public CLI (`graft ask --json`) instead of importing an internal module — safer, and won't break when graft updates its version.
 
 > [!info] Used to have an auto-rebuild hook too — removed (2026-09-13)
-> The first version of this plugin had a `tool.execute.after` hook that would debounce for 3 seconds then run `graft build` itself in the background after every file edit. Confirmed by a live test that this is **no longer necessary**: editing a file then immediately calling `graft ask`, with no manual `graft build` in between, printed `[graft] refreshed the graph (1 file changed) before answering` — meaning the current graft CLI already auto-refreshes the graph itself before answering any query (see [mcp-servers.md](mcp-servers.md)). The removed hook wasn't just redundant — it was also the direct cause of the race condition documented in [gotchas.md](gotchas.md), item 6. The cause was removed instead of just working around the symptom.
+> The first version of this plugin had a `tool.execute.after` hook that would debounce for 3 seconds then run `graft build` itself in the background after every file edit. Confirmed by a live test that this is **no longer necessary**: editing a file then immediately calling `graft ask`, with no manual `graft build` in between, printed `[graft] refreshed the graph (1 file changed) before answering` — meaning the current graft CLI already auto-refreshes the graph itself before answering any query (see [[mcp-servers]]). The removed hook wasn't just redundant — it was also the direct cause of the race condition documented in [[gotchas]], item 6. The cause was removed instead of just working around the symptom.
 
 ### Install
 
 1. Put the file at `~/.config/opencode/plugin/graft-deep.js` (create the `plugin` folder yourself if it doesn't exist)
 2. Add that path to the `plugin` array in the global config
-3. Nothing extra needed per project — except `graft build` still needs to run once per repo as before (see [mcp-servers.md](mcp-servers.md)). After that, graft keeps the graph fresh itself on every query; nothing needs to rebuild it anymore.
+3. Nothing extra needed per project — except `graft build` still needs to run once per repo as before (see [[mcp-servers]]). After that, graft keeps the graph fresh itself on every query; nothing needs to rebuild it anymore.
 
 ### OpenCode Plugin Hook API used
 
@@ -344,7 +344,7 @@ console.log(output.messages[0].parts); // should have 2 parts if injection succe
 ```
 
 > [!info] There used to be a race-condition warning here — no longer relevant since removing the auto-rebuild hook
-> This plugin previously also had a `tool.execute.after` hook running `graft build` itself, which could collide with a test running `graft ask` at the same time (`graft ask` failing silently). That hook is now removed (see the box above), since graft CLI itself already auto-refreshes before answering any query — so this problem went away along with its cause. See [gotchas.md](gotchas.md), item 6.
+> This plugin previously also had a `tool.execute.after` hook running `graft build` itself, which could collide with a test running `graft ask` at the same time (`graft ask` failing silently). That hook is now removed (see the box above), since graft CLI itself already auto-refreshes before answering any query — so this problem went away along with its cause. See [[gotchas]], item 6.
 
 ---
 
@@ -363,7 +363,7 @@ Add the plugin to `opencode.json`/`opencode.jsonc` (can sit in the same list as 
 Restart OpenCode and try running `/ponytail-help` to confirm it activated.
 
 > [!note] Requirement
-> Node.js must be on PATH for the full lifecycle hooks — without it, the core skill still works, but some activation features go quiet (see how to install Node at [setup.md](setup.md) Part 0).
+> Node.js must be on PATH for the full lifecycle hooks — without it, the core skill still works, but some activation features go quiet (see how to install Node at [[setup]] Part 0).
 
 ### Available commands
 

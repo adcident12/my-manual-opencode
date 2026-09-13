@@ -6,7 +6,7 @@ summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows,
 
 # Gotchas
 
-Overview at [index.md](index.md) · Setup at [setup.md](setup.md)
+Overview at [[index]] · Setup at [[setup]]
 
 8 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
 
@@ -51,7 +51,7 @@ Time it. If it exceeds the failing tool's budget, this is the cause.
 
 | Error | Meaning | Fix |
 | --- | --- | --- |
-| An outright block page (e.g. FortiGate's "Application Blocked") when visiting github.com in a browser | The network is really blocking it as IT policy | Don't try to bypass it — use a local path for the plugin instead (see [plugins.md](plugins.md)), or ask IT for an allowlist |
+| An outright block page (e.g. FortiGate's "Application Blocked") when visiting github.com in a browser | The network is really blocking it as IT policy | Don't try to bypass it — use a local path for the plugin instead (see [[plugins]]), or ask IT for an allowlist |
 | `fatal: unable to access '...': unable to get local issuer certificate` | The network allows it, but `git` doesn't trust the corporate root CA used for SSL inspection (a browser trusts it because the OS has the CA; git uses its own certificate store) | Talk to the user before fixing it — the fix technically means trusting the organization's MITM cert, not a decision to make unilaterally |
 
 > [!important] Lesson
@@ -135,10 +135,10 @@ od --no-open
 
 ## 6. graft's rebuild and ask could race each other — [RESOLVED 2026-09-13]
 
-**Original impact:** Calling `graft ask` while `graft build` (background, from [plugins.md](plugins.md)'s old auto-rebuild hook) hadn't finished yet — `graft ask` would fail silently (no clear thrown error).
+**Original impact:** Calling `graft ask` while `graft build` (background, from [[plugins]]'s old auto-rebuild hook) hadn't finished yet — `graft ask` would fail silently (no clear thrown error).
 
 > [!note] Fixed by removing the cause, not working around the symptom
-> The cause was that `graft-deep.js` used to have a hook running `graft build` itself in the background after every file edit — a live test confirmed this is **entirely unnecessary**, since the current graft CLI version already auto-refreshes the graph itself before answering any query (editing a file then immediately calling `graft ask`, with no manual `graft build` in between, produced `[graft] refreshed the graph (1 file changed) before answering`). That hook has been removed from [plugins.md](plugins.md)'s graft-deep section — there's no more background `graft build` for `graft ask` to race against, so this problem disappeared along with its cause, not just "known and worked around" as before.
+> The cause was that `graft-deep.js` used to have a hook running `graft build` itself in the background after every file edit — a live test confirmed this is **entirely unnecessary**, since the current graft CLI version already auto-refreshes the graph itself before answering any query (editing a file then immediately calling `graft ask`, with no manual `graft build` in between, produced `[graft] refreshed the graph (1 file changed) before answering`). That hook has been removed from [[plugins]]'s graft-deep section — there's no more background `graft build` for `graft ask` to race against, so this problem disappeared along with its cause, not just "known and worked around" as before.
 
 ---
 

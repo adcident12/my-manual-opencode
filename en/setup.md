@@ -6,7 +6,7 @@ summary: A detailed OpenCode install guide from a blank machine — Node.js, Git
 
 # Setup
 
-> Full stack overview at [index.md](index.md) — this page is the detailed install walkthrough, written so you can follow it from **a completely blank machine** all the way to a working setup.
+> Full stack overview at [[index]] — this page is the detailed install walkthrough, written so you can follow it from **a completely blank machine** all the way to a working setup.
 
 > [!tip] Reading order
 > Follow Part 0 → 1 → 2 → 3 → 4 → 5 in order, don't skip — each Part depends on what the previous one finished.
@@ -32,7 +32,7 @@ Node.js is what OpenCode and nearly every MCP server needs to run (npm ships wit
 **Windows:**
 1. Go to [nodejs.org](https://nodejs.org/) → download the **LTS** version (the recommended one, not Current)
 2. Run the `.msi` installer, click Next through the defaults (the installer adds Node/npm to PATH automatically)
-3. **Close every open terminal and open a new one** (important — old terminals won't see the freshly updated PATH; see [gotchas.md](gotchas.md), item 2, for why)
+3. **Close every open terminal and open a new one** (important — old terminals won't see the freshly updated PATH; see [[gotchas]], item 2, for why)
 4. Verify: `node --version` should print a version number like `v22.x.x`
 
 **macOS:**
@@ -157,7 +157,7 @@ Replace:
 - `your-model-id` — the model name as your server reports it (check with `curl https://your-server/v1/models`)
 
 > [!tip] Why output = 32768
-> If the model is a reasoning model (has a thinking mode, like Qwen3), too low an output ceiling can make the agent "stop mid-thought" — 32768 matches Qwen's own recommendation for general work. Full details in [gotchas.md](gotchas.md), item 8.
+> If the model is a reasoning model (has a thinking mode, like Qwen3), too low an output ceiling can make the agent "stop mid-thought" — 32768 matches Qwen's own recommendation for general work. Full details in [[gotchas]], item 8.
 
 > [!warning] Never hardcode an API key directly in the file
 > Always use `{env:VAR_NAME}` instead of typing the API key value straight into the file — OpenCode will pull it from the environment variable you set instead. How to set that env var:
@@ -165,7 +165,7 @@ Replace:
 > - **Windows:** open "Edit the system environment variables" → Environment Variables → New (System variable) → name it `HOME_LLAMACPP_API_KEY` with the API key as the value
 > - **macOS/Linux:** add a line `export HOME_LLAMACPP_API_KEY="your-key"` to `~/.zshrc`, `~/.bashrc`, or whichever shell profile you use, then `source` it again (or open a new terminal)
 >
-> **After setting it, always close and reopen the terminal/app that will run opencode** — a process that was already running won't see the new value. Details in [gotchas.md](gotchas.md), item 2.
+> **After setting it, always close and reopen the terminal/app that will run opencode** — a process that was already running won't see the new value. Details in [[gotchas]], item 2.
 
 ### Cloud provider
 
@@ -203,7 +203,7 @@ Basic example config (add to `opencode.jsonc`):
 ```
 
 > [!info] Full detail on every server
-> An in-depth install guide for each MCP server (including graft, open-design, postgres/mysql) with its own prerequisites is at [mcp-servers.md](mcp-servers.md) — this page only shows a quick overview example.
+> An in-depth install guide for each MCP server (including graft, open-design, postgres/mysql) with its own prerequisites is at [[mcp-servers]] — this page only shows a quick overview example.
 
 Check status after adding config:
 
@@ -235,7 +235,7 @@ opencode debug skill
 > 1. **You get an outright block page** (e.g. FortiGate's "Application Blocked") → the network really is blocking it by policy. Don't try to bypass it — use the local-path method below instead, or ask IT to allowlist it.
 > 2. **The error is `unable to get local issuer certificate`** → the network allows it, but `git` doesn't trust the certificate the organization uses for SSL inspection (unlike a browser, which trusts it because the OS has the CA installed). This one has a technical fix, but always talk to the user/IT before applying it.
 >
-> Full fixes for both cases are in [plugins.md](plugins.md).
+> Full fixes for both cases are in [[plugins]].
 
 ### A plugin from an npm package (example: ponytail)
 
@@ -250,7 +250,7 @@ Not every plugin has to come from a git URL — some are plain npm packages, eas
 }
 ```
 
-Restart OpenCode and try `/ponytail-help` to confirm it activated — full command/config details in [plugins.md](plugins.md).
+Restart OpenCode and try `/ponytail-help` to confirm it activated — full command/config details in [[plugins]].
 
 ### A plugin from a local git clone (example: i-have-adhd)
 
@@ -270,7 +270,7 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 }
 ```
 
-Restart OpenCode and type `/i-have-adhd` in a session to turn it on — full toggle/always-on details in [plugins.md](plugins.md).
+Restart OpenCode and type `/i-have-adhd` in a session to turn it on — full toggle/always-on details in [[plugins]].
 
 ### A plugin you write yourself (custom .js)
 
@@ -285,7 +285,7 @@ Put the `.js` file anywhere (`~/.config/opencode/plugin/<name>.js` is recommende
 }
 ```
 
-A plugin's structure must export an async function that takes `{ directory }` and returns an object of hooks — a full example is in [plugins.md](plugins.md) (graft-deep).
+A plugin's structure must export an async function that takes `{ directory }` and returns an object of hooks — a full example is in [[plugins]] (graft-deep).
 
 ### Standalone skills following the Agent Skills open standard (not a plugin)
 
@@ -316,20 +316,20 @@ The full instruction content you want the agent to follow when this skill is inv
 > [!note] Fields OpenCode doesn't recognize are silently ignored
 > Skills ported from Claude Code sometimes have Claude-Code-specific frontmatter fields, like `disable-model-invocation` — OpenCode only supports `name`, `description`, `license`, `compatibility`, and `metadata`. Any other field is quietly skipped, no error, no need to strip it out before use.
 
-A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, wired to superpowers) is in [plugins.md](plugins.md).
+A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, wired to superpowers) is in [[plugins]].
 
 ### AGENTS.md — global vs project instructions
 
 `AGENTS.md` is an instruction file OpenCode reads every session (like an extra system prompt). It has 2 levels:
 
-1. **Project** — walking up from the working directory looking for `AGENTS.md` (or `CLAUDE.md`) in that repo — this is the file `graft init --agents agents --no-global` writes automatically per repo (see [mcp-servers.md](mcp-servers.md)).
+1. **Project** — walking up from the working directory looking for `AGENTS.md` (or `CLAUDE.md`) in that repo — this is the file `graft init --agents agents --no-global` writes automatically per repo (see [[mcp-servers]]).
 2. **Global** — `~/.config/opencode/AGENTS.md` — applies to **every project**. No installer creates this file automatically; you write it yourself.
 
 > [!info] Confirmed by a live test — the project and global files are used together, not one instead of the other
-> Tested for real on a project that had both a project-level `AGENTS.md` (from `graft init`) and a global `~/.config/opencode/AGENTS.md` (the grill-me/grilling reconciliation rule — see [plugins.md](plugins.md)) at the same time — the model referenced content from both files in the same turn (visible directly in its reasoning trace, quoting a sentence from the global AGENTS.md verbatim). Bottom line: **a rule written at the global level always applies, whether or not a project file also exists**.
+> Tested for real on a project that had both a project-level `AGENTS.md` (from `graft init`) and a global `~/.config/opencode/AGENTS.md` (the grill-me/grilling reconciliation rule — see [[plugins]]) at the same time — the model referenced content from both files in the same turn (visible directly in its reasoning trace, quoting a sentence from the global AGENTS.md verbatim). Bottom line: **a rule written at the global level always applies, whether or not a project file also exists**.
 
 > [!tip] When to write at global instead of project level
-> Write at global when a rule should apply "to every project, always" (e.g. how to reconcile two skills that might collide). Write at project level when it's context specific to that one repo (e.g. graft's context graph). A real example that had to be written at global level is in [plugins.md](plugins.md), the grill-me/grilling section.
+> Write at global when a rule should apply "to every project, always" (e.g. how to reconcile two skills that might collide). Write at project level when it's context specific to that one repo (e.g. graft's context graph). A real example that had to be written at global level is in [[plugins]], the grill-me/grilling section.
 
 ---
 
@@ -368,4 +368,4 @@ opencode debug config    # view the fully resolved config
 
 ## Next steps
 
-Setup done — read [USER-MANUAL.md](USER-MANUAL.md) for real day-to-day usage, or [gotchas.md](gotchas.md) if you hit a problem along the way.
+Setup done — read [[USER-MANUAL]] for real day-to-day usage, or [[gotchas]] if you hit a problem along the way.

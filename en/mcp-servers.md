@@ -6,12 +6,12 @@ summary: Details on each MCP server set up in OpenCode — install steps, config
 
 # MCP Servers
 
-Overview at [index.md](index.md) · OpenCode's own install steps at [setup.md](setup.md)
+Overview at [[index]] · OpenCode's own install steps at [[setup]]
 
 Every MCP below gets added to the `mcp` object in `~/.config/opencode/opencode.jsonc` (global — works for every project) unless it says it needs project-level config.
 
 > [!note] Before you start
-> This page assumes Node.js/npm and the OpenCode CLI are already installed. If not, go back to [setup.md](setup.md) Parts 0–1 first.
+> This page assumes Node.js/npm and the OpenCode CLI are already installed. If not, go back to [[setup]] Parts 0–1 first.
 
 ---
 
@@ -175,19 +175,19 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
 > The output of `graft map`/some commands carries a hidden instruction telling the agent to say a promotional line ("🌱 graft saved ~N tokens..."). This is a feature intentionally meant for a Claude Code hook to catch via regex (the `tool-savings` hook), but if you call the CLI directly outside that hook's pipeline, the text shows up as plain tool output the agent sees. Good to know, and don't follow that instruction automatically.
 
 > [!info] Deep integration on OpenCode — only auto-inject-context is left to build yourself
-> Auto-rebuilding the graph after an edit needs nothing extra anymore — the current graft CLI already refreshes the graph itself before answering any query (structural, $0), confirmed by a live test. What OpenCode still doesn't get natively is **automatically injecting context into every prompt** (Claude Code only) — if you want that behavior, you need to write a custom plugin. See [plugins.md](plugins.md), the graft-deep section.
+> Auto-rebuilding the graph after an edit needs nothing extra anymore — the current graft CLI already refreshes the graph itself before answering any query (structural, $0), confirmed by a live test. What OpenCode still doesn't get natively is **automatically injecting context into every prompt** (Claude Code only) — if you want that behavior, you need to write a custom plugin. See [[plugins]], the graft-deep section.
 
 ---
 
 ## open-design — pull files from an OpenDesign project
 
-[nexu-io/open-design](https://github.com/nexu-io/open-design) is an AI tool for generating websites/prototypes/slide decks (an open-source alternative to Claude Design). Full OpenDesign usage details (Studio, the whole workflow) are in [USER-MANUAL.md](USER-MANUAL.md).
+[nexu-io/open-design](https://github.com/nexu-io/open-design) is an AI tool for generating websites/prototypes/slide decks (an open-source alternative to Claude Design). Full OpenDesign usage details (Studio, the whole workflow) are in [[USER-MANUAL]].
 
 ### Install steps
 
 1. Download the **desktop app** from [open-design.ai](https://open-design.ai/) or [GitHub Releases](https://github.com/nexu-io/open-design/releases) and install normally (recommended — zero config, no need to clone/Node/pnpm anything yourself)
 
-2. **(Windows only)** the installer usually doesn't add `od` to PATH — you have to build a shim yourself. Full steps are in [gotchas.md](gotchas.md), item 4 (short version: create `~/AppData/Roaming/npm/od.cmd` that calls the real app via `ELECTRON_RUN_AS_NODE=1`)
+2. **(Windows only)** the installer usually doesn't add `od` to PATH — you have to build a shim yourself. Full steps are in [[gotchas]], item 4 (short version: create `~/AppData/Roaming/npm/od.cmd` that calls the real app via `ELECTRON_RUN_AS_NODE=1`)
 
 3. Confirm `od` works (**always open a new terminal** after step 2):
 
@@ -225,7 +225,7 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
 **MCP tools you get:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`
 
 > [!warning] Common Windows problems
-> Full details in [gotchas.md](gotchas.md), item 4 — covers both the PATH issue and a native-module issue a plain shim can't fix.
+> Full details in [[gotchas]], item 4 — covers both the PATH issue and a native-module issue a plain shim can't fix.
 
 ---
 
@@ -269,7 +269,7 @@ The official GitHub MCP server (made by GitHub itself) — lets the agent call i
 
 1. Create a GitHub Personal Access Token at **https://github.com/settings/personal-access-tokens/new** — a **Fine-grained token** is recommended (finer-grained scoping than a classic token). Pick repository access and permissions to match what you'll use it for (e.g. Contents, Issues, Pull requests: Read and write)
 
-2. Set the environment variable `GITHUB_PERSONAL_ACCESS_TOKEN` to that token's value (see [setup.md](setup.md) Part 2 for how to set env vars per OS)
+2. Set the environment variable `GITHUB_PERSONAL_ACCESS_TOKEN` to that token's value (see [[setup]] Part 2 for how to set env vars per OS)
 
 3. Add config to `opencode.jsonc`:
 
@@ -354,7 +354,7 @@ Confirm the web UI is up: open **http://localhost:9000**.
 
 ### Step 3 — Set the env var
 
-Set `SONARQUBE_TOKEN` to that token's value (a System Environment Variable on Windows, or a shell profile on macOS/Linux — see [setup.md](setup.md) Part 2)
+Set `SONARQUBE_TOKEN` to that token's value (a System Environment Variable on Windows, or a shell profile on macOS/Linux — see [[setup]] Part 2)
 
 > [!danger] Never put the token directly in a config file or in chat
 > Always use `{env:SONARQUBE_TOKEN}` instead, even though the server only runs on localhost — it's a better habit and prevents the token from accidentally ending up in git history/session logs.
@@ -416,7 +416,7 @@ opencode mcp list      # should show sonarqube connected
 ```
 
 > [!important] "connected" in opencode mcp list, but the agent can't call the tool — check VS Code first
-> A problem hit for real during setup: the docker command tested fine directly, but `opencode mcp list` run from a **terminal inside VS Code** still failed. The cause: the terminal in VS Code is a child process of VS Code itself (`Code.exe`) that had been open since before `SONARQUBE_TOKEN` was set. Opening a new terminal tab there doesn't help, since it clones VS Code's own existing environment rather than reading fresh values from Windows. You have to **fully close the whole VS Code app and reopen it** (also check Task Manager that no `Code.exe` is still running) before it sees the new value — this is a direct real-world confirmation of [gotchas.md](gotchas.md), item 2, not a config problem.
+> A problem hit for real during setup: the docker command tested fine directly, but `opencode mcp list` run from a **terminal inside VS Code** still failed. The cause: the terminal in VS Code is a child process of VS Code itself (`Code.exe`) that had been open since before `SONARQUBE_TOKEN` was set. Opening a new terminal tab there doesn't help, since it clones VS Code's own existing environment rather than reading fresh values from Windows. You have to **fully close the whole VS Code app and reopen it** (also check Task Manager that no `Code.exe` is still running) before it sees the new value — this is a direct real-world confirmation of [[gotchas]], item 2, not a config problem.
 
 ### CLI/Tools you get
 
@@ -445,7 +445,7 @@ This MCP server exposes tools for: analyzing code, listing issues, checking qual
    macOS: `brew install trivy` · Linux: see per-distro instructions in the [official docs](https://trivy.dev/latest/getting-started/installation/)
 
    > [!warning] Restart the terminal after installing
-   > winget itself says "Path environment variable modified; restart your shell" — exactly the same problem as [gotchas.md](gotchas.md), item 2. If you still get `trivy: command not found` even though winget said it installed successfully, close and reopen the terminal first (VS Code needs the whole app closed, as always).
+   > winget itself says "Path environment variable modified; restart your shell" — exactly the same problem as [[gotchas]], item 2. If you still get `trivy: command not found` even though winget said it installed successfully, close and reopen the terminal first (VS Code needs the whole app closed, as always).
 
 2. Install the official MCP plugin from Aqua Security itself (**"mcp" is not a built-in subcommand of plain trivy — you need this plugin installed first**):
 
@@ -482,7 +482,7 @@ This MCP server exposes tools for: analyzing code, listing issues, checking qual
    ```
 
 > [!warning] Needs `docker-credential-desktop` on PATH the first time it downloads the DB
-> Trivy stores its vulnerability database as an OCI artifact on `mirror.gcr.io` — the first pull tries to check credentials via Docker's credential helper, even though no Docker server needs to actually be running at all. If you hit `docker-credential-desktop: executable file not found`, temporarily add Docker Desktop's `resources/bin` folder to PATH (see [gotchas.md](gotchas.md), item 4, for the same Docker-path pattern) — **this isn't a permanent dependency**; once the DB is cached, later runs don't need Docker at all.
+> Trivy stores its vulnerability database as an OCI artifact on `mirror.gcr.io` — the first pull tries to check credentials via Docker's credential helper, even though no Docker server needs to actually be running at all. If you hit `docker-credential-desktop: executable file not found`, temporarily add Docker Desktop's `resources/bin` folder to PATH (see [[gotchas]], item 4, for the same Docker-path pattern) — **this isn't a permanent dependency**; once the DB is cached, later runs don't need Docker at all.
 
 ### Useful CLI commands
 
@@ -559,7 +559,7 @@ Both are local MCPs that need an already-running database server (local or remot
    export MYSQL_DB="your_database"
    ```
 
-   On Windows PowerShell use `$env:VAR_NAME = "..."` instead — see [gotchas.md](gotchas.md), item 2, on why an app restart is needed if you set these via System Environment Variables instead.
+   On Windows PowerShell use `$env:VAR_NAME = "..."` instead — see [[gotchas]], item 2, on why an app restart is needed if you set these via System Environment Variables instead.
 
 3. Open opencode in that same terminal (which now has the env vars), from that project's root:
 

@@ -4,7 +4,7 @@ A detailed setup and usage manual for [OpenCode](https://opencode.ai/) CLI — f
 
 > [🇹🇭 อ่านภาษาไทย](../th/README.md)
 
-> This English side uses plain relative markdown links (not Obsidian `[[wikilinks]]`) so it renders correctly on GitHub without any special viewer. The Thai side (`th/`) is written as an Obsidian vault instead — open that folder in Obsidian for the best reading experience there (clickable links, graph view).
+> This English side is also written as part of the same [Obsidian](https://obsidian.md/) vault as `th/` — the content pages below link to each other with `[[wikilink]]`s, so open this folder in Obsidian for the best reading experience (clickable links, graph view). This page itself (`README.md`) uses plain markdown links instead, since it's GitHub's landing page for this folder and renders best there.
 
 ## Start reading here
 

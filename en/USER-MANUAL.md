@@ -6,7 +6,7 @@ summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, g
 
 # 📘 OpenCode Usage Manual for Vibe Coding
 
-> Finished setup? See [setup.md](setup.md) · MCP/Plugin details in [mcp-servers.md](mcp-servers.md) and [plugins.md](plugins.md) · Common problems in [gotchas.md](gotchas.md) · Updating/upgrading in [updating.md](updating.md)
+> Finished setup? See [[setup]] · MCP/Plugin details in [[mcp-servers]] and [[plugins]] · Common problems in [[gotchas]] · Updating/upgrading in [[updating]]
 
 ---
 
@@ -65,7 +65,7 @@ Use this to see which tools "one piece of work" should flow through, in order �
 
 ### The agent's per-request workflow cycle (micro)
 
-What happens behind the scenes within each turn you type a command to opencode (based on [plugins.md](plugins.md) and [mcp-servers.md](mcp-servers.md)):
+What happens behind the scenes within each turn you type a command to opencode (based on [[plugins]] and [[mcp-servers]]):
 
 ```mermaid
 graph LR
@@ -87,19 +87,19 @@ graph LR
 ```
 
 > [!note] No separate "auto-rebuild graph" step anymore
-> graft-deep used to have a hook that would rebuild the graph itself after an edit — removed, because the current graft CLI version already refreshes the graph itself before answering any query (verified — see [plugins.md](plugins.md), the graft-deep section). There's nothing to wait for, so there's no separate node for it in this diagram anymore — graph freshness is graft's own job now, not opencode's.
+> graft-deep used to have a hook that would rebuild the graph itself after an edit — removed, because the current graft CLI version already refreshes the graph itself before answering any query (verified — see [[plugins]], the graft-deep section). There's nothing to wait for, so there's no separate node for it in this diagram anymore — graph freshness is graft's own job now, not opencode's.
 
 > [!note] Not every turn goes through every step
 > If a command is short/unrelated to code (e.g. "explain X to me"), some nodes get skipped — this diagram shows **every possible path**, not a route every single turn takes in full.
 
 > [!note] Plugin ponytail
-> The ponytail plugin (see [plugins.md](plugins.md)) is the last gate before actually writing code (node L) — it forces the agent to walk the decision ladder (don't write it if unnecessary → reuse what's there → is there a standard library → a native feature → an already-installed dependency → a one-liner → only then write minimal new code). Works alongside superpowers/graft-deep without overlapping (superpowers picks the workflow, graft-deep finds context, ponytail controls how much code gets written).
+> The ponytail plugin (see [[plugins]]) is the last gate before actually writing code (node L) — it forces the agent to walk the decision ladder (don't write it if unnecessary → reuse what's there → is there a standard library → a native feature → an already-installed dependency → a one-liner → only then write minimal new code). Works alongside superpowers/graft-deep without overlapping (superpowers picks the workflow, graft-deep finds context, ponytail controls how much code gets written).
 
 > [!note] Plugin i-have-adhd — deliberately not in the per-turn cycle above
-> Unlike superpowers/graft-deep/ponytail, which run automatically every turn — i-have-adhd (see [plugins.md](plugins.md)) is **opt-in per session**: you have to type `/i-have-adhd` yourself before it takes effect (it only changes reply style to be terse/to-the-point, it doesn't touch tool orchestration). Good for when you want a fast answer, not a long explanation — turn it off any time with `stop adhd mode`.
+> Unlike superpowers/graft-deep/ponytail, which run automatically every turn — i-have-adhd (see [[plugins]]) is **opt-in per session**: you have to type `/i-have-adhd` yourself before it takes effect (it only changes reply style to be terse/to-the-point, it doesn't touch tool orchestration). Good for when you want a fast answer, not a long explanation — turn it off any time with `stop adhd mode`.
 
 > [!note] Skill grill-me / grilling — not a separate plugin, wired into node C
-> Not a separate node in the diagram, because it's a skill (a standalone `SKILL.md` file following the Agent Skills open standard — see [setup.md](setup.md)), not a plugin — but it works at the same node C as superpowers: when the agent picks `brainstorming` for building a new feature, it uses `grilling`'s batch question format instead of asking one at a time (or calls `grilling` on its own if the user just wants to interview an idea, not implement it right away). Real usage is in section 3 below; full install/reconciliation detail is in [plugins.md](plugins.md).
+> Not a separate node in the diagram, because it's a skill (a standalone `SKILL.md` file following the Agent Skills open standard — see [[setup]]), not a plugin — but it works at the same node C as superpowers: when the agent picks `brainstorming` for building a new feature, it uses `grilling`'s batch question format instead of asking one at a time (or calls `grilling` on its own if the user just wants to interview an idea, not implement it right away). Real usage is in section 3 below; full install/reconciliation detail is in [[plugins]].
 
 ---
 
@@ -114,7 +114,7 @@ cd my-new-project
 # if the folder/repo doesn't exist yet: mkdir my-new-project && cd my-new-project && git init
 ```
 
-**Step 2 — build a context graph with graft** (skip this step if graft isn't installed — see [mcp-servers.md](mcp-servers.md) first if you haven't installed it yet)
+**Step 2 — build a context graph with graft** (skip this step if graft isn't installed — see [[mcp-servers]] first if you haven't installed it yet)
 
 ```bash
 graft build
@@ -134,7 +134,7 @@ graft init --agents agents --no-global
 opencode mcp list
 ```
 
-✅ **You should see:** the `graft` row with status `connected`. If not, check [gotchas.md](gotchas.md) first.
+✅ **You should see:** the `graft` row with status `connected`. If not, check [[gotchas]] first.
 
 ```bash
 graft map
@@ -173,7 +173,7 @@ Try asking something that needs real code references, e.g. `summarize this proje
 opencode debug skill
 ```
 
-✅ **You should see:** all 14 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s skills (`ponytail`, `ponytail-review`, ...), `i-have-adhd`, and `grill-me`/`grilling` if installed (see [plugins.md](plugins.md) for what each one is).
+✅ **You should see:** all 14 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s skills (`ponytail`, `ponytail-review`, ...), `i-have-adhd`, and `grill-me`/`grilling` if installed (see [[plugins]] for what each one is).
 
 > [!tip] Done all 6 steps? Go straight to section 3
 > No need to repeat this checklist for the same project again — just open `opencode` and use it per section 3. Only redo this checklist when starting a genuinely new project.
@@ -216,7 +216,7 @@ The "agent's per-request workflow" diagram in section 1 is an abstract overview 
 
 ### Using grill-me / grilling before starting a new feature (if installed)
 
-If the `grill-me`/`grilling` skill is installed (install steps in [plugins.md](plugins.md)), there are 2 ways to invoke it:
+If the `grill-me`/`grilling` skill is installed (install steps in [[plugins]]), there are 2 ways to invoke it:
 
 **1. Interview standalone (not implementing right away, no spec file):**
 
@@ -244,13 +244,13 @@ If `superpowers` is also installed (normally installed as a pair), case 2 will c
 You can reply with short options/letters directly (e.g. `A A A A` or `go with all recommendations`) — the agent won't start writing code until every question is answered and the frontier is empty (no questions left).
 
 > [!info] Confirmed not to collide
-> Tested for real that calling `grilling` standalone versus letting `brainstorming` borrow its format both work correctly down their own separate paths without colliding (no duplicate rounds of questions, no spec file appearing when it shouldn't). Full details are in [plugins.md](plugins.md), the grill-me/grilling section.
+> Tested for real that calling `grilling` standalone versus letting `brainstorming` borrow its format both work correctly down their own separate paths without colliding (no duplicate rounds of questions, no spec file appearing when it shouldn't). Full details are in [[plugins]], the grill-me/grilling section.
 
 ---
 
 ## 4. Using graft to understand code faster
 
-No need to call `graft` yourself at all — once the MCP is wired up (see [mcp-servers.md](mcp-servers.md)), opencode calls graft's tools (`graft_find_code`/`graft_file_api`/`graft_trace_calls`/`graft_find_all`/`graft_repo_map`/`graft_check_freshness`) automatically whenever needed, just like playwright/chrome-devtools. This section is about calling the CLI directly yourself, in case you want to explore code quickly before talking to the agent.
+No need to call `graft` yourself at all — once the MCP is wired up (see [[mcp-servers]]), opencode calls graft's tools (`graft_find_code`/`graft_file_api`/`graft_trace_calls`/`graft_find_all`/`graft_repo_map`/`graft_check_freshness`) automatically whenever needed, just like playwright/chrome-devtools. This section is about calling the CLI directly yourself, in case you want to explore code quickly before talking to the agent.
 
 **Step 1 — see the project overview**
 
@@ -302,7 +302,7 @@ graft check
 ✅ exit code `0` = the graph matches the current code, nothing else to do.
 
 > [!note] Plugin graft-deep
-> The graft-deep plugin (see [plugins.md](plugins.md)) auto-injects relevant context into every new prompt — runs in the background with nothing extra to do, though it doesn't guarantee 100% that the model will always use the injected context (depends on each model's own ability). Graph freshness itself no longer needs this plugin at all — the current graft CLI refreshes itself before answering any query.
+> The graft-deep plugin (see [[plugins]]) auto-injects relevant context into every new prompt — runs in the background with nothing extra to do, though it doesn't guarantee 100% that the model will always use the injected context (depends on each model's own ability). Graph freshness itself no longer needs this plugin at all — the current graft CLI refreshes itself before answering any query.
 
 ---
 
@@ -339,7 +339,7 @@ opencode will call `list_projects` → `get_project`/`get_artifact`/`get_file` o
 > **OpenDesign** = the design/fast-frontend phase with a live preview · **opencode** (a separate session) = the real development phase, building it out into a full system, connected via the `open-design` MCP.
 
 > [!warning] The daemon must be running
-> Before using the `open-design` MCP, OpenDesign's daemon must be running (leave the app open, or run `od --no-open` headless) — full details/problems hit are in [gotchas.md](gotchas.md), item 4.
+> Before using the `open-design` MCP, OpenDesign's daemon must be running (leave the app open, or run `od --no-open` headless) — full details/problems hit are in [[gotchas]], item 4.
 
 ---
 
@@ -360,11 +360,11 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 
 ## 7. Common Problems
 
-Full list with fixes at [gotchas.md](gotchas.md) — the short version:
+Full list with fixes at [[gotchas]] — the short version:
 
 - **An external tool connects to opencode then times out** → check whether the default model is too slow (item 1 in gotchas)
 - **Set a new env var/PATH but it's not taking effect** → fully restart the relevant app, not just close its window (item 2)
 - **The `open-design` MCP is connected but calling a tool fails** → check whether OpenDesign's daemon is actually running on port 7456 (item 4)
 - **The same command gives different results between terminals** → try PowerShell instead of Git Bash on Windows (item 5)
-- **The `sonarqube` MCP shows connected but calling a tool gives 401/403** → check whether the token used is a "User Token," not a "Global/Project Analysis Token" (see [mcp-servers.md](mcp-servers.md), the sonarqube section) — the connection check only confirms it can reach the server, it doesn't check the token's permissions at that point
-- **`trivy` shows `command not found` even though winget said it installed successfully** → restart the terminal (VS Code needs the whole app closed) — the same PATH staleness as item 2 (see [mcp-servers.md](mcp-servers.md), the trivy section)
+- **The `sonarqube` MCP shows connected but calling a tool gives 401/403** → check whether the token used is a "User Token," not a "Global/Project Analysis Token" (see [[mcp-servers]], the sonarqube section) — the connection check only confirms it can reach the server, it doesn't check the token's permissions at that point
+- **`trivy` shows `command not found` even though winget said it installed successfully** → restart the terminal (VS Code needs the whole app closed) — the same PATH staleness as item 2 (see [[mcp-servers]], the trivy section)
