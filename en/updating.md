@@ -12,6 +12,25 @@ Each part of the stack has a different way to "update." Some already update auto
 
 ---
 
+## Automated update script (recommended — one run covers everything that needs a manual command)
+
+[`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) — a single Node.js script that runs the same way on **Windows, macOS, and Ubuntu** (uses only the Node.js already installed per [[setup]] Part 0, no extra dependency to install) — automates every part of this page that can be done safely on its own:
+
+```bash
+node scripts/update-opencode.mjs             # update everything that's safe to update
+node scripts/update-opencode.mjs --dry-run   # preview every command, run nothing
+node scripts/update-opencode.mjs --recreate-sonarqube   # also recreate the sonarqube server container
+```
+
+Covers: the OpenCode CLI, graft (with an automatic fallback if `graft upgrade` hits the bug documented in [[gotchas]]), clearing the superpowers/ponytail caches, a `git pull` for i-have-adhd, diffing grill-me/grilling against upstream (never auto-overwriting), pulling the sonarqube MCP wrapper image, and updating the trivy CLI/plugin.
+
+> [!warning] What it deliberately does **not** automate (needs a flag or a manual step)
+> - **The sonarqube Server container** — skipped by default, since it means stopping/removing a running container. Pass `--recreate-sonarqube` to do it (the script `docker inspect`s the existing container first, so it reuses the real volume names in place rather than hardcoding over them).
+> - **trivy on Linux/Ubuntu** — never runs `sudo` on its own (it would need a password); it just prints the exact command to run yourself.
+> - **graft-deep.js** and **OpenDesign** — hand-written / a GUI auto-updater, respectively. The script only prints a reminder; there's nothing for it to update automatically.
+
+---
+
 ## OpenCode CLI
 
 ```bash

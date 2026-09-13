@@ -12,6 +12,25 @@ Bawat bahagi ng stack ay may kanya-kanyang paraan ng "pag-update." May ilang awt
 
 ---
 
+## Awtomatikong update script (inirerekumenda — isang beses lang para sa lahat ng manu-manong bahagi)
+
+Ang [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) ay isang Node.js script na tumatakbo nang pareho sa **Windows, macOS, at Ubuntu** (gumagamit lang ng Node.js na naka-install na ayon sa [[setup]] Part 0, walang extra na dependency na kailangang i-install) — ino-automate ang bawat bahagi ng pahinang ito na ligtas gawin mag-isa:
+
+```bash
+node scripts/update-opencode.mjs             # i-update ang lahat ng ligtas i-update
+node scripts/update-opencode.mjs --dry-run   # tignan ang bawat command, walang tatakbo
+node scripts/update-opencode.mjs --recreate-sonarqube   # i-recreate din ang sonarqube server container
+```
+
+Saklaw: ang OpenCode CLI, graft (may awtomatikong fallback kung tinamaan ng `graft upgrade` ang bug na nakadokumento sa [[gotchas]]), paglilinis ng cache ng superpowers/ponytail, isang `git pull` para sa i-have-adhd, pag-diff ng grill-me/grilling laban sa upstream (hindi kailanman awtomatikong nag-o-overwrite), pag-pull ng sonarqube MCP wrapper image, at pag-update ng trivy CLI/plugin.
+
+> [!warning] Ang hindi sinasadyang ino-automate (kailangan ng flag o manu-manong hakbang)
+> - **Ang sonarqube Server container** — naka-skip by default, dahil kailangan nitong isara/tanggalin ang isang tumatakbong container. I-pass ang `--recreate-sonarqube` para gawin ito (mismong `docker inspect`-in muna ng script ang meron nang container, kaya ginagamit ang tunay na pangalan ng volumes sa halip na i-hardcode ito).
+> - **Trivy sa Linux/Ubuntu** — hindi kailanman nagpapatakbo ng `sudo` mismo (kakailanganin nito ng password); prine-print lang nito ang eksaktong command na dapat mong patakbuhin.
+> - **graft-deep.js** at **OpenDesign** — manu-manong sinulat / isang GUI auto-updater, ayon sa pagkakasunod-sunod. Ang script ay nagpe-print lang ng paalala; walang awtomatikong ii-update dito.
+
+---
+
 ## OpenCode CLI
 
 ```bash

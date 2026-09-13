@@ -12,6 +12,25 @@ summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP 
 
 ---
 
+## สคริปต์อัปเดตอัตโนมัติ (แนะนำ — รันครั้งเดียวได้ทุกส่วนที่ต้องสั่งเอง)
+
+[`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) — สคริปต์ Node.js ไฟล์เดียว รันได้เหมือนกันบน **Windows, macOS, Ubuntu** (ใช้แค่ Node.js ที่ติดตั้งไว้แล้วตาม [[setup]] Part 0 ไม่ต้องติดตั้ง dependency เพิ่ม) — automate ทุกส่วนในหน้านี้ที่ทำเองได้อย่างปลอดภัย:
+
+```bash
+node scripts/update-opencode.mjs             # อัปเดตส่วนที่ปลอดภัยทั้งหมด
+node scripts/update-opencode.mjs --dry-run   # ดูว่าจะรันคำสั่งอะไรบ้าง โดยไม่รันจริง
+node scripts/update-opencode.mjs --recreate-sonarqube   # เพิ่มการ recreate sonarqube server container ด้วย
+```
+
+ครอบคลุม: OpenCode CLI, graft (พร้อม fallback อัตโนมัติถ้า `graft upgrade` พังตามบั๊กที่เจอใน [[gotchas]]), ล้าง cache ของ superpowers/ponytail, `git pull` ของ i-have-adhd, เทียบ diff ของ grill-me/grilling กับต้นฉบับ (ไม่ overwrite อัตโนมัติ), pull image ของ sonarqube MCP wrapper, อัปเดต trivy CLI/plugin
+
+> [!warning] ขั้นตอนที่ **ไม่** ทำให้อัตโนมัติ (ต้องสั่ง flag/ทำเอง)
+> - **sonarqube Server container** — ข้ามเป็น default เพราะต้อง stop+rm+recreate container ที่รันอยู่ ต้องใส่ `--recreate-sonarqube` ถึงจะทำ (สคริปต์จะ `docker inspect` container เดิมก่อนเพื่อใช้ volume names จริงที่มีอยู่ ไม่ hardcode ทับ)
+> - **trivy บน Linux/Ubuntu** — ไม่รัน `sudo` ให้อัตโนมัติ (ต้องใส่รหัสผ่าน) แค่ print คำสั่งที่ต้องรันเอง
+> - **graft-deep.js** และ **OpenDesign** — hand-written / GUI auto-updater ตามลำดับ สคริปต์แค่เตือนไว้ ไม่มีอะไรให้อัปเดตอัตโนมัติ
+
+---
+
 ## OpenCode CLI
 
 ```bash
