@@ -2,9 +2,9 @@
 
 Detalyadong gabay sa pag-setup at paggamit ng [OpenCode](https://opencode.ai/) CLI — mula sa walang laman na makina, hanggang sa MCP servers, Plugins, at aktwal na araw-araw na vibe-coding workflows.
 
-> [🇹🇭 อ่านภาษาไทย](../th/README.md) · [🇬🇧 Read in English](../en/README.md)
+> [🇹🇭 อ่านภาษาไทย](../th/README.md) · [🇬🇧 Read in English](../en/README.md) · [🇱🇦 ອ່ານພາສາລາວ](../lo/README.md)
 
-> Bahagi ito ng parehong [Obsidian](https://obsidian.md/) vault gaya ng `th/` at `en/` — ang mga content page sa ibaba ay naka-link sa isa't isa gamit ang `[[wikilink]]`, kaya buksan ang folder na ito sa Obsidian para sa pinakamahusay na karanasan sa pagbabasa (clickable links, graph view). Ang pahinang ito (`README.md`) ay gumagamit ng plain markdown links dahil ito ang landing page para sa GitHub.
+> Bahagi ito ng parehong [Obsidian](https://obsidian.md/) vault gaya ng `th/`, `en/`, at `lo/` — ang mga content page sa ibaba ay naka-link sa isa't isa gamit ang `[[wikilink]]`, kaya buksan ang folder na ito sa Obsidian para sa pinakamahusay na karanasan sa pagbabasa (clickable links, graph view). Ang pahinang ito (`README.md`) ay gumagamit ng plain markdown links dahil ito ang landing page para sa GitHub.
 
 ## Magsimula dito
 

@@ -6,15 +6,18 @@ Detailed setup and usage manual for [OpenCode](https://opencode.ai/) CLI — fro
 
 Detalyadong gabay sa pag-setup at paggamit ng OpenCode CLI — mula sa walang laman na makina hanggang sa MCP servers, Plugins, at aktwal na araw-araw na vibe-coding workflows.
 
-## Choose a language / เลือกภาษา / Pumili ng wika
+ຄູ່ມືການຕິດຕັ້ງແລະນຳໃຊ້ OpenCode CLI ແບບລະອຽດ — ຕັ້ງແຕ່ເຄື່ອງເປົ່າ ຈົນເຖິງ MCP servers, Plugins ແລະວິທີນຳໃຊ້ຈິງສຳລັບ vibe coding
+
+## Choose a language / เลือกภาษา / Pumili ng wika / ເລືອກພາສາ
 
 | | |
 | --- | --- |
 | 🇹🇭 | **[อ่านภาษาไทย →](th/README.md)** |
 | 🇬🇧 | **[Read in English →](en/README.md)** |
 | 🇵🇭 | **[Basahin sa Filipino →](fil/README.md)** |
+| 🇱🇦 | **[ອ່ານພາສາລາວ →](lo/README.md)** |
 
 ---
 
 > [!note]
-> This entire repo (`th/`, `en/`, and `fil/`) is written as one [Obsidian](https://obsidian.md/) vault — the content pages within each language folder link to each other with `[[wikilink]]`s, so open the repo root in Obsidian for the best reading experience (clickable links, graph view, per-language subgraphs). Only the `README.md` file in each folder (this one included) uses plain markdown links instead, since those are GitHub's landing pages for browsing without Obsidian. All three are personal reference content — generic, no machine-specific paths/URLs/credentials (all replaced with placeholders).
+> This entire repo (`th/`, `en/`, `fil/`, and `lo/`) is written as one [Obsidian](https://obsidian.md/) vault — the content pages within each language folder link to each other with `[[wikilink]]`s, so open the repo root in Obsidian for the best reading experience (clickable links, graph view, per-language subgraphs). Only the `README.md` file in each folder (this one included) uses plain markdown links instead, since those are GitHub's landing pages for browsing without Obsidian. All four are personal reference content — generic, no machine-specific paths/URLs/credentials (all replaced with placeholders).
