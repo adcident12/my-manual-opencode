@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-08-22
+updated: 2026-09-13
 summary: รายละเอียด MCP server แต่ละตัวที่ตั้งไว้ใน OpenCode — ขั้นตอนติดตั้ง, config, วิธีทดสอบ, ข้อควรระวัง
 ---
 
@@ -100,7 +100,10 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 
 ## graft — code-graph / context retrieval (per-project)
 
-[nanonets/graft](https://github.com/nanonets/graft) สร้างกราฟความสัมพันธ์ของโค้ด (ฟังก์ชันไหนเรียกอะไร ไฟล์ไหนเกี่ยวกับไฟล์ไหน) ให้ agent เข้าใจโครงสร้าง repo ได้เร็วโดยไม่ต้องอ่านทุกไฟล์ ต่างจาก 3 ตัวข้างบนตรงที่ **ต้องตั้งต่อโปรเจกต์** เพราะกราฟต้องสแกนโค้ดของ repo นั้นๆ จริงๆ
+[trailhq/Graft](https://github.com/trailhq/Graft) สร้างกราฟความสัมพันธ์ของโค้ด (ฟังก์ชันไหนเรียกอะไร ไฟล์ไหนเกี่ยวกับไฟล์ไหน) ให้ agent เข้าใจโครงสร้าง repo ได้เร็วโดยไม่ต้องอ่านทุกไฟล์ ต่างจาก 3 ตัวข้างบนตรงที่ **ต้องตั้งต่อโปรเจกต์** เพราะกราฟต้องสแกนโค้ดของ repo นั้นๆ จริงๆ
+
+> [!note] repo ย้าย org แล้ว (เช็คล่าสุด 2026-09-13)
+> เดิมอยู่ที่ `nanonets/graft` — ตอนนี้ทั้ง `github.com/nanonets/graft` และ `github.com/NanoNets/Graft` (ตัวพิมพ์ใหญ่) **redirect (301) ไปที่ `github.com/trailhq/Graft` อัตโนมัติ** ลิงก์เก่าที่เคยแปะไว้ (README, npm package page) ยังใช้ได้เพราะ GitHub redirect ให้ แต่ควรใช้ลิงก์ใหม่จากนี้ไป — ตัว npm package ยังชื่อเดิม `@nanonets/graft` ไม่เปลี่ยน
 
 ### ขั้นตอนติดตั้ง
 
@@ -140,11 +143,33 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 | --- | --- |
 | `graft map` | ภาพรวมโปรเจกต์ — ไฟล์ไหน function อะไรถูกเรียกบ่อย |
 | `graft ask "<คำถาม>"` | ถามเป็นภาษาคน หาโค้ดที่เกี่ยวข้อง คืน file:line |
-| `graft grep "<regex>"` | ค้นหาแบบ exhaustive กลุ่มตาม symbol |
-| `graft callers <ชื่อฟังก์ชัน>` | ดูว่าใครเรียกฟังก์ชันนี้บ้าง |
+| `graft grep "<regex>"` | ค้นหาแบบ exhaustive กลุ่มตาม symbol (`-i --fixed` = case-insensitive + literal string ไม่ใช่ regex) |
+| `graft callers <symbol>` | ดูว่าใครเรียก/import/extend symbol นี้บ้าง — `--direction out` สลับเป็น "symbol นี้เรียกอะไรบ้าง", `-d N` เดินลึก N ชั้นดู blast radius เต็ม |
 | `graft skeleton <file>` | API surface ของไฟล์แบบไม่มี body |
-| `graft check` | เช็คว่ากราฟ drift จากโค้ดจริงหรือยัง |
-| `graft viz` | เปิดหน้าเว็บดู dependency graph แบบ interactive |
+| `graft blast [dir]` | **(ใหม่)** blast radius ของ diff ปัจจุบัน — `--base origin/main` เทียบกับ merge base, `--format markdown` ออกแบบพร้อมแปะเป็น PR comment, `--export-viz` ทำหน้าเว็บ interactive ด้วย |
+| `graft check` | เช็คว่ากราฟ drift จากโค้ดจริงหรือยัง (ไม่ rebuild ให้ แค่รายงาน) |
+| `graft viz` | เปิดหน้าเว็บดู dependency graph แบบ interactive — `--export site/` ได้ static HTML ไฟล์เดียวสำหรับแปะใน CI/GitHub Pages |
+| `graft uninstall [dir]` | ล้างทุกไฟล์/config ที่ `graft init` เคยเขียนไว้ (ตรงข้ามกับ init) — ต้องใส่ `-y` ถึงจะลบจริง ไม่งั้นแค่ print รายการ |
+
+> [!info] `graft build` มี flag สำหรับ monorepo/submodule เพิ่มมาด้วย
+> `--follow-submodules` / `--follow-nested-repos` รวม submodule ที่ init แล้ว หรือ repo ที่ clone ซ้อนไว้ข้างในเข้ากราฟเดียวกัน (ปกติถูกกันออกเป็น default) — ตัวเลือกถูกจำไว้ที่ `.graft/config.json` ใช้ `--extensions .ts .py` จำกัดเฉพาะนามสกุลไฟล์ที่ต้องการก็ได้ ไม่ต้องแก้ config
+
+> [!tip] `--deep` เพิ่ม LLM summary ต่อ symbol (ยังไม่ได้ตั้งค่าใน setup นี้)
+> ปกติ `graft build`/`graft ask`/`graft check` เป็น structural ล้วน (tree-sitter, $0, ไม่มี LLM) แต่ `graft build --deep` เพิ่มชั้นสรุปด้วยโมเดลภาษา (concept node summary + crux ต่อ symbol) ต้องตั้ง `GRAFT_PROVIDER` (`openai`/`anthropic`/`litellm`/`orcarouter`) + `GRAFT_API_KEY` + `GRAFT_MODEL` (แยกจาก provider ของตัว coding agent เอง) — setup นี้ยังไม่ได้เปิดใช้ฟีเจอร์นี้ ใช้แค่ structural graph เฉยๆ
+
+### MCP tools ที่ agent เรียกจริง (ต่างจาก CLI ด้านบน — CLI ไว้ให้คนเรียกเอง)
+
+| Tool | รับ | ใช้ทำอะไร |
+| --- | --- | --- |
+| `graft_find_code` | คำถาม | โหนดที่เกี่ยวข้องเรียงอันดับ พร้อม file:line และซอร์สโค้ดฝังมาด้วย — มักตอบจบไม่ต้องอ่านไฟล์ต่อ |
+| `graft_file_api` | path ไฟล์ | signature ทุกตัวในไฟล์นั้น ไม่มี body — ได้ API surface โดยใช้ token แค่ ~1/10 |
+| `graft_trace_calls` | symbol | ใครเรียกใช้ symbol นี้บ้าง (หรือ symbol นี้เรียกอะไรบ้างถ้าใส่ `direction: out`) เดินลึกได้หลายชั้นดู blast radius |
+| `graft_find_all` | regex | ทุก hit จัดกลุ่มตาม symbol ที่ครอบมัน เรียงตามความเชื่อมโยง |
+| `graft_repo_map` | (ไม่ต้องใส่อะไร) | ภาพรวม repo ที่ไม่เคยเห็นมาก่อน — dir cluster, hub, hotspot |
+| `graft_check_freshness` | (ไม่ต้องใส่อะไร) | เช็คว่ากราฟในเครื่อง drift จากโค้ดจริงหรือยัง |
+
+> [!note] ชื่อ tool ที่เห็นจริงใน OpenCode มี prefix ซ้อน
+> เพราะ OpenCode ตั้งชื่อ MCP server ว่า `graft` แล้ว namespace tool เป็น `<ชื่อ server>_<ชื่อ tool>` เห็นจริงจะเป็น `graft_graft_find_code`, `graft_graft_file_api` ฯลฯ (ซ้ำคำว่า graft สองรอบ) — เป็นเรื่องปกติของการตั้งชื่อ ไม่ใช่ bug ไม่กระทบการใช้งาน
 
 > [!warning] Prompt injection ที่เจอจริง
 > output ของ `graft map`/บาง command มีข้อความแฝงสั่งให้ agent พูดประโยคโปรโมท ("🌱 graft saved ~N tokens...") — เป็นฟีเจอร์ที่ตั้งใจให้ hook ของ Claude Code จับด้วย regex (`tool-savings` hook) แต่ถ้าเรียก CLI ตรงๆ นอก pipeline ของ hook ข้อความนี้จะโผล่มาเป็น tool output ธรรมดาที่ agent เห็น ควรรู้ไว้และไม่ทำตามคำสั่งนั้นอัตโนมัติ

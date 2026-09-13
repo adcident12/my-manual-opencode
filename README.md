@@ -20,7 +20,7 @@
 ## Stack ที่ครอบคลุม
 
 - **OpenCode CLI** + self-hosted/cloud model provider
-- **MCP servers**: context7, playwright, chrome-devtools, [graft](https://github.com/nanonets/graft) (code-graph), [OpenDesign](https://github.com/nexu-io/open-design), memory (persistent context), [SonarQube](https://github.com/SonarSource/sonarqube-mcp-server) (code quality/security, self-hosted), [Trivy](https://github.com/aquasecurity/trivy-mcp) (vulnerability/secret/misconfig scan, standalone CLI), [GitHub](https://github.com/github/github-mcp-server) (issues/PR), postgres/mysql
+- **MCP servers**: context7, playwright, chrome-devtools, [graft](https://github.com/trailhq/Graft) (code-graph), [OpenDesign](https://github.com/nexu-io/open-design), memory (persistent context), [SonarQube](https://github.com/SonarSource/sonarqube-mcp-server) (code quality/security, self-hosted), [Trivy](https://github.com/aquasecurity/trivy-mcp) (vulnerability/secret/misconfig scan, standalone CLI), [GitHub](https://github.com/github/github-mcp-server) (issues/PR), postgres/mysql
 - **Plugins**: [superpowers](https://github.com/obra/superpowers) (skill library) + custom `graft-deep` plugin + [ponytail](https://github.com/dietrichgebert/ponytail) (code minimization ruleset) + [i-have-adhd](https://github.com/ayghri/i-have-adhd) (terse, action-first output style)
 - **Skills (Agent Skills open standard, ไม่ใช่ plugin)**: [grill-me / grilling](https://github.com/mattpocock/skills) — batch-interview เสริม `brainstorming` ของ superpowers
 

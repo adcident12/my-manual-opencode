@@ -64,7 +64,7 @@ graft upgrade    # อัปเกรด global install ให้เป็นเ
 ```
 
 > [!warning] อัปเกรดแล้วอาจต้อง build กราฟใหม่
-> ถ้าเวอร์ชันใหม่เปลี่ยนรูปแบบกราฟ/wiring format ให้รัน `graft build` ซ้ำในแต่ละโปรเจกต์ที่ใช้งานอยู่ (ดู [[mcp-servers]] หัวข้อ graft) — เช็ค [CHANGELOG](https://github.com/nanonets/graft/blob/main/CHANGELOG.md) ของ graft ก่อนอัปเกรดถ้ากังวลเรื่อง breaking change
+> ถ้าเวอร์ชันใหม่เปลี่ยนรูปแบบกราฟ/wiring format ให้รัน `graft build` ซ้ำในแต่ละโปรเจกต์ที่ใช้งานอยู่ (ดู [[mcp-servers]] หัวข้อ graft) — เช็ค [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) ของ graft ก่อนอัปเกรดถ้ากังวลเรื่อง breaking change (repo ย้ายมาที่ `trailhq/Graft` แล้ว — ดู [[mcp-servers]])
 
 ---
 
