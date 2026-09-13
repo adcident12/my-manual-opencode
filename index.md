@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-11
-summary: Home page คู่มือการติดตั้งและใช้งาน OpenCode CLI พร้อม MCP servers และ Plugins สำหรับ vibe coding
+updated: 2026-09-13
+summary: Home page คู่มือการติดตั้งและใช้งาน OpenCode CLI พร้อม MCP servers, Plugins และ Skills (Agent Skills open standard) สำหรับ vibe coding
 ---
 
 # OpenCode — Vibe Coding Setup
@@ -21,6 +21,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **Model สำรอง (เร็ว)** | `opencode/deepseek-v4-flash-free` — built-in ของ OpenCode เอง ไม่ต้องตั้ง API key เพิ่ม ตอบเร็ว (~10 วินาที) |
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), memory (จำ context ข้าม session), sonarqube (code quality/security — self-hosted ผ่าน Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — ปิดไว้จนกว่าจะมี PAT), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
 | **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-rebuild graph + auto-inject context), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
+| **Skills** (Agent Skills open standard, ไม่ใช่ plugin) | grill-me / grilling (จาก mattpocock/skills) — batch-interview สัมภาษณ์ผู้ใช้เป็นรอบก่อนเริ่มงาน ผูกเข้ากับ `brainstorming` ของ superpowers ไม่ให้ชนกัน |
 | **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (เขียนอัตโนมัติโดย `od mcp install`) |
 
 ---
@@ -30,7 +31,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 - [[sdlc]] — ภาพรวม Software Development Life Cycle ทั้ง 7 กระบวนการ พร้อมชี้ว่าคู่มือนี้ครอบคลุม phase ไหนบ้าง (และช่องว่างที่ยังไม่มี)
 - [[setup]] — คู่มือติดตั้งแบบละเอียด ตั้งแต่**เครื่องเปล่า**ที่ยังไม่มี Node.js/Git จนถึงต่อ provider/MCP/plugin ครบ
 - [[mcp-servers]] — รายละเอียด MCP server แต่ละตัว ขั้นตอนติดตั้ง config และวิธีทดสอบ
-- [[plugins]] — superpowers, custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น)
+- [[plugins]] — superpowers, grill-me/grilling (batch-interview skill เสริม superpowers), custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น)
 - [[USER-MANUAL]] — วิธีใช้งานจริงวันต่อวัน: vibe coding, graft workflow, OpenDesign workflow
 - [[gotchas]] — ปัญหาที่เจอจริง 8 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, reasoning model output cap, ฯลฯ)
 - [[updating]] — วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว

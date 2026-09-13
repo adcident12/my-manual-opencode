@@ -12,7 +12,7 @@
 | [sdlc.md](sdlc.md) | ภาพรวม Software Development Life Cycle ทั้ง 7 กระบวนการ พร้อมชี้ว่าคู่มือนี้ครอบคลุม phase ไหนบ้าง |
 | [setup.md](setup.md) | **เริ่มที่นี่ถ้ายังไม่ได้ติดตั้งอะไรเลย** — Node.js, Git, OpenCode CLI, provider, MCP, plugin ครบทุกขั้นตอน |
 | [mcp-servers.md](mcp-servers.md) | รายละเอียด MCP server แต่ละตัว (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) พร้อมขั้นตอนติดตั้งเฉพาะตัว |
-| [plugins.md](plugins.md) | superpowers, custom plugin `graft-deep`, `ponytail` (โค้ดเต็ม + Plugin Hook API ของ OpenCode) และ `i-have-adhd` (สไตล์การตอบแบบตรงประเด็น) |
+| [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (batch-interview skill เสริม superpowers), custom plugin `graft-deep`, `ponytail` (โค้ดเต็ม + Plugin Hook API ของ OpenCode) และ `i-have-adhd` (สไตล์การตอบแบบตรงประเด็น) |
 | [USER-MANUAL.md](USER-MANUAL.md) | วิธีใช้งานจริงวันต่อวัน — vibe coding, graft workflow, OpenDesign → OpenCode workflow |
 | [gotchas.md](gotchas.md) | ปัญหาที่เจอจริง 8 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, native module ABI mismatch, reasoning model output cap, ฯลฯ) |
 | [updating.md](updating.md) | วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว |
@@ -22,6 +22,7 @@
 - **OpenCode CLI** + self-hosted/cloud model provider
 - **MCP servers**: context7, playwright, chrome-devtools, [graft](https://github.com/nanonets/graft) (code-graph), [OpenDesign](https://github.com/nexu-io/open-design), memory (persistent context), [SonarQube](https://github.com/SonarSource/sonarqube-mcp-server) (code quality/security, self-hosted), [Trivy](https://github.com/aquasecurity/trivy-mcp) (vulnerability/secret/misconfig scan, standalone CLI), [GitHub](https://github.com/github/github-mcp-server) (issues/PR), postgres/mysql
 - **Plugins**: [superpowers](https://github.com/obra/superpowers) (skill library) + custom `graft-deep` plugin + [ponytail](https://github.com/dietrichgebert/ponytail) (code minimization ruleset) + [i-have-adhd](https://github.com/ayghri/i-have-adhd) (terse, action-first output style)
+- **Skills (Agent Skills open standard, ไม่ใช่ plugin)**: [grill-me / grilling](https://github.com/mattpocock/skills) — batch-interview เสริม `brainstorming` ของ superpowers
 
 ---
 

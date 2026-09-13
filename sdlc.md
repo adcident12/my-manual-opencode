@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, sdlc, opencode, reference, overview]
-updated: 2026-09-11
+updated: 2026-09-13
 summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 7 กระบวนการ อธิบายสำหรับผู้อ่านทั่วไป พร้อมลิงก์ไปยังส่วนที่คู่มือ OpenCode นี้ implement จริงในแต่ละ phase, ระบุชัดว่าส่วนไหนยังไม่ครอบคลุม และแนะนำเครื่องมือ/MCP ที่ควรเพิ่มเพื่อปิดช่องว่างแต่ละ phase (ยังไม่ได้ติดตั้งจริง)
 ---
 
@@ -30,6 +30,8 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 
 > [!tip] มีอยู่บางส่วนในคู่มือนี้ แต่ปิดไว้
 > [[mcp-servers#github — จัดการ issues/PR/code search ผ่าน structured tool (ปิดไว้ก่อน จนกว่าจะมี token)|github MCP]] รองรับ issues/PR ได้ แต่ตั้ง `enabled: false` ไว้จนกว่าจะมี Personal Access Token — ตอนนี้ยังไม่ active จริง นับเป็น partial coverage เท่านั้น
+>
+> ส่วนการเก็บ requirement ผ่านบทสนทนา (ไม่ใช่ backlog tool) มี [[plugins#grill-me / grilling — batch-interview skill (เสริม superpowers, ไม่ใช่ plugin)|grill-me / grilling]] ช่วยได้ — สัมภาษณ์แบบ batch เป็นรอบจนตกผลึกว่าฟีเจอร์ต้องทำอะไรบ้าง แต่จบแค่บทสนทนา ไม่มี ticket/trace กลับไปยัง requirement เหมือน backlog tool จริง
 
 ---
 
@@ -38,7 +40,7 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 แปล requirement เป็นพิมพ์เขียวทางเทคนิค แบ่งเป็น 2 ระดับ: **system/architecture design** (เลือก stack, ออกแบบ database schema, API contract) กับ **UI/UX design** (mockup, prototype, design system)
 
 > [!tip] มีเฉพาะฝั่ง UI/UX
-> [[mcp-servers#open-design — ดึงไฟล์จากโปรเจกต์ OpenDesign|open-design MCP]] + workflow เต็มที่ [[USER-MANUAL#5. สร้างเว็บไซต์ด้วย OpenDesign แล้วดึงมาต่อใน opencode]] ครอบคลุมการออกแบบ/สร้างต้นแบบหน้าเว็บได้ดี — แต่ system/architecture design (schema, API contract) ยังไม่มีเครื่องมือเฉพาะ อาศัย `writing-plans` skill ของ [[plugins#superpowers — skill library|superpowers]] ช่วยได้บางส่วนในระดับ implementation plan เท่านั้น ไม่ใช่ design doc เต็มรูปแบบ
+> [[mcp-servers#open-design — ดึงไฟล์จากโปรเจกต์ OpenDesign|open-design MCP]] + workflow เต็มที่ [[USER-MANUAL#5. สร้างเว็บไซต์ด้วย OpenDesign แล้วดึงมาต่อใน opencode]] ครอบคลุมการออกแบบ/สร้างต้นแบบหน้าเว็บได้ดี — แต่ system/architecture design (schema, API contract) ยังไม่มีเครื่องมือเฉพาะ อาศัย `writing-plans` skill ของ [[plugins#superpowers — skill library|superpowers]] ช่วยได้บางส่วนในระดับ implementation plan เท่านั้น ไม่ใช่ design doc เต็มรูปแบบ — ขั้นตอนก่อนหน้านั้น (เก็บ requirement/ตัดสินใจให้ตกผลึกก่อนเขียนแผน) เร็วขึ้นได้ด้วย [[plugins#grill-me / grilling — batch-interview skill (เสริม superpowers, ไม่ใช่ plugin)|grill-me / grilling]] ซึ่งผูกอยู่กับ `writing-plans`/`brainstorming` ตัวเดียวกัน
 
 ---
 
@@ -48,6 +50,7 @@ summary: ภาพรวม Software Development Life Cycle (SDLC) ทั้ง 
 
 > [!tip] จุดแข็งที่สุดของคู่มือนี้
 > - [[plugins#superpowers — skill library|superpowers]] — บังคับ workflow ที่ดี (brainstorming, systematic-debugging, executing-plans, subagent-driven-development ฯลฯ)
+> - [[plugins#grill-me / grilling — batch-interview skill (เสริม superpowers, ไม่ใช่ plugin)|grill-me / grilling]] — เสริม `brainstorming` ด้วยการถามคำถามชี้แจงเป็น batch (เร็วกว่าถามทีละข้อ สำคัญกับ local model ที่แต่ละ turn ช้า) หรือใช้เดี่ยวๆ สัมภาษณ์ไอเดียแบบไม่ implement
 > - [[plugins#graft-deep — custom plugin (auto-rebuild + auto-inject context)|graft-deep]] + [[mcp-servers#graft — code-graph / context retrieval (per-project)|graft MCP]] — auto-rebuild code graph และ inject context ที่เกี่ยวข้องให้อัตโนมัติ
 > - [[plugins#ponytail — code minimization ruleset|ponytail]] — คุมไม่ให้ agent เขียนโค้ดเกินจำเป็น
 > - [[plugins#i-have-adhd — บังคับตอบตรงประเด็น ไม่อ้อมค้อม|i-have-adhd]] — คุมสไตล์การตอบให้ตรงประเด็น (opt-in)

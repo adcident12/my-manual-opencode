@@ -1,7 +1,7 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-11
-summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft และ OpenDesign
+updated: 2026-09-13
+summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft, grill-me/grilling และ OpenDesign
 ---
 
 # 📘 คู่มือการใช้งาน OpenCode สำหรับ Vibe Coding
@@ -93,6 +93,9 @@ graph LR
 > [!note] Plugin i-have-adhd — ไม่อยู่ในวงจรต่อ turn ด้านบน (จงใจ)
 > ต่างจาก superpowers/graft-deep/ponytail ที่ทำงานอัตโนมัติทุก turn — i-have-adhd (ดู [[plugins]]) เป็น **opt-in ต่อ session**: ต้องพิมพ์ `/i-have-adhd` เองก่อนถึงจะเริ่มมีผล (เปลี่ยนแค่สไตล์การตอบให้ตรงประเด็น/ไม่อ้อมค้อม ไม่แตะ tool orchestration) เหมาะตอนต้องการคำตอบไว ไม่ต้องการคำอธิบายยาว — ปิดด้วย `stop adhd mode` เมื่อไหร่ก็ได้
 
+> [!note] Skill grill-me / grilling — ไม่ใช่ plugin แยก แต่ผูกกับโหนด C
+> ไม่ได้อยู่ในแผนภาพเป็นโหนดแยก เพราะเป็น skill (ไฟล์ `SKILL.md` เดี่ยวๆ ตาม Agent Skills open standard — ดู [[setup]]) ไม่ใช่ plugin แต่ทำงานที่โหนด C เดียวกับ superpowers: เมื่อ agent เลือก `brainstorming` สำหรับงานสร้างฟีเจอร์ใหม่ จะใช้ format คำถามแบบ batch ของ `grilling` แทนการถามทีละข้อ (หรือเรียก `grilling` เดี่ยวๆ ถ้าผู้ใช้แค่อยากสัมภาษณ์ตัวเอง ไม่ได้จะ implement ทันที) วิธีใช้จริงดูหัวข้อ 3 ด้านล่าง รายละเอียดการติดตั้ง/reconcile เต็มๆ ดูที่ [[plugins]]
+
 ---
 
 ## 2. เริ่มงานในโปรเจกต์ใหม่ — checklist
@@ -138,6 +141,38 @@ opencode run -m home-llamacpp/qwen3.8-27b "..."   # ระบุโมเดล�
 ```
 
 ระหว่างคุย agent จะเลือกใช้ tool เอง (context7 หา docs, playwright/chrome-devtools debug เบราว์เซอร์, graft เข้าใจโครงสร้างโค้ด) — ไม่ต้องสั่งเจาะจงว่า "ใช้ tool X" เว้นแต่อยากบังคับ
+
+### ใช้ grill-me / grilling ก่อนเริ่มฟีเจอร์ใหม่ (ถ้าติดตั้งไว้)
+
+ถ้าติดตั้ง skill `grill-me`/`grilling` ไว้แล้ว (วิธีติดตั้งที่ [[plugins]]) มี 2 วิธีเรียกใช้:
+
+**1. ให้สัมภาษณ์เดี่ยวๆ (ไม่ implement ทันที, ไม่มี spec file):**
+
+```
+grill me about <ไอเดีย/การตัดสินใจที่อยากทดสอบ>
+```
+
+**2. ปล่อยให้เกิดขึ้นเองตอนขอฟีเจอร์ใหม่ (ไม่ต้องพูดคำว่า grill เลย):**
+
+```
+ช่วยเพิ่ม <ฟีเจอร์> ให้หน่อย
+```
+
+ถ้าติดตั้ง `superpowers` ไว้ด้วย (ปกติเป็นคู่กัน) กรณีที่ 2 จะเรียก `brainstorming` ก่อนตามเกตหลักของมัน แล้ว**เอา format คำถามของ grilling มาใช้** (ถามเป็นชุด มีเลขข้อ มีคำแนะนำ `➡️` ต่อท้ายทุกข้อ) แทนที่จะถามทีละข้อ — สังเกตได้จาก:
+
+```
+❓ Q1 - <หัวข้อคำถาม>: <รายละเอียด/ตัวเลือก>
+➡️ <คำแนะนำ>
+
+---
+
+❓ Q2 - ...
+```
+
+ตอบเป็นตัวเลือก/ตัวอักษรสั้นๆ ได้เลย (เช่น `A A A A` หรือ `ตามแนะนำทั้งหมด`) — agent จะไม่เริ่มเขียนโค้ดจนกว่าจะตอบครบทุกข้อและ frontier ว่าง (ไม่มีคำถามค้าง)
+
+> [!info] ยืนยันแล้วว่าไม่ชนกัน
+> ทดสอบจริงแล้วว่าเรียก `grilling` เดี่ยวๆ กับปล่อยให้ `brainstorming` ยืม format ไปใช้ ทำงานถูกทางที่ต่างกันโดยไม่ชนกัน (ไม่ถามซ้อนสองรอบ, ไม่มี spec file โผล่มาตอนไม่ควรมี) รายละเอียดเต็มอยู่ที่ [[plugins]] หัวข้อ grill-me/grilling
 
 ---
 

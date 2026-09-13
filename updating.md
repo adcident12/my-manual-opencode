@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-11
-summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว
+updated: 2026-09-13
+summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins, grill-me/grilling skill และ OpenDesign แต่ละตัว
 ---
 
 # Updating & Upgrading
@@ -128,6 +128,24 @@ git -C ~/.config/opencode/vendor/i-have-adhd pull
 
 ---
 
+## grill-me / grilling skill (vendored SKILL.md, ไม่มี plugin manager คอยอัปเดต)
+
+ไม่ได้ติดตั้งผ่าน `plugin` array เลย (ดู [[plugins]]) — เป็นไฟล์ `SKILL.md` เปล่าๆ ที่ copy มาจาก [mattpocock/skills](https://github.com/mattpocock/skills) ไว้ที่ `~/.config/opencode/skills/grill-me/` และ `~/.config/opencode/skills/grilling/` **อัปเดตไม่ได้อัตโนมัติเลย** ต้องเช็ค diff กับต้นฉบับเองเป็นระยะ:
+
+```bash
+curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md
+curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md
+```
+
+เทียบกับไฟล์ที่มีอยู่ — ถ้าต้นทางมีการเปลี่ยนแปลง **อย่า copy ทับตรงๆ**: ไฟล์ `grilling/SKILL.md` ที่ใช้จริงถูกแก้จากต้นฉบับ 1 จุด (ย่อหน้าหา fact ให้ใช้ `graft ask` inline แทน "dispatch a sub-agent" — ดู [[plugins]]) ต้อง merge การแก้นี้กลับเข้าไปทุกครั้งที่อัปเดตจากต้นทาง ไม่งั้นจะเผลอ regress กลับไปพึ่ง subagent เหมือนเดิม
+
+> [!tip] ไม่ต้องรีสตาร์ท OpenCode
+> ต่างจาก plugin ที่โหลดตอน session เริ่มเท่านั้น — skill แบบไฟล์ถูกอ่านผ่าน native skill tool เรียกใช้ได้ทันทีหลังบันทึกไฟล์
+
+**ถอด:** ลบโฟลเดอร์ `~/.config/opencode/skills/grill-me/` และ `.../grilling/` ทิ้ง ถ้าเคยเขียนกฎ reconcile ไว้ใน global `AGENTS.md` (ดู [[plugins]]) อย่าลืมลบส่วนนั้นออกด้วย ไม่งั้น `brainstorming` จะยังพยายามอ้างอิง skill ที่ไม่มีอยู่แล้ว
+
+---
+
 ## graft-deep.js (custom plugin ที่เขียนเอง)
 
 ไม่มีต้นทางให้ "อัปเดต" เพราะเขียนเอง — ถ้าอยากปรับปรุง แก้ไฟล์ `~/.config/opencode/plugin/graft-deep.js` ตรงๆ ได้เลย (ดูโค้ดเต็มที่ [[plugins]]) ไม่ต้องรีสตาร์ทอะไรเพิ่มนอกจากเปิด session ใหม่ของ opencode
@@ -225,6 +243,7 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
 | ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
 | i-have-adhd | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
+| grill-me / grilling | ✅ ต้องเช็ค diff เอง (vendored, ไม่มี manager) | curl raw URL เทียบ แล้ว merge การแก้กลับ |
 | graft-deep.js | ➖ ไม่มีอัปเดต (เขียนเอง) | แก้ไฟล์ตรงๆ |
 | OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
 | sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |

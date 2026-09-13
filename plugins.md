@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-11
-summary: superpowers (skill library), graft-deep (custom plugin ที่เขียนเอง), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
+updated: 2026-09-13
+summary: superpowers (skill library), grill-me/grilling (batch-interview skill เสริม superpowers), graft-deep (custom plugin ที่เขียนเอง), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
 ---
 
 # Plugins
@@ -71,6 +71,137 @@ fatal: unable to access 'https://github.com/...': unable to get local issuer cer
 ```bash
 rm -rf ~/.cache/opencode/packages/<plugin-name>@git+https_
 ```
+
+---
+
+## grill-me / grilling — batch-interview skill (เสริม superpowers, ไม่ใช่ plugin)
+
+[mattpocock/skills](https://github.com/mattpocock/skills) เป็น community skill ของ Matt Pocock (Total TypeScript / AI Hero) แจกเป็นไฟล์ `SKILL.md` เดี่ยวๆ ตามมาตรฐานเปิด **Agent Skills** (สเปกเดียวกับที่ Claude Code ใช้ และ OpenCode รองรับ native โดยไม่ต้องดัดแปลง) — **ไม่ใช่ plugin** จึงไม่ต้องเพิ่มอะไรใน `plugin` array ของ `opencode.jsonc` เลย ดูกลไก skill แบบไฟล์เต็มๆ ที่ [[setup#Skill เดี่ยวๆ ตาม Agent Skills open standard (ไม่ใช่ plugin)|setup]]
+
+ทำงานเป็นคู่ 2 ไฟล์:
+
+- `grill-me` — entry point เฉยๆ (มี frontmatter field `disable-model-invocation: true` ซึ่งเป็นของเฉพาะ Claude Code — OpenCode ไม่รู้จัก field นี้ จะ **ignore เงียบๆ ไม่มีผลเสีย** ดู [[setup]]) แค่ forward ไปเรียก `grilling`
+- `grilling` — ตัว logic จริง: สัมภาษณ์ผู้ใช้แบบ "design tree" — ทุกการตัดสินใจแตกเป็นการตัดสินใจย่อย ถามเป็น**รอบ** (round) โดยยิงทุกคำถามที่พร้อมถามได้พร้อมกัน (เรียกว่า frontier) แต่ละข้อมีคำแนะนำคำตอบ (`➡️`) แนบมาด้วยเสมอ จบเมื่อไม่มีคำถามเหลือและผู้ใช้ยืนยันว่าเข้าใจตรงกันแล้ว
+
+> [!info] ต่างจาก `superpowers brainstorming` ยังไง
+> `brainstorming` (หัวข้อบน) ก็ถามคำถามชี้แจงเหมือนกัน แต่ถามทีละข้อ และสำหรับงาน bounded/architectural จะจบด้วยการเขียน spec file ที่ `docs/superpowers/specs/` — `grilling` ถามเป็น batch เร็วกว่า (ยิงหลายข้อพร้อมกันต่อรอบ) และไม่เขียนไฟล์อะไรเลย เหมาะกับ local model ที่แต่ละ turn ใช้เวลานาน (ยิ่งลดจำนวน turn ยิ่งดี) — ดูหัวข้อ "ผูกเข้ากับ superpowers brainstorming" ด้านล่างว่าทำไมต้องผูกสองตัวนี้เข้าด้วยกัน ไม่ปล่อยให้ชนกัน
+
+### ติดตั้ง (vendor ไฟล์ตรงๆ ไม่ผ่าน plugin manager)
+
+สร้าง 2 ไฟล์นี้ที่ **global skills folder** ของ OpenCode (ใช้ได้ทุกโปรเจกต์ทันที ไม่ต้องตั้งอะไรต่อ repo):
+
+```
+~/.config/opencode/skills/grill-me/SKILL.md
+~/.config/opencode/skills/grilling/SKILL.md
+```
+
+`~/.config/opencode/skills/grill-me/SKILL.md`:
+
+```markdown
+---
+name: grill-me
+description: A relentless interview to sharpen a plan or design.
+disable-model-invocation: true
+---
+
+Call the Skill tool with "grilling".
+```
+
+`~/.config/opencode/skills/grilling/SKILL.md` — เวอร์ชันที่ปรับสำหรับ setup นี้แล้ว (ดูหัวข้อ "ปรับให้เข้ากับ setup นี้" ถัดไปว่าต่างจากต้นฉบับตรงไหน):
+
+````markdown
+---
+name: grilling
+description: Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phrases.
+---
+
+Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
+
+Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
+
+Format a round like so:
+
+```
+❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+
+➡️ <your recommended answer>
+
+---
+
+❓ **Q2** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+
+➡️ <your recommended answer>
+```
+
+Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
+
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment (filesystem, tools, etc.), look it up yourself inline before asking the user anything you could find out yourself: if the project has a `graft/` index, run `graft ask "<question>"` first; otherwise fall back to grep or reading files directly. Do this synchronously while preparing each round — only dispatch a sub-agent for it if one is available and the lookup is heavy enough to warrant it. The _decisions_ are the user's: put each to them and wait.
+
+The session is done when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Do not act on it until the user confirms you have reached a shared understanding.
+````
+
+ไม่ต้องรีสตาร์ท OpenCode — skill แบบไฟล์โหลดผ่าน native skill tool เรียกใช้ได้ทันทีหลังบันทึกไฟล์ (ต่างจาก plugin ที่โหลดตอน session เริ่มเท่านั้น) ทดสอบเรียกตรงๆ ในเซสชันด้วยประโยคที่มีคำว่า "grill" เช่น `grill me about <ไอเดีย>`
+
+> [!note] ต้นฉบับไม่ได้ปรับแต่งอะไรอยู่ที่
+> - https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grill-me/SKILL.md
+> - https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/grilling/SKILL.md
+
+### ปรับให้เข้ากับ setup นี้ (สำคัญ — อย่าข้าม)
+
+ต้นฉบับของ `grilling` ใช้คำว่า "dispatch a sub-agent to find [a fact]" ตรงย่อหน้า "Finding facts is your job" — ถ้า workflow ของคุณพึ่ง subagent น้อย/execute inline เป็นหลัก (แบบ setup นี้) ควรแก้ย่อหน้านั้นให้ **หา fact เอง inline ก่อนเสมอ**: เรียก `graft ask` ถ้าโปรเจกต์มี graft index (ดู [[mcp-servers#graft — code-graph / context retrieval (per-project)|graft MCP]]) แล้วค่อย fallback เป็น grep/อ่านไฟล์ตรงๆ ถ้าไม่มี — dispatch sub-agent เฉพาะตอนมีให้ใช้จริงและงานหนักพอเท่านั้น (โค้ดบล็อกด้านบนเป็นเวอร์ชันที่แก้แล้ว)
+
+> [!tip] ทำไมต้องแก้
+> `graft`/subagent เป็นทางเลือก ไม่ใช่ทุก setup จะมีหรืออยากใช้เหมือนกัน ปรับ instruction ให้ตรงกับเครื่องมือ/สไตล์การทำงานจริงของคุณเสมอ แทนที่จะ copy ต้นฉบับตรงๆ ทุกครั้งที่อัปเดตจากต้นทาง ต้อง merge การแก้นี้กลับเข้าไปด้วย (ดู [[updating]])
+
+### ผูกเข้ากับ superpowers brainstorming (ต้องทำ ถ้าติดตั้ง superpowers ไว้อยู่แล้ว)
+
+`brainstorming` (หัวข้อบน) มี hard-gate ของตัวเองอยู่แล้ว: **"MUST use this before any creative work"** — ถ้าเพิ่ม `grilling` เข้าไปโดยไม่เขียนกฎ reconcile ไว้ก่อน จะได้ **เกตสองอันที่แย่งกันคุมจังหวะเดียวกัน** ("ก่อนเริ่มงานใหม่") ซึ่งกับโมเดลขนาดเล็ก/local เสี่ยงสูงที่จะเลือกผิดตัวหรือถามซ้อนกันสองรอบ
+
+วิธีแก้คือเขียนกฎไว้ใน **global** `~/.config/opencode/AGENTS.md` (ดู [[setup#AGENTS.md — instructions ระดับ global vs project|setup]] ว่าทำไมต้องเป็น global ไม่ใช่ project) ให้ `grilling` **เสริม** `brainstorming` แทนที่จะแข่งกัน:
+
+```markdown
+## Grill me — complements superpowers brainstorming, doesn't duplicate it
+
+This setup also runs the `superpowers` plugin. Its `brainstorming` skill is
+the primary gate before creative work (new features, new subsystems,
+behavior changes) — it already classifies scope, asks clarifying
+questions, proposes approaches, and for bounded/architectural work writes
+a spec under `docs/superpowers/specs/` before any implementation plan.
+Do not add a second gate on top of it: if brainstorming has already run
+(or is running) for a piece of work, do not also invoke `grilling` as a
+separate pre-check for that same work.
+
+Use `grilling` in exactly two situations instead:
+
+1. **Inside** brainstorming's "ask clarifying questions" step: instead of
+   asking one question at a time, batch the current frontier into
+   `grilling`'s round format — numbered questions with a recommended
+   answer each, resolved via the design-tree/frontier method — then fold
+   the answers back into the brainstorming flow. This is a formatting
+   upgrade to that one step, not a separate skill invocation cycle.
+2. **Standalone**, outside any SDD/brainstorming flow: when the user
+   explicitly wants to stress-test an idea or decision quickly (e.g. says
+   "grill me about X"), with no spec file produced — this is a
+   spike-level conversation, not project planning.
+
+When a `grilling` round needs a fact from the codebase rather than a
+user decision, look it up yourself inline before asking: if the project
+has a `graft/` index, run `graft ask "<question>"` first; otherwise fall
+back to grep or reading files directly. Only dispatch a sub-agent for it
+if one is available and the lookup is heavy enough to warrant it.
+```
+
+> [!warning] ทำไมต้องเป็น global ไม่ใช่ project AGENTS.md
+> ถ้าเขียนกฎนี้แค่ใน AGENTS.md ระดับโปรเจกต์ (ไฟล์ที่ `graft init` เขียนให้อัตโนมัติ — ดู [[mcp-servers]]) จะใช้ได้แค่ repo เดียว โปรเจกต์อื่นที่ยังไม่ได้รัน `graft init` หรือยังไม่มี `AGENTS.md` จะไม่มีกฎ reconcile นี้เลย ทำให้ `grilling` กลับไปชนกับ `brainstorming` เหมือนเดิมทันทีที่เปลี่ยนโปรเจกต์
+
+### ยืนยันแล้วว่าใช้งานได้จริง (ทดสอบสด 2 เคส)
+
+> [!info] ผลทดสอบจริงบนโปรเจกต์เกม browser เล็กๆ (local model, ไม่ใช่ cloud)
+> **เคส 1 — เรียก `grilling` ตรงๆ** ("grill me about ...") → โมเดลแยกออกได้เองว่าเป็น standalone case ไม่เรียก `brainstorming` เลย, หา fact ด้วย `graft ask` inline (ไม่มี subagent), ถามเป็น 2 รอบ (รวม 8 ข้อ) ตาม format ที่กำหนด, ไม่มี spec file ถูกสร้าง, รอคำสั่งเริ่มก่อนลงมือ, จบด้วย feature ที่ implement + browser-verify + commit สำเร็จ
+>
+> **เคส 2 — ขอฟีเจอร์ตรงๆ ไม่พูดคำว่า grill** ("ช่วยเพิ่ม... หน่อย") → โมเดลเรียก `brainstorming` ก่อนตามเกตหลัก, classify scope (bounded/architectural), สำรวจโค้ดด้วย graft, แล้ว**เอา format คำถามของ grilling มาใช้แทนการถามทีละข้อ** (ตรงตามกฎที่เขียนไว้ใน global AGENTS.md เป๊ะ — เห็นจาก reasoning trace ที่ quote ประโยคจากกฎนี้ตรงๆ) ไม่มีการเรียก `grilling` ซ้อนเป็น skill call ที่สอง ไม่มีการถามสองรอบซ้ำกัน จบด้วย implement + test + commit สำเร็จเช่นกัน (ไม่มี spec file เพราะ classify เป็น bounded)
+>
+> ทั้งสองเคสไม่มีการ dispatch subagent เลยตลอดทั้ง session ตรงกับที่ตั้งใจไว้
 
 ---
 

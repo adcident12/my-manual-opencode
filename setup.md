@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-11
-summary: คู่มือติดตั้ง OpenCode แบบละเอียดตั้งแต่เครื่องเปล่า — Node.js, Git, CLI, provider, MCP servers และ plugins ครบทุกขั้นตอน
+updated: 2026-09-13
+summary: คู่มือติดตั้ง OpenCode แบบละเอียดตั้งแต่เครื่องเปล่า — Node.js, Git, CLI, provider, MCP servers, plugins, skill แบบ Agent Skills open standard และ AGENTS.md (global vs project) ครบทุกขั้นตอน
 ---
 
 # Setup
@@ -286,6 +286,50 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 ```
 
 โครงสร้าง plugin ต้อง export ฟังก์ชัน async ที่รับ `{ directory }` แล้วคืน object ของ hooks — ตัวอย่างเต็มที่ [[plugins]] (graft-deep)
+
+### Skill เดี่ยวๆ ตาม Agent Skills open standard (ไม่ใช่ plugin)
+
+ไม่ใช่ของเสริมทุกตัวต้องมาจาก `plugin` array — บางอย่างเป็นแค่ไฟล์ `SKILL.md` เดี่ยวๆ ตามมาตรฐานเปิด **Agent Skills** (Anthropic เป็นคนเริ่ม ตอนนี้เป็น open standard ที่หลายเครื่องมือรองรับ รวม OpenCode) วางไฟล์ถูกที่ก็ใช้ได้เลย ไม่ต้องแก้ `opencode.jsonc`
+
+OpenCode มองหา skill จาก 3 ที่:
+
+| ตำแหน่ง | ใช้ได้กับ |
+| --- | --- |
+| `<project>/.opencode/skills/<name>/SKILL.md` | เฉพาะโปรเจกต์นั้น |
+| `~/.config/opencode/skills/<name>/SKILL.md` | ทุกโปรเจกต์ (global) |
+| `<project>/.claude/skills/<name>/SKILL.md` | compat กับ Claude Code (ใช้ไฟล์เดียวกันได้ทั้งสองเครื่องมือ) |
+
+โครงสร้างไฟล์ขั้นต่ำ:
+
+```markdown
+---
+name: my-skill
+description: อธิบายสั้นๆ ว่า skill นี้ใช้ตอนไหน (โมเดลใช้ข้อความนี้ตัดสินใจว่าจะเรียกเมื่อไหร่)
+---
+
+เนื้อหา instruction เต็มๆ ที่อยากให้ agent ทำตามเมื่อ skill นี้ถูกเรียก
+```
+
+> [!warning] ไม่ใช่ slash command อัตโนมัติ (ต่างจาก Claude Code)
+> Skill แบบนี้ **ไม่กลายเป็น `/my-skill` ให้พิมพ์ตรงๆ** ใน OpenCode — โมเดลเป็นคนตัดสินใจเองว่าจะเรียก skill ไหน โดยเทียบข้อความที่คุณพิมพ์กับ field `description` ของแต่ละ skill (ผ่าน native `skill` tool) ดังนั้น `description` ต้องเขียนให้ชัดพอที่โมเดลจะจับคู่ถูก — ถ้าอยากได้ความชัวร์ 100% แบบ slash command จริง ต้องสร้างเป็น custom command แยกที่ `.opencode/commands/<name>.md` แทน (ดู [OpenCode Commands docs](https://opencode.ai/docs/commands/))
+
+> [!note] Field ที่ OpenCode ไม่รู้จักจะถูก ignore เฉยๆ
+> Skill ที่ port มาจาก Claude Code บางตัวมี frontmatter field เฉพาะของ Claude Code เช่น `disable-model-invocation` — OpenCode รองรับแค่ `name`, `description`, `license`, `compatibility`, `metadata` เท่านั้น field อื่นที่ไม่รู้จักจะถูกข้ามไปเงียบๆ ไม่ error ไม่ต้องลบออกเองก่อนใช้
+
+ตัวอย่างการติดตั้งจริง (skill `grill-me`/`grilling` จาก mattpocock/skills, ผูกกับ superpowers) ดูที่ [[plugins]]
+
+### AGENTS.md — instructions ระดับ global vs project
+
+`AGENTS.md` คือไฟล์ instruction ที่ OpenCode อ่านทุก session (คล้าย system prompt เพิ่มเติม) มี 2 ระดับ:
+
+1. **Project** — ไล่จาก working directory ขึ้นไปหา `AGENTS.md` (หรือ `CLAUDE.md`) ในแต่ละ repo — ไฟล์นี้คือไฟล์ที่ `graft init --agents agents --no-global` เขียนให้อัตโนมัติต่อ repo (ดู [[mcp-servers#graft — code-graph / context retrieval (per-project)|mcp-servers]])
+2. **Global** — `~/.config/opencode/AGENTS.md` — ใช้กับ**ทุกโปรเจกต์** ไม่มี installer ตัวไหนสร้างไฟล์นี้ให้อัตโนมัติ ต้องสร้างเอง
+
+> [!info] ยืนยันจากการทดสอบจริง — ไฟล์ project และ global ถูกใช้ร่วมกัน ไม่ใช่เลือกไฟล์เดียว
+> ทดสอบจริงบนโปรเจกต์ที่มีทั้ง project-level `AGENTS.md` (จาก `graft init`) และ global `~/.config/opencode/AGENTS.md` (กฎ reconcile ของ grill-me/grilling — ดู [[plugins]]) พร้อมกัน — โมเดลอ้างอิงเนื้อหาจากทั้งสองไฟล์ได้ในเทิร์นเดียวกัน (เห็นตรงๆ จาก reasoning trace ที่ quote ประโยคจาก global AGENTS.md) สรุปคือ **กฎที่เขียนไว้ที่ global จะมีผลเสมอ ไม่ว่าจะมีไฟล์ project อยู่ด้วยหรือไม่**
+
+> [!tip] เมื่อไหร่ควรเขียนที่ global แทน project
+> เขียนที่ global เมื่อกฎนั้นควร apply "ทุกโปรเจกต์เสมอ" (เช่น วิธี reconcile skill สองตัวที่อาจชนกัน) เขียนที่ project เมื่อเป็นบริบทเฉพาะ repo นั้น (เช่น context graph ของ graft) — ตัวอย่างจริงที่ต้องเขียนที่ global ดูที่ [[plugins]] หัวข้อ grill-me/grilling
 
 ---
 
