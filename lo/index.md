@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-13
+updated: 2026-09-14
 summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ້ງແລະນຳໃຊ້ OpenCode CLI ພ້ອມ MCP servers, Plugins, ແລະ Skills (Agent Skills open standard) ສຳລັບ vibe coding
 ---
 
@@ -29,6 +29,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 ## 📖 ໜ້າ Wiki
 
 - [[sdlc]] — ພາບລວມ Software Development Life Cycle ທັງ 7 ຂະບວນການ ພ້ອມຊີ້ບອກວ່າຄູ່ມືນີ້ຄອບຄຸມ phase ໃດແດ່ (ແລະຊ່ອງຫວ່າງທີ່ຍັງບໍ່ມີ)
+- [[architecture]] — ເບິ່ງ stack ທັງໝົດຜ່ານ 4 layer ຕາມໜ້າທີ່ (Knowledge/Reasoning/Execution/Governance) ແທນທີ່ຈະຕາມກົນໄກທາງເທັກນິກ ໄວ້ຕອບວ່າເຄື່ອງມືໃໝ່ແຕ່ລະໂຕ "ຢູ່ layer ໃດ"
 - [[setup]] — ຄູ່ມືຕິດຕັ້ງແບບລະອຽດ ຕັ້ງແຕ່**ເຄື່ອງເປົ່າ**ທີ່ຍັງບໍ່ມີ Node.js/Git ຈົນເຖິງຕໍ່ provider/MCP/plugin ຄົບຖ້ວນ
 - [[mcp-servers]] — ລາຍລະອຽດ MCP server ແຕ່ລະໂຕ ຂັ້ນຕອນຕິດຕັ້ງ config ແລະວິທີທົດສອບ
 - [[plugins]] — superpowers, grill-me/grilling (batch-interview skill ເສີມ superpowers), custom plugin graft-deep (ໂຄ້ດເຕັມ + Plugin Hook API), ponytail (code-minimization ruleset) ແລະ i-have-adhd (ບັງຄັບຕອບກົງປະເດັນ)

@@ -12,6 +12,7 @@ Detalyadong gabay sa pag-setup at paggamit ng [OpenCode](https://opencode.ai/) C
 | --- | --- |
 | [index.md](index.md) | Buod ng buong stack na aktwal na ginagamit |
 | [sdlc.md](sdlc.md) | Buod ng lahat ng 7 phase ng Software Development Life Cycle, at kung alin sa mga ito ang saklaw ng manual na ito |
+| [architecture.md](architecture.md) | Ang buong stack sa pamamagitan ng 4 functional layer (Knowledge/Reasoning/Execution/Governance) sa halip na ayon sa technical mechanism |
 | [setup.md](setup.md) | **Magsimula dito kung wala pang naka-install** — Node.js, Git, OpenCode CLI, provider, MCP, plugins, bawat hakbang |
 | [mcp-servers.md](mcp-servers.md) | Detalye ng bawat MCP server (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) kasama ang sariling hakbang sa pag-install |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (isang batch-interview skill na dagdag sa superpowers), ang custom na `graft-deep` plugin, `ponytail` (buong source code + ang OpenCode Plugin Hook API), at `i-have-adhd` (maikli, diretso-sa-punto na istilo ng sagot) |

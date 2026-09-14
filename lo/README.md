@@ -12,6 +12,7 @@
 | --- | --- |
 | [index.md](index.md) | ພາບລວມ stack ທັງຫມົດທີ່ໃຊ້ຈິງ |
 | [sdlc.md](sdlc.md) | ພາບລວມ Software Development Life Cycle ທັງ 7 ຂະບວນການ ພ້ອມຊີ້ບອກວ່າຄູ່ມືນີ້ຄອບຄຸມ phase ໃດແດ່ |
+| [architecture.md](architecture.md) | ເບິ່ງ stack ທັງໝົດຜ່ານ 4 layer ຕາມໜ້າທີ່ (Knowledge/Reasoning/Execution/Governance) ແທນທີ່ຈະຕາມກົນໄກທາງເທັກນິກ |
 | [setup.md](setup.md) | **ເລີ່ມທີ່ນີ້ຖ້າຍັງບໍ່ໄດ້ຕິດຕັ້ງຫຍັງເລີຍ** — Node.js, Git, OpenCode CLI, provider, MCP, plugin ຄົບທຸກຂັ້ນຕອນ |
 | [mcp-servers.md](mcp-servers.md) | ລາຍລະອຽດ MCP server ແຕ່ລະໂຕ (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) ພ້ອມຂັ້ນຕອນຕິດຕັ້ງສະເພາະໂຕ |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (batch-interview skill ເສີມ superpowers), custom plugin `graft-deep`, `ponytail` (ໂຄ້ດເຕັມ + OpenCode Plugin Hook API) ແລະ `i-have-adhd` (ຮູບແບບຄຳຕອບແບບສັ້ນ ກົງປະເດັນ) |

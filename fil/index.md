@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-13
+updated: 2026-09-14
 summary: Home page ng OpenCode CLI setup at usage manual — saklaw ang MCP servers, Plugins, at Skills (Agent Skills open standard) para sa vibe coding
 ---
 
@@ -29,6 +29,7 @@ Itong set ng dokumento ay talaan ng aktwal, gumaganang setup — mula sa pag-ins
 ## 📖 Mga Wiki Page
 
 - [[sdlc]] — buod ng lahat ng 7 phase ng Software Development Life Cycle, kasama ang alin sa mga ito ang aktwal na saklaw ng manual na ito (at ang mga gap na wala pa)
+- [[architecture]] — ang buong stack sa pamamagitan ng 4 functional layer (Knowledge/Reasoning/Execution/Governance) sa halip na ayon sa technical mechanism, para masagot kung aling layer ang bagong tool
 - [[setup]] — detalyadong gabay sa pag-install, mula sa **walang laman na makina** na walang Node.js/Git, hanggang sa kumpletong naka-wire na provider/MCP/plugin
 - [[mcp-servers]] — detalye ng bawat MCP server: hakbang sa pag-install, config, at paano subukan ang bawat isa
 - [[plugins]] — superpowers, grill-me/grilling (batch-interview skill na dagdag sa superpowers), custom na plugin na graft-deep (buong source code + ang OpenCode Plugin Hook API), ponytail (code-minimization ruleset), at i-have-adhd (maikli, diretso-sa-punto na sagot)

@@ -12,6 +12,7 @@ A detailed setup and usage manual for [OpenCode](https://opencode.ai/) CLI — f
 | --- | --- |
 | [index.md](index.md) | Overview of the whole stack actually in use |
 | [sdlc.md](sdlc.md) | Overview of all 7 Software Development Life Cycle phases, and which ones this manual covers |
+| [architecture.md](architecture.md) | The whole stack viewed through 4 functional layers (Knowledge/Reasoning/Execution/Governance) instead of by technical mechanism |
 | [setup.md](setup.md) | **Start here if nothing is installed yet** — Node.js, Git, OpenCode CLI, provider, MCP, plugins, every step |
 | [mcp-servers.md](mcp-servers.md) | Details on each MCP server (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) with its own install steps |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin, `ponytail` (full source + the OpenCode Plugin Hook API), and `i-have-adhd` (terse, to-the-point reply style) |
