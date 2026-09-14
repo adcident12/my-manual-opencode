@@ -12,6 +12,7 @@
 | --- | --- |
 | [index.md](index.md) | ภาพรวม stack ทั้งหมดที่ใช้งานจริง |
 | [sdlc.md](sdlc.md) | ภาพรวม Software Development Life Cycle ทั้ง 7 กระบวนการ พร้อมชี้ว่าคู่มือนี้ครอบคลุม phase ไหนบ้าง |
+| [architecture.md](architecture.md) | มอง stack ทั้งหมดผ่าน 4 layer ตามหน้าที่ (Knowledge/Reasoning/Execution/Governance) แทนตามกลไกทางเทคนิค |
 | [setup.md](setup.md) | **เริ่มที่นี่ถ้ายังไม่ได้ติดตั้งอะไรเลย** — Node.js, Git, OpenCode CLI, provider, MCP, plugin ครบทุกขั้นตอน |
 | [mcp-servers.md](mcp-servers.md) | รายละเอียด MCP server แต่ละตัว (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) พร้อมขั้นตอนติดตั้งเฉพาะตัว |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (batch-interview skill เสริม superpowers), custom plugin `graft-deep`, `ponytail` (โค้ดเต็ม + Plugin Hook API ของ OpenCode) และ `i-have-adhd` (สไตล์การตอบแบบตรงประเด็น) |
