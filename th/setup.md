@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: คู่มือติดตั้ง OpenCode แบบละเอียดตั้งแต่เครื่องเปล่า — Node.js, Git, CLI, provider, MCP servers, plugins, skill แบบ Agent Skills open standard และ AGENTS.md (global vs project) ครบทุกขั้นตอน
 ---
 
@@ -108,7 +108,7 @@ Config หลักอยู่ที่ `~/.config/opencode/` — ใช้ **p
 - `opencode.jsonc` *(รองรับ comment — แนะนำใช้ไฟล์นี้เป็นหลักสำหรับตั้งค่าเอง)*
 
 > [!note] ทำไมอาจมี 2 ไฟล์
-> บาง MCP installer (เช่น `od mcp install`) จะสร้าง `opencode.json` แยกเองอัตโนมัติ ในขณะที่เราตั้งค่าอย่างอื่นไว้ที่ `opencode.jsonc` — ไม่ต้องแปลกใจถ้าเจอทั้งสองไฟล์อยู่ด้วยกัน OpenCode จะ merge ให้เองไม่มีปัญหา
+> บาง MCP installer (เช่น `od mcp install`) จะสร้าง `opencode.json` แยกเองอัตโนมัติ ในขณะที่เราตั้งค่าอย่างอื่นไว้ที่ `opencode.jsonc` — ไม่ต้องแปลกใจถ้าเจอทั้งสองไฟล์อยู่ด้วยกัน OpenCode จะ merge ให้เองไม่มีปัญหา แต่ตั้งแต่ OpenDesign 0.22 ให้ลบ `--daemon-url` ที่มันเขียนให้ออกด้วย — ดู [[mcp-servers]] หัวข้อ open-design
 
 สร้างไฟล์ตั้งต้นด้วยมือ (ถ้ายังไม่มี):
 

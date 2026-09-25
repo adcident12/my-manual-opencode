@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Detalyadong gabay sa pag-install ng OpenCode mula sa walang laman na makina — Node.js, Git, ang CLI, provider, MCP servers, plugins, Agent Skills open-standard skills, at AGENTS.md (global vs project), bawat hakbang
 ---
 
@@ -108,7 +108,7 @@ Mga config file na binabasa ng OpenCode (at pinagsasama kung mahigit isa):
 - `opencode.jsonc` *(may suporta sa comment — inirerekumenda bilang pangunahing manu-manong ini-edit na file)*
 
 > [!note] Bakit maaaring magkaroon ng 2 file
-> May ilang MCP installer (hal. `od mcp install`) na awtomatikong gumagawa ng hiwalay na `opencode.json`, habang inilalagay mo ang ibang setting sa `opencode.jsonc` — huwag magulat kung parehong file ang mahanap mo — pinagsasama ito ng OpenCode nang walang problema.
+> May ilang MCP installer (hal. `od mcp install`) na awtomatikong gumagawa ng hiwalay na `opencode.json`, habang inilalagay mo ang ibang setting sa `opencode.jsonc` — huwag magulat kung parehong file ang mahanap mo — pinagsasama ito ng OpenCode nang walang problema. Pero mula OpenDesign 0.22, tanggalin ang `--daemon-url` na isinusulat nito — tignan [[mcp-servers]], open-design.
 
 Gumawa ng starter file nang manu-mano (kung wala pa):
 

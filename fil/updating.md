@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Paano i-update/i-upgrade ang OpenCode CLI, MCP servers, plugins, ang grill-me/grilling skill, at OpenDesign, isa-isa
 ---
 
@@ -28,6 +28,13 @@ Saklaw: ang OpenCode CLI, graft (may awtomatikong fallback kung tinamaan ng `gra
 > - **Ang sonarqube Server container** — naka-skip by default, dahil kailangan nitong isara/tanggalin ang isang tumatakbong container. I-pass ang `--recreate-sonarqube` para gawin ito (mismong `docker inspect`-in muna ng script ang meron nang container, kaya ginagamit ang tunay na pangalan ng volumes sa halip na i-hardcode ito).
 > - **Trivy sa Linux/Ubuntu** — hindi kailanman nagpapatakbo ng `sudo` mismo (kakailanganin nito ng password); prine-print lang nito ang eksaktong command na dapat mong patakbuhin.
 > - **graft-deep.js** at **OpenDesign** — manu-manong sinulat / isang GUI auto-updater, ayon sa pagkakasunod-sunod. Ang script ay nagpe-print lang ng paalala; walang awtomatikong ii-update dito.
+
+> [!info] Inayos 2026-09-25 — ang port ng SonarQube, pag-quote ng argument, at ang index ng trivy
+> - **Pinapanatili ng `--recreate-sonarqube` ang host port ng dating container** (at mga named volume) sa halip na laging `9000` — default na `9001` kung wala pang container, dahil kadalasang may ibang service na gumagamit ng `9000` (tignan [[mcp-servers]], sonarqube). Subukan muna ang `--dry-run --recreate-sonarqube`: ipinapakita na nito ang eksaktong `docker run -p <port>:9000 -v …` na may totoong value.
+> - Sa Windows, ang mga npm shim lang (`opencode`, `graft`, `npm`) ang dumadaan sa shell; dati lahat ng command, kaya nahati sa espasyo ang `docker inspect --format '{{json .Mounts}}'` at tahimik na bumalik sa default ang paghahanap ng volume — tignan [[gotchas]] item 10.
+> - Ang pag-fail ng `trivy plugin update` dahil sa network (nasa github.io ang plugin index, na bina-block ng ilang network) ay ⚠️ warning na ngayon kung nagtagumpay pa rin ang `trivy plugin upgrade`, hindi ❌ failure.
+>
+> Pinapatakbo mula sa lokal na kopya (hal. `~/.config/opencode/scripts/update-opencode.mjs`)? Palitan ang kopyang iyon ng bagong [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs).
 
 ---
 
@@ -84,6 +91,9 @@ graft upgrade    # i-upgrade ang global install sa pinakabagong bersyon
 
 > [!warning] Baka kailangang i-rebuild ang graph pagkatapos mag-upgrade
 > Kung nagbago ang graph/wiring format ng bagong bersyon, i-run muli ang `graft build` sa bawat project na ginagamitan mo nito (tignan [[mcp-servers]], seksyong graft) — tignan ang [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) ng graft bago mag-upgrade kung nag-aalala tungkol sa breaking changes (lumipat na sa `trailhq/Graft` ang repo — tignan [[mcp-servers]]).
+
+> [!important] Pagkatapos ng bawat graft upgrade, suriin din ang graft-deep
+> Kinokopya ng graft-deep ang injection gate mula sa sariling Claude Code hook ng graft, kaya maaaring baguhin ng isang graft release ang dapat gawin ng plugin — ginawa ito ng 0.19.0 (tignan [[plugins]], graft-deep → "Injection gate", na naglilista ng eksaktong mga file at `grep` command na ikukumpara). Mabilis na check na naglo-load pa ang mga dating graph: ang `graft check . --json` sa isang project ay dapat mag-ulat ng `"graph": { "ok": true }`.
 
 ---
 
@@ -169,16 +179,26 @@ Ihambing sa mga meron nang file — kung nagbago ang upstream, **huwag lang dire
 
 Walang upstream para "i-update" dito, dahil manu-mano itong sinulat — para pagbutihin ito, i-edit lang direkta ang `~/.config/opencode/plugin/graft-deep.js` (buong source code nasa [[plugins]]). Wala nang ibang kailangang i-restart maliban sa pagbukas ng bagong OpenCode session.
 
+Pero may dalawa pa rin itong kailangang sabayan:
+
+1. **graft** — ginagaya ng plugin ang sariling Claude Code prompt hook ng graft (ang gate na nagpapasya kung kailan mag-inject). Ikumpara pagkatapos ng bawat graft upgrade — tignan ang kahon sa ilalim ng graft sa itaas.
+2. **OpenCode** — umaasa ang plugin sa paraan ng pagtawag ng OpenCode sa `experimental.chat.messages.transform` (bagong load na mga message bawat step, tinatawag din sa compaction, synthetic parts). Kung baguhin ito ng bagong bersyon ng OpenCode, masisira ang mga palagay ng plugin — tignan [[plugins]], graft-deep → "Paano pinapatakbo ng OpenCode ang hook na ito", at [[gotchas]] item 9.
+
+Huling sinuri: graft 0.19.0 + OpenCode 1.18.32 (2026-09-25).
+
 ---
 
 ## OpenDesign (desktop app)
 
-Isang Electron app na may built-in na updater (auto-updater) — karaniwang chine-check nito mismo ang bagong bersyon kapag binubuksan ang app, walang extra na kailangang patakbuhin.
+Ina-update ang sarili sa pamamagitan ng sarili nitong launcher (mula 0.22) — chine-check nito ang bagong bersyon kapag binubuksan ang app, walang extra na kailangang patakbuhin.
 
-Para tignan mismo, pumunta sa **Settings → About** sa app (may "Check for updates" na button o katulad), o i-download ang pinakabagong installer direkta mula sa [GitHub Releases](https://github.com/nexu-io/open-design/releases) at i-install ito sa ibabaw ng meron na.
+Para tignan mismo, pumunta sa **Settings → About** sa app, o i-download ang pinakabagong installer direkta mula sa [GitHub Releases](https://github.com/nexu-io/open-design/releases).
 
-> [!warning] Pagkatapos mag-update, tignan ulit ang `od` shim (Windows lang)
-> Kung nagbago ang path ng `daemon-cli.mjs` matapos mag-update ang OpenDesign (hal. nagbago ang version folder), ang shim na binuo sa [[gotchas]], item 4, ay maaaring kailangang i-update ang path para tumugma sa bagong lokasyon — tignan gamit ang `od --help` kung gumagana pa rin ito nang tama pagkatapos mag-update.
+> [!note] Kung nasaan talaga ang tumatakbong bersyon (Windows)
+> Mula 0.22, tumatakbo ang bawat bersyon mula sa `%APPDATA%\Open Design\launcher\channels\stable\namespaces\release-stable-win\versions\<version>\payload\`; ang active ay ang `active.version` sa `runtime.json` katabi ng `versions\`. Nananatili sa unang na-install na bersyon ang orihinal na install folder sa ilalim ng `Programs`.
+
+> [!tip] Walang kailangang ayusin nang mano-mano pagkatapos ng update (Windows) — kung ang shim ay ang sumusunod-sa-bersyon
+> Binabasa ng `od.mjs` shim mula sa [[gotchas]] item 4 ang `runtime.json` sa bawat tawag, kaya kusa nitong sinusundan ang bawat update, at walang nakapirming port ang MCP config. Kumpirmahin gamit ang `od --help` at `opencode mcp list` (dapat connected ang open-design). Kung ang lumang shim na naka-hardcode sa iisang path pa rin ang gamit mo, palitan ito — patuloy nitong pinapatakbo ang lumang CLI.
 
 ---
 
@@ -199,13 +219,16 @@ docker pull sonarsource/sonarqube-mcp
 
 ### Bahagi 2 — ang SonarQube Server container (image na `sonarqube:community`)
 
+> [!note] Host port na `9001`, hindi `9000`
+> Kadalasang may ibang lokal na service nang gumagamit ng `9000`, kaya inilalathala ng setup na ito ang SonarQube sa host port na `9001` (`9000` pa rin sa panig ng container). Binabasa ng `update-opencode.mjs --recreate-sonarqube` ang port mula sa dating container, kaya pinapanatili nito ang talagang ginagamit mo.
+
 Isang service na dapat manatiling tumatakbo nang permanente ang container na ito (hindi spina-spawn per-use gaya ng MCP) — ang pag-update dito ay pag-pull ng bagong image at pagbuo ulit ng container. Walang mawawalang data dahil nakaimbak ito sa hiwalay na named volumes:
 
 ```bash
 docker pull sonarqube:community
 docker stop sonarqube
 docker rm sonarqube
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
@@ -218,7 +241,7 @@ Kumpirmahin na tumatakbo na talaga ang bagong bersyon matapos magtagumpay ang co
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-Pumunta sa **http://localhost:9000 → Administration → System** para kumpirmahin din ang version number mula sa web UI.
+Pumunta sa **http://localhost:9001 → Administration → System** para kumpirmahin din ang version number mula sa web UI.
 
 > [!danger] Maaaring masira kapag nilaktawan ang ilang major version nang sabay-sabay
 > Karaniwang isang major version lang bawat pagkakataon ang suportado ng SonarQube (gaya ng karamihan ng databases) para sa pag-upgrade. Kung matagal na itong naiwan at gusto mong i-update nang sabay-sabay sa maraming bersyon, palaging tignan muna ang [opisyal na Upgrade Guide](https://docs.sonarsource.com/sonarqube-server/upgrading/) — minsan kailangang mag-upgrade nang paisa-isa ayon sa pagkakasunod-sunod, hindi tumalon diretso sa pinakabagong bersyon.
@@ -244,6 +267,9 @@ trivy plugin update      # i-refresh muna ang plugin index
 trivy plugin upgrade     # i-upgrade ang mga naka-install na plugin (kasama ang mcp) sa pinakabagong bersyon
 ```
 
+> [!warning] Maaaring mag-fail ang `trivy plugin update` sa ilang network — maaaring gumana pa rin ang upgrade mismo
+> Nire-refresh lang ng `plugin update` ang plugin index, na nasa `aquasecurity.github.io`; nakitang nagta-timeout dito (2026-09-25). Nasuri pa rin ng `trivy plugin upgrade` ang sariling repo ng `mcp` plugin at kinumpirmang pinakabago ito (ipinapakita ng `trivy plugin list` ang bersyon). Iniuulat ito ng update script bilang warning, hindi failure.
+
 **3. Ang vulnerability database** — **auto-update ito mismo, walang kailangang gawin** — chine-check nito mismo ang kasariwaan ng DB sa bawat scan, awtomatikong nagdo-download ng bago kung masyadong luma na ang cache (kaiba sa 2 bahagi sa itaas na kailangan ng manu-manong command).
 
 > [!note] Walang "server" ang Trivy na kailangang i-update nang hiwalay
@@ -263,10 +289,10 @@ trivy plugin upgrade     # i-upgrade ang mga naka-install na plugin (kasama ang 
 | ponytail | ⚠️ Manu-mano (kung may naka-pin na bersyon ang lockfile) | tanggalin ang cache, pagkatapos i-restart |
 | i-have-adhd | ✅ Manu-mano (lokal na clone) | `git pull`, pagkatapos i-restart |
 | grill-me / grilling | ✅ Manu-manong pag-diff (vendored, walang manager) | i-curl ang raw URL, ihambing, i-merge pabalik ang ayos |
-| graft-deep.js | ➖ Walang pag-update (manu-manong sinulat) | i-edit direkta ang file |
-| OpenDesign | ❌ Awtomatiko (pero maaaring tingnan mismo) | via UI ng app |
+| graft-deep.js | ➖ Walang upstream (manu-manong sinulat) — pero ikumpara sa hook ng graft pagkatapos ng bawat graft upgrade | i-edit direkta ang file; tignan [[plugins]] |
+| OpenDesign | ❌ Awtomatiko (launcher auto-updater) | via UI ng app; kusang sinusundan ng `od.mjs` shim ang bagong bersyon |
 | sonarqube MCP wrapper (docker) | ⚠️ Manu-mano (hindi auto gaya ng npx) | `docker pull sonarsource/sonarqube-mcp` |
-| sonarqube Server (container) | ✅ Manu-mano | pull → stop → rm → recreate (panatilihin ang parehong volumes) |
+| sonarqube Server (container) | ✅ Manu-mano | pull → stop → rm → recreate (parehong volumes + parehong host port, `9001`) |
 | trivy CLI | ✅ Manu-mano | `winget upgrade AquaSecurity.Trivy` |
-| trivy plugin (mcp) | ✅ Manu-mano (hiwalay sa CLI) | `trivy plugin update && trivy plugin upgrade` |
+| trivy plugin (mcp) | ✅ Manu-mano (hiwalay sa CLI) | `trivy plugin update && trivy plugin upgrade` (maaaring mag-fail ang index refresh sa ilang network — gumagana pa rin ang upgrade) |
 | trivy vulnerability DB | ❌ Awtomatiko | — |

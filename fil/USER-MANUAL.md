@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Araw-araw na gabay sa paggamit ng OpenCode — vibe coding, ang graft workflow, grill-me/grilling, at ang OpenDesign workflow
 ---
 
@@ -364,7 +364,7 @@ Buong listahan may kasamang ayos nasa [[gotchas]] — maikling bersyon:
 
 - **Nagko-konekta ang isang external na tool sa opencode pagkatapos ay nag-ti-timeout** → tignan kung masyadong mabagal ang default na model (item 1 sa gotchas)
 - **Nag-set ng bagong env var/PATH pero hindi pa rin ito gumagana** → buong i-restart ang kaugnay na app, hindi lang isara ang window nito (item 2)
-- **Naka-connect ang `open-design` MCP pero hindi matawag ang tool** → tignan kung talagang tumatakbo ang daemon ng OpenDesign sa port 7456 (item 4)
+- **Naka-connect ang `open-design` MCP pero hindi matawag ang tool** → dapat simpleng `["od", "mcp"]` ang config, walang `--daemon-url` — mula OpenDesign 0.22, random na port ang gamit ng daemon, hindi 7456 (item 4)
 - **Ibang resulta ang parehong command sa magkaibang terminal** → subukan ang PowerShell sa halip ng Git Bash sa Windows (item 5)
 - **Naka-show na connected ang `sonarqube` MCP pero 401/403 ang resulta sa pagtawag ng tool** → tignan kung "User Token" ang ginagamit na token, hindi "Global/Project Analysis Token" (tignan [[mcp-servers]], seksyong sonarqube) — kinukumpirma lang ng connection check na naaabot ang server, hindi nito tinitignan ang permissions ng token sa oras na iyon
 - **Lumalabas ang `command not found` sa `trivy` kahit sinabi ng winget na matagumpay ang pag-install** → i-restart ang terminal (kailangang buong isara ang VS Code) — parehong PATH staleness gaya ng item 2 (tignan [[mcp-servers]], seksyong trivy)

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: รายละเอียด MCP server แต่ละตัวที่ตั้งไว้ใน OpenCode — ขั้นตอนติดตั้ง, config, วิธีทดสอบ, ข้อควรระวัง
 ---
 
@@ -187,34 +187,31 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
 
 1. ดาวน์โหลด **desktop app** จาก [open-design.ai](https://open-design.ai/) หรือ [GitHub Releases](https://github.com/nexu-io/open-design/releases) แล้วติดตั้งตามปกติ (แนะนำที่สุด — zero config ไม่ต้องมี Node/pnpm/clone เอง)
 
-2. **(เฉพาะ Windows)** ตัวติดตั้งมักไม่เพิ่ม `od` เข้า PATH ให้ ต้องสร้าง shim เอง — ดูขั้นตอนเต็มที่ [[gotchas]] ข้อ 4 (สรุปสั้นๆ: สร้างไฟล์ `~/AppData/Roaming/npm/od.cmd` ที่เรียกตัวแอปจริงผ่าน `ELECTRON_RUN_AS_NODE=1`)
+2. **(เฉพาะ Windows)** ตัวติดตั้งมักไม่เพิ่ม `od` เข้า PATH ให้ — และตั้งแต่ OpenDesign 0.22 แอปรันจากโฟลเดอร์ของ launcher ที่เปลี่ยนทุกครั้งที่อัปเดต ต้องสร้าง shim ที่ตามเวอร์ชันเอง: คัดลอก [`scripts/od.mjs`](../scripts/od.mjs) จาก repo นี้ไปไว้ที่ `~/.config/opencode/scripts/od.mjs` แล้วสร้าง `~/AppData/Roaming/npm/od.cmd` ที่เรียกไฟล์นั้น — ขั้นตอนเต็มและเหตุผลอยู่ที่ [[gotchas]] ข้อ 4
 
-3. เช็คว่า `od` ใช้งานได้แล้ว (**เปิด terminal ใหม่** หลังทำ step 2 เสมอ):
+3. เช็คว่า `od` ใช้งานได้แล้ว (**เปิด terminal ใหม่** หลังทำ step 2 เสมอ — และใช้ PowerShell เพราะใน Git Bash `od` คือ octal-dump ของ coreutils ดู [[gotchas]] ข้อ 5):
 
    ```bash
    od --help
    ```
 
-4. เชื่อมกับ OpenCode:
-
-   ```bash
-   od mcp install opencode
-   ```
-
-   คำสั่งนี้จะเขียน config ให้เองที่ `~/.config/opencode/opencode.json`:
+4. เชื่อมกับ OpenCode — **แก้ config เอง** ที่ `~/.config/opencode/opencode.json` **โดยไม่ใส่** `--daemon-url`:
 
    ```jsonc
    "open-design": {
      "type": "local",
-     "command": ["od", "mcp", "--daemon-url", "http://127.0.0.1:7456"],
+     "command": ["od", "mcp"],
      "timeout": 30000,
      "enabled": true
    }
    ```
 
-   แนะนำเพิ่ม `"timeout": 30000` เองถ้า `od mcp install` ไม่ใส่ให้ (ค่า default 5000ms อาจไม่พอตอน daemon ยังไม่ warm)
+   > [!warning] อย่าล็อก `--daemon-url http://127.0.0.1:7456` (ซึ่งเป็นสิ่งที่ `od mcp install opencode` เขียนให้)
+   > ตั้งแต่ 0.22 daemon ของ desktop app ฟังอยู่ที่ port สุ่ม URL ที่ล็อกไว้จึงได้ `MCP error -32000: Connection closed` แม้จะเปิดแอปอยู่ก็ตาม ถ้าไม่ใส่ flag นี้ `od mcp` จะถามแอปที่รันอยู่ว่าตอนนี้ daemon อยู่ URL ไหนผ่าน pipe ในเครื่อง `od.mjs` ตั้ง env var ที่ต้องใช้ให้อัตโนมัติ config ด้านบนจึงไม่มี port ตายตัวและไม่มีค่าเฉพาะเครื่องเลย (รายละเอียด: [[gotchas]] ข้อ 4 ขั้นที่ 4) shim `od.mjs` ใช้ได้เฉพาะ Windows — บน macOS/Linux ให้คัดลอก `command`/`env` ที่แอปคืนมาเองจาก `GET <daemon>/api/mcp/install-info` แทนการล็อก port
 
-5. **เปิดแอป OpenDesign ทิ้งไว้** (หรือรัน `od --no-open` แบบ headless) — MCP นี้เป็นแค่ stdio proxy ไปหา daemon ที่ `127.0.0.1:7456` ถ้าไม่มี daemon รันอยู่จะเชื่อมต่อไม่ได้เลย
+   คง `"timeout": 30000` ไว้ (ค่า default 5000ms อาจไม่พอตอน daemon ยังไม่ warm)
+
+5. **เปิดแอป OpenDesign ทิ้งไว้** — MCP นี้เป็น stdio proxy ไปหา daemon ของแอป ถ้าแอปปิดอยู่ `od mcp` ถูกออกแบบให้เปิดแอปแบบ headless เอง (ตาม `--help` ของมันเอง — ที่ทดสอบแล้วมีแค่กรณีเปิดแอปไว้)
 
 6. ทดสอบ:
 
@@ -222,7 +219,7 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
    opencode mcp list      # ควรเห็น open-design connected
    ```
 
-**MCP tools ที่ได้:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`
+**MCP tools ที่ได้:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`, `get_artifact`, `write_file`, `delete_file`, `create_project`, `delete_project`, `list_skills`, `list_plugins`, `list_agents`, `collect_brief`, `confirm_brief`, `start_run`, `get_run`, `cancel_run`, `start_vela_login`, `get_vela_login_status` (22 tool ณ OpenDesign 0.22.2)
 
 > [!warning] ปัญหาที่พบบ่อยบน Windows
 > ดูรายละเอียดเต็มที่ [[gotchas]] ข้อ 4 — ครอบคลุมทั้งปัญหา PATH และปัญหา native module ที่ shim ธรรมดาแก้ไม่ได้
@@ -321,12 +318,15 @@ docker version
 ### ขั้นตอนที่ 1 — รัน SonarQube Server container
 
 ```bash
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
   sonarqube:community
 ```
+
+> [!note] host port `9001` ไม่ใช่ `9000`
+> `9000` มักมี service อื่นในเครื่องใช้อยู่แล้ว setup นี้จึงเปิด SonarQube ที่ host port `9001` (ฝั่ง container ยังเป็น `9000`) `update-opencode.mjs --recreate-sonarqube` อ่าน port จาก container เดิม จึงคงค่าที่ใช้อยู่จริงไว้
 
 ใช้ named volume 3 ตัวให้ข้อมูล/extension/log อยู่ถาวรข้าม container restart — **ไม่ใส่ `--rm`** เพราะต้องการให้ container คงอยู่ถาวร ไม่ใช่แบบ ephemeral เหมือน MCP server
 
@@ -336,14 +336,14 @@ docker run -d --name sonarqube -p 9000:9000 \
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-ทดสอบว่าเว็บขึ้นแล้ว: เปิด **http://localhost:9000**
+ทดสอบว่าเว็บขึ้นแล้ว: เปิด **http://localhost:9001**
 
 > [!note] Embedded H2 database พอสำหรับใช้คนเดียว
 > SonarQube เตือนว่า "Embedded database should be used for evaluation purposes only" — สำหรับใช้งานคนเดียว/โปรเจกต์ส่วนตัวไม่มีปัญหา แต่ถ้าจะใช้กับทีมหรือ production จริงต้องเปลี่ยนไปต่อ PostgreSQL แยกตามเอกสารทางการของ SonarQube
 
 ### ขั้นตอนที่ 2 — Login ครั้งแรก + สร้าง User Token
 
-1. เข้า **http://localhost:9000** login ด้วย `admin` / `admin` (default) — ระบบบังคับตั้งรหัสผ่านใหม่ทันที
+1. เข้า **http://localhost:9001** login ด้วย `admin` / `admin` (default) — ระบบบังคับตั้งรหัสผ่านใหม่ทันที
 2. ไปที่ **My Account → Security**
 3. ที่ **Generate Tokens**: ตั้งชื่อ (เช่น `opencode-mcp`), Expires in `No expiration` (หรือกำหนดเองถ้าต้องการ)
 
@@ -373,7 +373,7 @@ docker logs sonarqube | grep "SonarQube is operational"
   ],
   "environment": {
     "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
-    "SONARQUBE_URL": "http://host.docker.internal:9000"
+    "SONARQUBE_URL": "http://host.docker.internal:9001"
   },
   "timeout": 30000,
   "enabled": true
@@ -383,7 +383,7 @@ docker logs sonarqube | grep "SonarQube is operational"
 จุดสำคัญที่ต่างจาก config ตัวอย่างทั่วไปในเอกสารของ SonarQube เอง:
 
 - **ใช้ full path ของ `docker.exe`** แทนชื่อ `docker` เปล่าๆ ตามเหตุผลใน prerequisite ด้านบน
-- **`SONARQUBE_URL` ต้องเป็น `http://host.docker.internal:9000`** ไม่ใช่ `http://localhost:9000` — เพราะตัว MCP server รันอยู่**ใน container แยก** `localhost` ข้างในนั้นหมายถึงตัว container เอง ไม่ใช่เครื่องจริง `host.docker.internal` คือ DNS พิเศษที่ Docker Desktop ให้มาเพื่อชี้กลับไปที่เครื่อง host เสมอ
+- **`SONARQUBE_URL` ต้องเป็น `http://host.docker.internal:9001`** ไม่ใช่ `http://localhost:9001` — เพราะตัว MCP server รันอยู่**ใน container แยก** `localhost` ข้างในนั้นหมายถึงตัว container เอง ไม่ใช่เครื่องจริง `host.docker.internal` คือ DNS พิเศษที่ Docker Desktop ให้มาเพื่อชี้กลับไปที่เครื่อง host เสมอ
 - `-e SONARQUBE_TOKEN` (ไม่มี `=value` ต่อท้าย) บอก Docker ให้ forward ค่าจาก environment ของ process ที่เรียก `docker run` (คือ opencode เอง) เข้า container — ทำงานคู่กับ `"environment"` block ด้านบนที่ resolve `{env:SONARQUBE_TOKEN}` ให้ opencode เห็นค่าจริงก่อนส่งต่อ
 
 **pre-pull image ก่อนใช้งานจริงครั้งแรก** (กัน timeout 30 วินาทีไม่พอตอนต้องดาวน์โหลด image ~500MB+):
@@ -397,7 +397,7 @@ docker pull sonarsource/sonarqube-mcp
 **ทดสอบ docker command ตรงๆ ก่อน** (แยกปัญหา MCP config ออกจากปัญหา docker/network):
 
 ```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9000 sonarsource/sonarqube-mcp
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9001 sonarsource/sonarqube-mcp
 ```
 
 ควรเห็น log แบบนี้ (รอ input อยู่เพราะเป็น stdio transport — ปกติ, กด Ctrl+C ออกได้):

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-14
+updated: 2026-09-25
 summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ້ງແລະນຳໃຊ້ OpenCode CLI ພ້ອມ MCP servers, Plugins, ແລະ Skills (Agent Skills open standard) ສຳລັບ vibe coding
 ---
 
@@ -22,7 +22,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (ດຶງໄຟລ໌ຈາກ project OpenDesign), memory (ຈື່ context ຂ້າມ session), sonarqube (code quality/security — self-hosted ຜ່ານ Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — ປິດໄວ້ຈົນກວ່າຈະມີ PAT), postgres/mysql (ປິດໄວ້ກ່ອນ ເປີດຕໍ່ project) |
 | **Plugins** | superpowers (skill library ຈາກ obra/superpowers), graft-deep (custom plugin — auto-inject context ຢ່າງດຽວແລ້ວ; auto-rebuild graph ເປັນຫນ້າທີ່ຂອງ graft CLI ເອງ), ponytail (ruleset ຫຼຸດຄວາມຍາວໂຄ້ດທີ່ບໍ່ຈຳເປັນ — ຈາກ dietrichgebert/ponytail), i-have-adhd (ບັງຄັບຕອບກົງປະເດັນ ບໍ່ອ້ອມແອ້ມ — ຈາກ ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, ບໍ່ແມ່ນ plugin) | grill-me / grilling (ຈາກ mattpocock/skills) — batch-interview ສຳພາດຜູ້ໃຊ້ເປັນຮອບກ່ອນເລີ່ມວຽກ ຜູກເຂົ້າກັບ `brainstorming` ຂອງ superpowers ບໍ່ໃຫ້ຂັດແຍ້ງກັນ |
-| **Config ຫຼັກ** | `~/.config/opencode/opencode.jsonc` (ຕັ້ງເອງ) + `~/.config/opencode/opencode.json` (ຂຽນອັດຕະໂນມັດໂດຍ `od mcp install`) |
+| **Config ຫຼັກ** | `~/.config/opencode/opencode.jsonc` (ຕັ້ງເອງ) + `~/.config/opencode/opencode.json` (entry ຂອງ open-design ແກ້ເອງ — **ບໍ່ແມ່ນ**ແບບ port ຕາຍຕົວທີ່ `od mcp install` ຂຽນໃຫ້ ເບິ່ງ [[mcp-servers]]) |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-14
+updated: 2026-09-25
 summary: Home page for the OpenCode CLI setup and usage manual, covering MCP servers, Plugins, and Skills (Agent Skills open standard) for vibe coding
 ---
 
@@ -22,7 +22,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (pulls files from an OpenDesign project), memory (context that persists across sessions), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — disabled until a PAT exists), postgres/mysql (disabled by default, enabled per project) |
 | **Plugins** | superpowers (skill library from obra/superpowers), graft-deep (custom plugin — auto-inject context only now; auto-rebuilding the graph is graft CLI's own job), ponytail (a ruleset that trims unnecessary code — from dietrichgebert/ponytail), i-have-adhd (forces terse, to-the-point replies — from ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, not a plugin) | grill-me / grilling (from mattpocock/skills) — a batch interview that questions the user in rounds before starting work, wired to superpowers' `brainstorming` so the two don't collide |
-| **Main config** | `~/.config/opencode/opencode.jsonc` (hand-written) + `~/.config/opencode/opencode.json` (auto-written by `od mcp install`) |
+| **Main config** | `~/.config/opencode/opencode.jsonc` (hand-written) + `~/.config/opencode/opencode.json` (open-design entry, hand-edited — **not** the fixed-port version `od mcp install` writes; see [[mcp-servers]]) |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-14
+updated: 2026-09-25
 summary: Home page คู่มือการติดตั้งและใช้งาน OpenCode CLI พร้อม MCP servers, Plugins และ Skills (Agent Skills open standard) สำหรับ vibe coding
 ---
 
@@ -22,7 +22,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), memory (จำ context ข้าม session), sonarqube (code quality/security — self-hosted ผ่าน Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — ปิดไว้จนกว่าจะมี PAT), postgres/mysql (ปิดไว้ก่อน เปิดต่อโปรเจกต์) |
 | **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-inject context; auto-rebuild graph เป็นของ graft CLI เองแล้ว), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, ไม่ใช่ plugin) | grill-me / grilling (จาก mattpocock/skills) — batch-interview สัมภาษณ์ผู้ใช้เป็นรอบก่อนเริ่มงาน ผูกเข้ากับ `brainstorming` ของ superpowers ไม่ให้ชนกัน |
-| **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (เขียนอัตโนมัติโดย `od mcp install`) |
+| **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (entry ของ open-design แก้เอง — **ไม่ใช่**แบบ port ตายตัวที่ `od mcp install` เขียนให้ ดู [[mcp-servers]]) |
 
 ---
 

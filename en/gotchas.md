@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows, with confirmed fixes (item 6 resolved by removing its cause, after discovering graft CLI's own built-in auto-refresh made the old hook redundant)
 ---
 
@@ -8,7 +8,7 @@ summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows,
 
 Overview at [[index]] · Setup at [[setup]]
 
-8 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
+10 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
 
 ---
 
@@ -71,13 +71,22 @@ Get-Command od -All -ErrorAction SilentlyContinue
 
 If nothing turns up (or you find Git Bash's coreutils `od.exe` — an octal-dump tool, a coincidental name collision), the OpenDesign installer failed to add it to PATH.
 
-### Step 2 — find the real CLI
+### Step 2 — find the real CLI (it moves once the app updates itself)
+
+Right after installing, the CLI sits in the install folder:
 
 ```
-<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs
+<LocalAppData>\Programs\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs
 ```
 
-### Step 3 — don't build a shim with the system `node` directly
+> [!warning] Since OpenDesign 0.22 the install folder is no longer the version that runs (found 2026-09-25)
+> The app now updates itself through its own launcher and runs each version from a separate folder:
+> ```
+> %APPDATA%\Open Design\launcher\channels\stable\namespaces\release-stable-win\versions\<version>\payload\
+> ```
+> The version currently in use is recorded in `...\release-stable-win\runtime.json` (`active.version`). The original install folder stays on the version you first installed — on the machine this was found on, it was still 0.20.0 while the app was running 0.22.2 (with 0.24.1 already downloaded). A shim hardcoded to the install folder keeps working, but silently runs an old CLI against a newer daemon.
+
+### Step 3 — don't run the CLI with the system `node` directly
 
 > [!danger] It'll break the moment it tries to actually run
 > Not at `--help`/`--print` — those look like they work! The error only shows up when the daemon tries to actually open the database:
@@ -90,32 +99,59 @@ If nothing turns up (or you find Git Bash's coreutils `od.exe` — an octal-dump
 
 Cause: the native module (`better-sqlite3`) is compiled for the Node/Electron ABI bundled with the app itself, not the system Node — so `--help`/`--print` (which never touch the DB) look perfectly fine, tricking you into thinking it's fixed.
 
-**The correct shim** (`~/AppData/Roaming/npm/od.cmd` — the same folder `opencode.cmd` lives in, already on PATH):
+**The correct shim — follows whichever version is active.** Two files:
 
-```cmd
-@echo off
-setlocal
-set ELECTRON_RUN_AS_NODE=1
-"<Program Files>\Open Design\Open Design.exe" "<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs" %*
-```
+1. [`scripts/od.mjs`](../scripts/od.mjs) from this repo → copy to `~/.config/opencode/scripts/od.mjs`. It reads `runtime.json`, then runs **that version's own** `Open Design.exe` with `ELECTRON_RUN_AS_NODE=1` and that version's `daemon-cli.mjs` (falling back to the install folder if there's no launcher runtime yet). The system `node` only runs this small launcher — the CLI itself still runs on the app's bundled Node/ABI, so the native-module problem above can't come back.
+2. `~/AppData/Roaming/npm/od.cmd` (the same folder `opencode.cmd` lives in, already on PATH):
+
+   ```cmd
+   @echo off
+   rem Follows OpenDesign's active launcher version - see %USERPROFILE%\.config\opencode\scripts\od.mjs
+   node "%USERPROFILE%\.config\opencode\scripts\od.mjs" %*
+   ```
+
+After every OpenDesign update the shim picks up the new version by itself — nothing to edit.
 
 `ELECTRON_RUN_AS_NODE=1` is Electron's standard flag for running the `.exe` as a plain Node CLI (using the Node/ABI bundled inside the app itself, instead of opening the GUI) — OpenDesign's own CLI even hints at this in `--help`: `"$OD_NODE_BIN" "$OD_BIN" tools ...` — "avoids relying on user PATH for od or node."
 
-### Step 4 — the daemon needs to be running too
+> [!note] The previous shim (one version hardcoded) — kept for reference
+> ```cmd
+> @echo off
+> setlocal
+> set ELECTRON_RUN_AS_NODE=1
+> "<Program Files>\Open Design\Open Design.exe" "<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs" %*
+> ```
+> Correct for OpenDesign ≤ 0.20, but silently stuck on the old version once the launcher starts updating the app (Step 2).
 
-`od mcp` is just a stdio proxy to the daemon at `127.0.0.1:7456`, not a self-contained server — with no daemon running, you get `MCP error -32000: Connection closed`.
+### Step 4 — the daemon's port is no longer fixed: don't pin `--daemon-url`
 
-Check whether the daemon is running:
+> [!warning] Since 0.22 the desktop app's daemon uses a random port, not 7456
+> The packaged app starts its daemon with `OD_PORT` hardcoded to `"0"` (any free port — e.g. `63621`), so there is no setting or env var to pin it. Nothing listens on `7456` any more, and a config with `od mcp --daemon-url http://127.0.0.1:7456` fails with `MCP error -32000: Connection closed` **even with the app open**.
+
+**The fix: run `od mcp` without `--daemon-url`** and let it find the daemon itself. Its lookup order: the `--daemon-url` flag → `OD_DAEMON_URL` → asking the app over its private sidecar pipe (`OD_SIDECAR_CLIENT_ENDPOINT`) → `127.0.0.1:7456`. The pipe route needs a few env vars — the same ones the app hands out itself at `GET <daemon>/api/mcp/install-info`:
+
+| Env var | Value | Purpose |
+| --- | --- | --- |
+| `OD_SIDECAR_CLIENT_ENDPOINT` | `\\.\pipe\open-design-sidecar-<hash>` | Ask the running app for its daemon's current URL |
+| `OD_DATA_DIR` | `%APPDATA%\Open Design\namespaces\release-stable-win\data` | The app's own data (same projects as the GUI) |
+| `OD_MCP_BOOTSTRAP_COMMAND` + `OD_MCP_BOOTSTRAP_ARGS` | the launcher `Open Design.exe` + `["--headless"]` | If the app is closed, `od mcp` starts it headless (no window) and waits for its daemon |
+
+The pipe name is `sha256(<Windows username> + channel/namespace/source/mode/app)` — no version, no PID — so it stays the same across app restarts **and** updates. `od.mjs` computes all four values and sets them for `od mcp` automatically (any value already set in the environment wins), so the OpenCode config needs no fixed port and nothing machine-specific — see [[mcp-servers]], open-design.
+
+> [!warning] `od mcp install opencode` from a terminal still writes the old fixed port
+> It asks the daemon at `127.0.0.1:7456` for the launch spec — which no longer answers — so it falls back to writing `--daemon-url http://127.0.0.1:7456`. Edit the config by hand as shown in [[mcp-servers]] instead.
+
+Check which port the daemon is on right now (PowerShell):
 
 ```powershell
-Get-NetTCPConnection -LocalPort 7456 -ErrorAction SilentlyContinue
+$d = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*daemon-sidecar*' }
+$port = (Get-NetTCPConnection -State Listen -OwningProcess $d.ProcessId).LocalPort
+Invoke-RestMethod "http://127.0.0.1:$port/api/health"            # {"ok":true,"version":"…"}
+Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's own MCP launch spec
 ```
 
-Start it headless if it's not running:
-
-```powershell
-od --no-open
-```
+> [!note] Headless start when the app is closed — from OpenDesign's own help, not tested here
+> `od mcp --help` states that a packaged install "starts the signed Open Design app in --headless mode when its daemon is stopped" and "re-discovers the registered runtime before calls". Only the app-open path was verified (2026-09-25); the simplest route is still to keep the OpenDesign app open.
 
 > [!tip] A debugging tool that helps a lot
 > The daemon's own log at `~/AppData/Roaming/Open Design/namespaces/release-stable-win/logs/daemon/latest.log` — short but to the point, showing the latest error/event far more clearly than guessing from a GUI toast.
@@ -179,3 +215,31 @@ od --no-open
 
 > [!warning] "Continue" doesn't resume the original generation
 > The chat completions API has no token-level resume mechanism — typing "continue" opens an entirely new request with the cut-off thinking passed in as context for the model to read and try to continue from, not literally picking up from the last token. For a reasoning model, it sometimes **rethinks everything from scratch** instead of continuing the original train of thought — wasting the first round's tokens for nothing. Raising the `output` ceiling up front is a better permanent fix than relying on "continue."
+
+---
+
+## 9. A plugin's `experimental.chat.messages.transform` edits vanish after one step — OpenCode doesn't save them
+
+**Impact:** graft-deep's injected context was seen by the model only on the first step of a turn. As soon as the agent called a tool, the next step's prompt no longer had it — found 2026-09-25 while updating the plugin for graft 0.19.0.
+
+**Cause:** OpenCode's prompt loop reloads every message from storage at the start of **each** step (`session/prompt.ts`), then calls the hook on that fresh copy. Anything the hook adds lasts for exactly one LLM call. The plugin had copied Claude Code's pattern (inject once, then skip the message), but a Claude Code `UserPromptSubmit` hook's output is written into the transcript permanently — OpenCode's transform output is not. The same hook is also called during compaction (`session/compaction.ts`) on older history.
+
+> [!important] Fix — treat the hook as "rebuild the prompt every time", not "edit the history once"
+> Compute what to inject once per message, cache it by message ID, and re-attach it on every call. Only run expensive work (like `graft ask`) when the **last** message is the user's, so compaction passes don't trigger it. Full code and the other OpenCode specifics (synthetic parts, async spawn): [[plugins]], graft-deep.
+
+> [!tip] Lesson
+> Two harnesses exposing a hook with a similar name doesn't mean the hooks behave the same. Read the host's source for where the hook is called and what happens to its output before porting behavior across.
+
+---
+
+## 10. `update-opencode.mjs` silently ignored the real SonarQube container settings on Windows
+
+**Impact:** `--recreate-sonarqube` always recreated the container with the default volume names and host port `9000`, whatever the existing container actually used — on a machine where SonarQube runs on `9001` (because `9000` is taken by another service), running it would have moved SonarQube back to `9000` and broken the MCP config pointing at `9001`.
+
+**Cause:** the script ran every command with `shell: true` on Windows (needed only for npm's `.cmd` shims). A shell joins arguments **without quoting**, so `docker inspect sonarqube --format '{{json .Mounts}}'` was split at the space and docker failed with `template parsing error: unclosed action` — the script then quietly fell back to its defaults.
+
+> [!important] Fix (in the current script)
+> `shell: true` only for the npm shims that need it (`opencode`, `graft`, `npm`); real `.exe` tools (`docker`, `git`, `winget`, `trivy`) run without a shell. The recreate step now reads both the named volumes **and** the host port from the existing container (default `9001` if there's no container), and `docker inspect` runs even under `--dry-run` so the preview shows the real values. See [[updating]].
+
+> [!tip] Lesson
+> A fallback that hides an error makes a bug invisible. Always preview with `--dry-run` first — it now prints the exact `docker run -p <port>:9000 -v …` it would use.

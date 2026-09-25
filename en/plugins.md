@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: superpowers (skill library), grill-me/grilling (a batch-interview skill complementing superpowers), graft-deep (a hand-written custom plugin), ponytail (a code-minimization ruleset), and i-have-adhd (forces terse, to-the-point replies) — how to install each, and OpenCode's Plugin Hook API
 ---
 
@@ -207,39 +207,83 @@ if one is available and the lookup is heavy enough to warrant it.
 
 ## graft-deep — custom plugin (auto-inject context)
 
-graft (see [[mcp-servers]]) has no "deep integration" for OpenCode — meaning automatically injecting relevant context into a prompt. This feature only exists for Claude Code (auto-rebuilding the graph after an edit is now graft CLI's own job for every agent — see the box below). This plugin ports the auto-inject behavior using graft's public CLI (`graft ask --json`) instead of importing an internal module — safer, and won't break when graft updates its version.
+graft (see [[mcp-servers]]) has no "deep integration" for OpenCode — auto-injecting relevant context into each prompt — that feature only ships for Claude Code (auto-rebuild after edits, meanwhile, is now done by the graft CLI itself for every agent; see the box below). This plugin ports the auto-inject behavior using graft's public CLI (`graft ask --json`) instead of importing internal modules — safer, and it doesn't break when graft updates.
 
-> [!info] Used to have an auto-rebuild hook too — removed (2026-09-13)
-> The first version of this plugin had a `tool.execute.after` hook that would debounce for 3 seconds then run `graft build` itself in the background after every file edit. Confirmed by a live test that this is **no longer necessary**: editing a file then immediately calling `graft ask`, with no manual `graft build` in between, printed `[graft] refreshed the graph (1 file changed) before answering` — meaning the current graft CLI already auto-refreshes the graph itself before answering any query (see [[mcp-servers]]). The removed hook wasn't just redundant — it was also the direct cause of the race condition documented in [[gotchas]], item 6. The cause was removed instead of just working around the symptom.
+> [!info] There used to be an auto-rebuild hook too — removed (2026-09-13)
+> The first version of this plugin had a `tool.execute.after` hook that debounced 3 seconds and then ran `graft build` in the background after every file edit. A live test confirmed that's **no longer needed**: editing a file and immediately calling `graft ask`, without running `graft build` at all, printed `[graft] refreshed the graph (1 file changed) before answering` — the current graft CLI auto-refreshes the graph before answering every query on its own (see [[mcp-servers]]). The removed hook wasn't just redundant — it was the cause of the race condition documented in [[gotchas]] item 6, so removing it removed the cause instead of patching the symptom.
+
+> [!info] Updated 2026-09-25 — graft 0.19.0's new injection gate + fixes for how OpenCode actually runs this hook
+> Two separate reasons, both verified against source code rather than guessed:
+> 1. **graft 0.19.0 changed its own injection rule** (the Claude Code hook this plugin ports) — details under "Injection gate" below.
+> 2. **The previous version was written as if OpenCode behaved like Claude Code — it doesn't.** Reading the OpenCode 1.18.32 source showed that edits made in `experimental.chat.messages.transform` are never saved, so the injected context disappeared from the second agent step onward. Details under "How OpenCode runs this hook" below.
 
 ### Install
 
-1. Put the file at `~/.config/opencode/plugin/graft-deep.js` (create the `plugin` folder yourself if it doesn't exist)
+1. Put the file at `~/.config/opencode/plugin/graft-deep.js` (create the `plugin` folder if it doesn't exist)
 2. Add that path to the `plugin` array in the global config
-3. Nothing extra needed per project — except `graft build` still needs to run once per repo as before (see [[mcp-servers]]). After that, graft keeps the graph fresh itself on every query; nothing needs to rebuild it anymore.
+3. No per-project setup needed — except `graft build`, which still has to run once per repo as before (see [[mcp-servers]]); after that, graft keeps the graph fresh itself every time it's queried, nothing else needs to rebuild it
+
+> [!note] Listed in the `plugin` array *and* sitting in the `plugin/` folder — it still loads only once
+> OpenCode auto-loads every `{plugin,plugins}/*.{ts,js}` in the config dir **and** everything in the `plugin` array, then de-duplicates by exact file URL (`deduplicatePluginOrigins` in `config/plugin.ts`). Confirmed with `opencode debug config`: `graft-deep.js` appears once.
 
 ### OpenCode Plugin Hook API used
 
-A plugin returns an object of hooks matching the `Hooks` type from `@opencode-ai/plugin` — just one is used here now:
+A plugin returns an object of hooks, typed as `Hooks` from `@opencode-ai/plugin` — the only one used here:
 
-| Hook | Fires when | What graft-deep does with it |
+| Hook | When it fires | What graft-deep does with it |
 | --- | --- | --- |
-| `experimental.chat.messages.transform` | Every agent step (not just once per turn — fires more often than you'd think) | Runs `graft ask` against the user's latest message → appends the top 3 results to the prompt if coverage passes a threshold |
+| `experimental.chat.messages.transform` | Before **every** LLM call — every agent step of a turn, and also during compaction | On the first step of a new user turn: runs `graft ask` once and caches the result by message ID. On every call: re-attaches every cached context to its message |
 
-Other hooks available but not used here: `tool.execute.before`, `tool.execute.after`, `chat.message`, `command.execute.before`, `session.compacting`, `event`, `tool.definition` — see the full types at `node_modules/@opencode-ai/plugin/dist/index.d.ts`.
+Other hooks are available but unused here: `tool.execute.before`, `tool.execute.after`, `chat.message`, `command.execute.before`, `session.compacting`, `event`, `tool.definition` — see the full types in `node_modules/@opencode-ai/plugin/dist/index.d.ts`
 
-### Key lessons learned while writing it (Windows-specific)
+### How OpenCode runs this hook (verified in the opencode 1.18.32 source)
 
-**1. `execFileSync('npx.cmd', args, {shell:false})` breaks on Windows** — throws `EINVAL` because Windows can't spawn a `.cmd` file directly without going through a shell.
+> [!important] Edits made in `messages.transform` are **temporary** — they last for one LLM call only
+> The prompt loop reloads every message from storage at the start of each step (`session/prompt.ts`, `MessageV2.filterCompactedEffect` inside the `while (true)` loop) and only then calls the hook. Whatever the hook adds is sent to the model once and then thrown away. This is the opposite of Claude Code, whose `UserPromptSubmit` hook output is written into the transcript permanently.
 
-**2. `shell:true` + concatenating a string yourself = a command-injection risk** — the prompt is free text from the user's chat message, going straight into a shell string is unsafe.
+What that meant for the previous version, and how this one handles it:
+
+| OpenCode behavior | Previous version | Now |
+| --- | --- | --- |
+| Messages are reloaded fresh every step | Injected on step 1, then `injected.has(key)` returned early on step 2+ → **the context vanished as soon as the agent called its first tool** | The pack is computed once per message, cached by message ID, and **re-attached on every call** — it stays visible on later steps and later turns, like Claude Code's transcript |
+| Compaction also calls this hook, on a copy of older history (`session/compaction.ts`) | Ran a pointless `graft ask` against an old message | `graft ask` runs only when the **last** message is the user's (the first step of a fresh turn); compaction just gets the cached contexts re-attached |
+| OpenCode's own reminders push `synthetic` text parts into the user message before the hook runs (`session/reminders.ts` — plan-mode prompts etc.) | That boilerplate was mixed into the graft query | The query uses only text parts that aren't `synthetic`/`ignored`; the injected part is itself marked `synthetic: true`, OpenCode's own convention |
+| Plugins run in the same process as the TUI | `crossSpawn.sync` froze OpenCode for up to 8 seconds | `graft ask` runs through an async `spawn` — the event loop keeps running |
+
+Side effects of re-attaching: the prompt prefix stays identical from step to step (prompt-cache friendly), and the "novelty" gate below becomes honest — a pointer already shown really is still in front of the model. The cache lives in memory: after restarting OpenCode, older messages lose their pack, and the novelty memory resets along with it, so the two stay consistent.
+
+### Injection gate (mirrors graft 0.19's own Claude Code hook)
+
+graft 0.19.0 replaced its single `coverage` threshold (this plugin used `0.12`; graft itself used `0.15`) after finding that a borderline pack "reads as orientation and suppresses the very retrieval call it should have triggered" (`dist/claude/format.js`). The plugin now uses the same two gates as graft's `relevantRetrieval`:
+
+1. **Strength** — a lexical result is injected only if the top hit matched a real symbol **name** (`coverageStrong ≥ 0.1`) or matched the query broadly (`coverage ≥ 0.5`). Otherwise, a one-line hint is injected instead, pointing at the graft tools — at most 2 times per session. Structural results (e.g. "who calls X") carry no coverage score and always pass — the previous version treated a missing `coverage` as `0` and silently dropped them.
+2. **Novelty** — hits whose `pointer` was already injected this session are dropped (the last 40 are remembered); if none are left, nothing is injected.
+
+A measured example (graft 0.19.0, a real Next.js repo): the prompt "who calls the api client" came back with `coverage 0.20`, `coverageStrong 0` — no hit matched a symbol name. The old `0.12` threshold would have injected those 3 unrelated hits; now it injects the hint instead. "where is createTicket defined" matched the symbol name and injected the pack.
+
+> [!tip] Re-checking after every graft upgrade
+> graft-deep has no upstream of its own, but it mirrors graft's hook, so compare it whenever graft changes version:
+> ```bash
+> G="$(npm root -g)/@nanonets/graft/dist"
+> grep -n "STRONG_FLOOR =\|HIGH_FLOOR =" "$G/ask/fuse.js"               # the two thresholds
+> grep -n "function relevantRetrieval" -A 25 "$G/claude/format.js"       # the gate itself
+> grep -n "'ask', prompt" "$G/claude/hooks.js"                           # the ask flags graft itself uses
+> graft ask --help                                                       # --json / -n still exist?
+> ```
+> Also check that `graft ask ... --json` still returns `hits[].title`, `hits[].pointer`, `coverage` and `coverageStrong` (`dist/ask/ask.d.ts`, `AskResult`).
+
+### Key lessons from writing it (Windows-specific)
+
+**1. `execFileSync('npx.cmd', args, {shell:false})` breaks on Windows** — throws `EINVAL`, because Windows can't spawn a `.cmd` file directly without going through a shell
+
+**2. `shell:true` + manually concatenated strings = command injection risk** — the prompt is free text from the user's chat message; splicing it straight into a shell string isn't safe
 
 > [!danger] Security
-> Never concatenate user-supplied free text into a shell command string, even with a hand-written escaping function — it's too easy to get wrong and usually doesn't cover every edge case.
+> Never splice free text from a user into a shell command string, even with a hand-written escape function — it's easy to get wrong and rarely covers every edge case
 
-**3. The correct fix** is `cross-spawn` (a dependency OpenCode already ships in its own `node_modules`), which handles Windows argv quoting correctly without going through a shell — imported dynamically only when `process.platform === 'win32'`. macOS/Linux just use Node's built-in `execFileSync` directly, since POSIX has no such problem — so this file has zero extra dependencies on non-Windows.
+**3. The correct approach** is `cross-spawn` (a dependency OpenCode already has in its own `node_modules`), which handles Windows argv quoting correctly without going through a shell — imported dynamically only when `process.platform === 'win32'`. macOS/Linux use Node's built-in `spawn` directly since POSIX doesn't have this problem, so this file has no extra dependency on non-Windows at all. Both have the same async API (`spawn`, not `.sync`), so the rest of the code doesn't care which one it got.
 
-### Full source
+### Full code
 
 ```js
 /**
@@ -255,96 +299,187 @@ Other hooks available but not used here: `tool.execute.before`, `tool.execute.af
  * The old debounced `graft build` hook here was therefore redundant, and
  * was the direct cause of the rebuild/ask race condition documented in
  * gotchas.md #6 — removing it fixes that race by removing its cause.
+ *
+ * Injection gate mirrors graft 0.19's own Claude prompt hook
+ * (dist/claude/format.js `relevantRetrieval`), which replaced the old
+ * single `coverage` floor:
+ *   1. strength — lexical results inject only if the top hit matched a
+ *      symbol NAME (`coverageStrong` >= STRONG_FLOOR) or matched the query
+ *      broadly (`coverage` >= HIGH_FLOOR); otherwise a short nudge is
+ *      injected instead (at most NUDGE_CAP per session). Structural results
+ *      carry no coverage score and always pass.
+ *   2. novelty — pointers already injected this session are dropped; if
+ *      none remain, nothing is injected.
+ *
+ * OpenCode specifics (verified against opencode v1.18.32 source):
+ * - `experimental.chat.messages.transform` edits are NOT persisted — the
+ *   prompt loop reloads messages from storage on every agent step
+ *   (session/prompt.ts). Claude Code keeps hook output in the transcript,
+ *   so to match that (and to keep the novelty gate honest and the prompt
+ *   prefix cache-stable) each message's context is computed once, cached by
+ *   message ID, and re-attached to that message on every call.
+ * - Compaction also fires this hook (session/compaction.ts) on older
+ *   history, so a new `graft ask` runs only when the last message is the
+ *   user's — i.e. the first step of a fresh turn.
+ * - OpenCode's own reminders push `synthetic` text parts into the user
+ *   message (plan mode etc.); those are excluded from the query.
  */
-import { execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
 const isWin = process.platform === 'win32';
 const MIN_PROMPT_CHARS = 12;
 const ASK_TIMEOUT_MS = 8000;
-const MIN_COVERAGE = 0.12;
+const STRONG_FLOOR = 0.1; // graft dist/ask/fuse.js
+const HIGH_FLOOR = 0.5; // graft dist/ask/fuse.js
+const PACK_CAP = 3;
+const NUDGE_CAP = 2;
+const INJECTED_POINTERS_CAP = 40;
 
 export const GraftDeepPlugin = async ({ directory }) => {
-  const crossSpawn = isWin ? (await import('cross-spawn')).default : null;
+  const spawnFn = isWin ? (await import('cross-spawn')).default : spawn;
 
-  const injected = new Set();
+  const contexts = new Map(); // messageID -> injected text, or null (asked, nothing to inject)
+  const sessions = new Map(); // sessionID -> { injectedPointers, nudges }
 
-  function graftAsk(prompt) {
-    const args = ['-y', '@nanonets/graft', 'ask', prompt, '.', '--json', '-n', '3'];
-    try {
-      if (isWin) {
-        const r = crossSpawn.sync('npx', args, { cwd: directory, encoding: 'utf8', timeout: ASK_TIMEOUT_MS });
-        if (r.error || r.status !== 0 || !r.stdout) return null;
-        return JSON.parse(r.stdout);
-      }
-      const out = execFileSync('npx', args, {
-        cwd: directory, encoding: 'utf8', timeout: ASK_TIMEOUT_MS,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
-      return JSON.parse(out);
-    } catch {
-      return null;
-    }
+  function sessionState(id) {
+    let s = sessions.get(id);
+    if (!s) sessions.set(id, (s = { injectedPointers: [], nudges: 0 }));
+    return s;
   }
 
-  function formatContext(result) {
+  // Async so a slow ask never blocks OpenCode's event loop (TUI, other sessions).
+  function graftAsk(prompt) {
+    const args = ['-y', '@nanonets/graft', 'ask', prompt, '.', '--json', '-n', String(PACK_CAP)];
+    return new Promise((resolve) => {
+      let out = '';
+      let child;
+      try {
+        child = spawnFn('npx', args, { cwd: directory, stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+      } catch {
+        return resolve(null);
+      }
+      const timer = setTimeout(() => {
+        child.kill();
+        resolve(null);
+      }, ASK_TIMEOUT_MS);
+      child.stdout.setEncoding('utf8');
+      child.stdout.on('data', (c) => (out += c));
+      child.on('error', () => {
+        clearTimeout(timer);
+        resolve(null);
+      });
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        try {
+          resolve(code === 0 && out ? JSON.parse(out) : null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  function weakMatchNudge(s, strong) {
+    if (s.nudges >= NUDGE_CAP) return null;
+    s.nudges += 1;
+    return `[graft] no strong match for this prompt (name-field match ${strong.toFixed(2)}) — the graph ` +
+      'has more than this probe found. Use the graft MCP tools (or `graft ask "<your task>" --source`) before grepping.';
+  }
+
+  function formatContext(result, s) {
     const hits = result?.hits;
     if (!Array.isArray(hits) || hits.length === 0) return null;
-    if ((result.coverage ?? 0) < MIN_COVERAGE) return null;
-    const lines = hits.map((h) => `- ${h.title} — ${h.pointer}`);
+
+    const lexical = typeof result.coverage === 'number' || typeof result.coverageStrong === 'number';
+    if (lexical) {
+      const strong = result.coverageStrong ?? 0;
+      const broad = result.coverage ?? 0;
+      if (strong < STRONG_FLOOR && broad < HIGH_FLOOR) return weakMatchNudge(s, strong);
+    }
+
+    const seen = new Set(s.injectedPointers);
+    const fresh = hits.filter((h) => !seen.has(h.pointer)).slice(0, PACK_CAP);
+    if (fresh.length === 0) return null;
+    s.injectedPointers = [...s.injectedPointers, ...fresh.map((h) => h.pointer)].slice(-INJECTED_POINTERS_CAP);
+
+    const lines = fresh.map((h) => `- ${h.title} — ${(h.pointer ?? '').split(',')[0].trim()}`);
     return `[graft] possibly relevant code for this request:\n${lines.join('\n')}\n(use the graft MCP tools for full detail if needed)`;
+  }
+
+  function attach(msg, text) {
+    msg.parts.push({
+      id: `${msg.info.id}-graft`,
+      messageID: msg.info.id,
+      sessionID: msg.info.sessionID,
+      type: 'text',
+      text,
+      synthetic: true,
+    });
   }
 
   return {
     'experimental.chat.messages.transform': async (_input, output) => {
       if (process.env.GRAFT_AUTO_CONTEXT === '0') return;
-      if (!output?.messages?.length) return;
+      const messages = output?.messages;
+      if (!messages?.length) return;
 
-      const lastUser = [...output.messages].reverse().find((m) => m.info.role === 'user');
-      if (!lastUser || !lastUser.parts.length) return;
+      // Fresh turn: the user's message is the last one (not a later agent step,
+      // not a compaction pass over older history). Ask graft once for it.
+      const last = messages[messages.length - 1];
+      if (last.info.role === 'user' && last.info.id && !contexts.has(last.info.id)) {
+        const text = last.parts
+          .filter((p) => p.type === 'text' && !p.synthetic && !p.ignored)
+          .map((p) => p.text)
+          .join(' ')
+          .trim();
+        if (text.length >= MIN_PROMPT_CHARS) {
+          contexts.set(last.info.id, null); // claim it; a failed ask is not retried
+          const result = await graftAsk(text);
+          if (result) contexts.set(last.info.id, formatContext(result, sessionState(last.info.sessionID || 'default')));
+        }
+      }
 
-      const text = lastUser.parts.filter((p) => p.type === 'text').map((p) => p.text).join(' ').trim();
-      if (text.length < MIN_PROMPT_CHARS) return;
-
-      const key = lastUser.info.id || text; // dedupe per message across agent steps
-      if (injected.has(key)) return;
-
-      const result = graftAsk(text);
-      const ctx = result && formatContext(result);
-      if (!ctx) return;
-
-      injected.add(key);
-      const ref = lastUser.parts[0];
-      lastUser.parts.push({ ...ref, type: 'text', text: ctx });
+      // Re-attach every cached context so it stays visible on later steps and turns.
+      for (const m of messages) {
+        if (m.info.role !== 'user') continue;
+        const ctx = contexts.get(m.info.id);
+        if (ctx) attach(m, ctx);
+      }
     },
   };
 };
 ```
 
-### How to turn it off temporarily if it's too slow
+### Temporarily disabling it if it's too slow
 
-The auto-inject-context part runs **synchronously (blocking)** on every new user message — if it feels slow on a local model, turn it off with an env var, no code changes needed:
+`graft ask` no longer blocks OpenCode (it's async now), but the first step of each new user turn still waits for it — at most 8 seconds, typically 2-3 (including `npx` startup). Later steps don't ask again. To turn it off without editing code, use an env var:
 
 ```bash
 GRAFT_AUTO_CONTEXT=0 opencode
 ```
 
-### How to test the plugin without waiting on a slow agent loop
+### Testing the plugin without waiting on a slow agent loop
 
-Call the hook function directly via a node script instead of waiting on the LLM (very useful while the model is slow):
+Call the hook function directly from a node script instead of going through the LLM (very useful when the model is slow). To test it the way OpenCode really runs it, give every step a **fresh copy** of the stored messages:
 
 ```js
 import { pathToFileURL } from "node:url";
 const { GraftDeepPlugin } = await import(pathToFileURL("<path-to-graft-deep.js>").href);
 const hooks = await GraftDeepPlugin({ directory: "<project-path>" });
+const transform = hooks["experimental.chat.messages.transform"];
 
-// test auto-inject context (the only hook there is now)
-const output = { messages: [{ info: { id: "msg1", role: "user" }, parts: [{ type: "text", text: "a real question" }] }] };
-await hooks["experimental.chat.messages.transform"]({}, output);
-console.log(output.messages[0].parts); // should have 2 parts if injection succeeded
+const storage = [{ info: { id: "u1", role: "user", sessionID: "S1" }, parts: [{ type: "text", text: "where is createTicket defined" }] }];
+const step = async () => { const msgs = structuredClone(storage); await transform({}, { messages: msgs }); return msgs; };
+
+console.log((await step())[0].parts.length);  // step 1 (asks graft): 2 if a pack/hint was injected
+storage.push({ info: { id: "a1", role: "assistant", sessionID: "S1" }, parts: [{ type: "text", text: "..." }] });
+console.log((await step())[0].parts.length);  // step 2 (after a tool call): still 2 — re-attached, no new graft call
 ```
 
-> [!info] There used to be a race-condition warning here — no longer relevant since removing the auto-rebuild hook
-> This plugin previously also had a `tool.execute.after` hook running `graft build` itself, which could collide with a test running `graft ask` at the same time (`graft ask` failing silently). That hook is now removed (see the box above), since graft CLI itself already auto-refreshes before answering any query — so this problem went away along with its cause. See [[gotchas]], item 6.
+On Windows, run it with `NODE_PATH` pointing at the folder that has `cross-spawn` (e.g. `NODE_PATH=~/.config/opencode/node_modules`), since the plugin imports it by name.
+
+> [!info] There used to be a race-condition warning here — no longer relevant since the auto-rebuild hook was removed
+> The plugin previously still had a `tool.execute.after` hook running `graft build` itself, so testing it alongside `graft ask` could collide (`graft ask` failing silently). That hook has now been removed (see the box above) since the graft CLI auto-refreshes before answering every query anyway, so this problem went away along with its cause — see [[gotchas]] item 6
 
 ---
 

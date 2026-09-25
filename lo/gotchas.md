@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ້ງຄ່າ OpenCode + MCP + Plugins ເທິງ Windows ພ້ອມວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ (ຂໍ້ 6 ໄດ້ຮັບການແກ້ໄຂແລ້ວໂດຍການຕັດສາເຫດຖິ້ມ ຫຼັງພົບວ່າ auto-refresh ໃນຕົວຂອງ graft CLI ເຮັດໃຫ້ hook ເດີມຊ້ຳຊ້ອນ)
 ---
 
@@ -8,7 +8,7 @@ summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ�
 
 ພາບລວມທີ [[index]] · ການຕັ້ງຄ່າທີ [[setup]]
 
-ລວມບັນຫາທີ່ພົບຈິງ 8 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
+ລວມບັນຫາທີ່ພົບຈິງ 10 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
 
 ---
 
@@ -71,16 +71,25 @@ Get-Command od -All -ErrorAction SilentlyContinue
 
 ຖ້າບໍ່ພົບຫຍັງເລີຍ (ຫຼືພົບ `od.exe` ຂອງ Git Bash's coreutils — octal dump tool ຄົນລະໂຕ ຊື່ຊົນກັນໂດຍບັງເອີນ) ແປວ່າຕົວຕິດຕັ້ງຂອງ OpenDesign ພາດບໍ່ໄດ້ເພີ່ມ PATH ໃຫ້
 
-### ຂັ້ນທີ 2 — ຫາ CLI ຈິງ
+### ຂັ້ນທີ 2 — ຫາ CLI ຈິງ (ຍ້າຍບ່ອນຢູ່ຫຼັງແອັບອັບເດດຕົນເອງ)
+
+ຫຼັງຕິດຕັ້ງໃໝ່ໆ CLI ຢູ່ໃນໂຟນເດີຕິດຕັ້ງ:
 
 ```
-<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs
+<LocalAppData>\Programs\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs
 ```
 
-### ຂັ້ນທີ 3 — ຢ່າສ້າງ shim ດ້ວຍ system `node` ໂດຍກົງ
+> [!warning] ຕັ້ງແຕ່ OpenDesign 0.22 ໂຟນເດີຕິດຕັ້ງບໍ່ແມ່ນເວີຊັນທີ່ແລ່ນແທ້ແລ້ວ (ພົບ 2026-09-25)
+> ຕອນນີ້ແອັບອັບເດດຕົນເອງຜ່ານ launcher ຂອງຕົນເອງ ແລະແລ່ນແຕ່ລະເວີຊັນຈາກໂຟນເດີແຍກ:
+> ```
+> %APPDATA%\Open Design\launcher\channels\stable\namespaces\release-stable-win\versions\<version>\payload\
+> ```
+> ເວີຊັນທີ່ໃຊ້ຢູ່ແທ້ບັນທຶກໄວ້ທີ່ `...\release-stable-win\runtime.json` (`active.version`) ສ່ວນໂຟນເດີຕິດຕັ້ງເດີມຄ້າງຢູ່ທີ່ເວີຊັນທຳອິດທີ່ຕິດຕັ້ງ — ເຄື່ອງທີ່ພົບບັນຫານີ້ຍັງເປັນ 0.20.0 ຢູ່ ຂະນະທີ່ແອັບແລ່ນ 0.22.2 (ແລະດາວໂຫຼດ 0.24.1 ລໍໄວ້ແລ້ວ) shim ທີ່ຊີ້ຕາຍຕົວໄປໂຟນເດີຕິດຕັ້ງຍັງໃຊ້ໄດ້ ແຕ່ແອບແລ່ນ CLI ເວີຊັນເກົ່າກັບ daemon ເວີຊັນໃໝ່ກວ່າຢູ່ງຽບໆ
 
-> [!danger] ຈະພັງຕອນພະຍາຍາມເປີດຈິງ
-> ບໍ່ແມ່ນຕອນ `--help`/`--print` ຊຶ່ງເບິ່ງຄືໃຊ້ໄດ້! error ຈະໂຜ່ມາສະເພາະຕອນ daemon ພະຍາຍາມເປີດ database ຈິງ:
+### ຂັ້ນທີ 3 — ຢ່າແລ່ນ CLI ດ້ວຍ system `node` ໂດຍກົງ
+
+> [!danger] ຈະພັງຕອນພະຍາຍາມເປີດແທ້
+> ບໍ່ແມ່ນຕອນ `--help`/`--print` ຊຶ່ງເບິ່ງຄືໃຊ້ໄດ້! error ຈະໂຜ່ສະເພາະຕອນ daemon ພະຍາຍາມເປີດ database ແທ້:
 >
 > ```
 > Error: The module '...\better_sqlite3.node' was compiled against a different
@@ -88,35 +97,64 @@ Get-Command od -All -ErrorAction SilentlyContinue
 > requires NODE_MODULE_VERSION 137.
 > ```
 
-ສາເຫດ: native module (`better-sqlite3`) compile ມາສຳລັບ Node/Electron ABI ທີ່ bundle ມາກັບຕົວແອັບ ບໍ່ແມ່ນ system Node
+ສາເຫດ: native module (`better-sqlite3`) compile ມາສຳລັບ Node/Electron ABI ທີ່ bundle ມາກັບໂຕແອັບ ບໍ່ແມ່ນ system Node — ເຮັດໃຫ້ `--help`/`--print` (ທີ່ບໍ່ແຕະ DB) ເບິ່ງຄືໃຊ້ໄດ້ປົກກະຕິ ຫຼອກໃຫ້ຄິດວ່າແກ້ແລ້ວ
 
-**shim ທີ່ຖືກຕ້ອງ** (`~/AppData/Roaming/npm/od.cmd`):
+**shim ທີ່ຖືກຕ້ອງ — ຕາມເວີຊັນທີ່ active ຢູ່ສະເໝີ** ມີສອງໄຟລ໌:
 
-```cmd
-@echo off
-setlocal
-set ELECTRON_RUN_AS_NODE=1
-"<Program Files>\Open Design\Open Design.exe" "<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs" %*
-```
+1. [`scripts/od.mjs`](../scripts/od.mjs) ຈາກ repo ນີ້ → ສຳເນົາໄປໄວ້ທີ່ `~/.config/opencode/scripts/od.mjs` ໂຕນີ້ອ່ານ `runtime.json` ແລ້ວແລ່ນ `Open Design.exe` **ຂອງເວີຊັນນັ້ນເອງ** ດ້ວຍ `ELECTRON_RUN_AS_NODE=1` ກັບ `daemon-cli.mjs` ຂອງເວີຊັນດຽວກັນ (ຖ້າຍັງບໍ່ມີ launcher runtime ຈະຖອຍໄປໃຊ້ໂຟນເດີຕິດຕັ້ງ) system `node` ພຽງແລ່ນ launcher ໂຕນ້ອຍນີ້ເທົ່ານັ້ນ — ໂຕ CLI ແທ້ຍັງແລ່ນເທິງ Node/ABI ທີ່ bundle ມາກັບແອັບ ບັນຫາ native module ຂ້າງເທິງຈຶ່ງບໍ່ກັບມາອີກ
+2. `~/AppData/Roaming/npm/od.cmd` (ໂຟນເດີດຽວກັບທີ່ `opencode.cmd` ຢູ່ ຢູ່ເທິງ PATH ແທ້ຢູ່ແລ້ວ):
 
-### ຂັ້ນທີ 4 — daemon ຕ້ອງແລ່ນຢູ່ນຳ
+   ```cmd
+   @echo off
+   rem Follows OpenDesign's active launcher version - see %USERPROFILE%\.config\opencode\scripts\od.mjs
+   node "%USERPROFILE%\.config\opencode\scripts\od.mjs" %*
+   ```
 
-`od mcp` ເປັນພຽງ stdio proxy ໄປຫາ daemon ທີ່ `127.0.0.1:7456` ຖ້າບໍ່ມີ daemon ແລ່ນຢູ່ຈະໄດ້ `MCP error -32000: Connection closed`
+ຫຼັງ OpenDesign ອັບເດດທຸກຄັ້ງ shim ຈະເອົາເວີຊັນໃໝ່ໄປໃຊ້ເອງ — ບໍ່ຕ້ອງແກ້ຫຍັງ
 
-ກວດວ່າ daemon ແລ່ນຢູ່ບໍ່:
+`ELECTRON_RUN_AS_NODE=1` ຄື flag ມາດຕະຖານຂອງ Electron ທີ່ໃຫ້ແລ່ນໂຕ .exe ເປັນ plain Node CLI (ໃຊ້ Node/ABI ທີ່ bundle ມາໃນແອັບເອງ ແທນທີ່ຈະເປີດ GUI) — CLI ຂອງ OpenDesign ເອງກໍ hint ເລື່ອງນີ້ໄວ້ໃນ `--help`: `"$OD_NODE_BIN" "$OD_BIN" tools ...` — "avoids relying on user PATH for od or node"
+
+> [!note] shim ເດີມ (ຊີ້ຕາຍຕົວໄປເວີຊັນດຽວ) — ເກັບໄວ້ອ້າງອີງ
+> ```cmd
+> @echo off
+> setlocal
+> set ELECTRON_RUN_AS_NODE=1
+> "<Program Files>\Open Design\Open Design.exe" "<Program Files>\Open Design\resources\app\prebundled\daemon\daemon-cli.mjs" %*
+> ```
+> ຖືກຕ້ອງສຳລັບ OpenDesign ≤ 0.20 ແຕ່ຈະຄ້າງຢູ່ທີ່ເວີຊັນເກົ່າແບບງຽບໆ ທັນທີທີ່ launcher ເລີ່ມອັບເດດແອັບ (ຂັ້ນທີ 2)
+
+### ຂັ້ນທີ 4 — port ຂອງ daemon ບໍ່ຕາຍຕົວແລ້ວ: ຢ່າລັອກ `--daemon-url`
+
+> [!warning] ຕັ້ງແຕ່ 0.22 daemon ຂອງ desktop app ໃຊ້ port ສຸ່ມ ບໍ່ແມ່ນ 7456
+> ແອັບເວີຊັນ packaged ສັ່ງ daemon ດ້ວຍ `OD_PORT` ທີ່ hardcode ເປັນ `"0"` (port ວ່າງໂຕໃດກໍໄດ້ — ເຊັ່ນ `63621`) ຈຶ່ງບໍ່ມີ setting ຫຼື env var ໃຫ້ລັອກ port ໄດ້ ບໍ່ມີຫຍັງຟັງຢູ່ທີ່ `7456` ອີກແລ້ວ ແລະ config ທີ່ເປັນ `od mcp --daemon-url http://127.0.0.1:7456` ຈະໄດ້ `MCP error -32000: Connection closed` **ເຖິງແມ່ນຈະເປີດແອັບໄວ້ຢູ່ກໍຕາມ**
+
+**ວິທີແກ້: ແລ່ນ `od mcp` ໂດຍບໍ່ໃສ່ `--daemon-url`** ແລ້ວໃຫ້ມັນຫາ daemon ເອງ ລຳດັບການຫາ: flag `--daemon-url` → `OD_DAEMON_URL` → ຖາມແອັບຜ່ານ sidecar pipe ສ່ວນໂຕ (`OD_SIDECAR_CLIENT_ENDPOINT`) → `127.0.0.1:7456` ທາງ pipe ຕ້ອງໃຊ້ env var ບໍ່ເທົ່າໃດໂຕ — ຊຸດດຽວກັບທີ່ແອັບແຈກໃຫ້ເອງທີ່ `GET <daemon>/api/mcp/install-info`:
+
+| Env var | ຄ່າ | ໃຊ້ເຮັດຫຍັງ |
+| --- | --- | --- |
+| `OD_SIDECAR_CLIENT_ENDPOINT` | `\\.\pipe\open-design-sidecar-<hash>` | ຖາມແອັບທີ່ແລ່ນຢູ່ວ່າຕອນນີ້ daemon ຢູ່ URL ໃດ |
+| `OD_DATA_DIR` | `%APPDATA%\Open Design\namespaces\release-stable-win\data` | ຂໍ້ມູນຂອງແອັບເອງ (project ຊຸດດຽວກັບໃນ GUI) |
+| `OD_MCP_BOOTSTRAP_COMMAND` + `OD_MCP_BOOTSTRAP_ARGS` | `Open Design.exe` ໂຕ launcher + `["--headless"]` | ຖ້າແອັບປິດຢູ່ `od mcp` ຈະເປີດແອັບແບບ headless (ບໍ່ມີໜ້າຕ່າງ) ແລ້ວລໍ daemon |
+
+ຊື່ pipe ຄື `sha256(<ຊື່ຜູ້ໃຊ້ Windows> + channel/namespace/source/mode/app)` — ບໍ່ມີເວີຊັນ ບໍ່ມີ PID — ຈຶ່ງຄືເດີມທັງຕອນ restart ແອັບ**ແລະ**ຕອນອັບເດດ `od.mjs` ຄຳນວນຄ່າທັງສີ່ໂຕແລ້ວຕັ້ງໃຫ້ `od mcp` ອັດຕະໂນມັດ (ຖ້າຕັ້ງຄ່າໄວ້ໃນ environment ແລ້ວຈະໃຊ້ຄ່ານັ້ນກ່ອນ) config ຂອງ OpenCode ຈຶ່ງບໍ່ຕ້ອງມີ port ຕາຍຕົວ ແລະບໍ່ມີຄ່າສະເພາະເຄື່ອງເລີຍ — ເບິ່ງ [[mcp-servers]] ຫົວຂໍ້ open-design
+
+> [!warning] `od mcp install opencode` ທີ່ແລ່ນຈາກ terminal ຍັງຂຽນ port ຕາຍຕົວແບບເດີມ
+> ມັນຖາມ launch spec ຈາກ daemon ທີ່ `127.0.0.1:7456` — ຊຶ່ງບໍ່ຕອບແລ້ວ — ຈຶ່ງຖອຍໄປຂຽນ `--daemon-url http://127.0.0.1:7456` ໃຫ້ແກ້ config ເອງຕາມທີ່ຂຽນໄວ້ໃນ [[mcp-servers]] ແທນ
+
+ກວດວ່າຕອນນີ້ daemon ຢູ່ port ໃດ (PowerShell):
 
 ```powershell
-Get-NetTCPConnection -LocalPort 7456 -ErrorAction SilentlyContinue
+$d = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*daemon-sidecar*' }
+$port = (Get-NetTCPConnection -State Listen -OwningProcess $d.ProcessId).LocalPort
+Invoke-RestMethod "http://127.0.0.1:$port/api/health"            # {"ok":true,"version":"…"}
+Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec ຂອງ MCP ທີ່ແອັບແຈກເອງ
 ```
 
-ເປີດແບບ headless ຖ້າຍັງບໍ່ແລ່ນ:
-
-```powershell
-od --no-open
-```
+> [!note] ເປີດແບບ headless ເອງຕອນແອັບປິດຢູ່ — ມາຈາກ help ຂອງ OpenDesign ເອງ ຍັງບໍ່ໄດ້ທົດສອບ
+> `od mcp --help` ລະບຸວ່າ packaged install ຈະ "starts the signed Open Design app in --headless mode when its daemon is stopped" ແລະ "re-discovers the registered runtime before calls" ທີ່ຢືນຢັນແລ້ວ (2026-09-25) ຄືກໍລະນີເປີດແອັບໄວ້ເທົ່ານັ້ນ — ທາງທີ່ງ່າຍທີ່ສຸດຍັງເປັນການເປີດແອັບ OpenDesign ໄວ້
 
 > [!tip] ເຄື່ອງມື debug ທີ່ຊ່ວຍໄດ້ຫຼາຍ
-> log ຂອງ daemon ເອງທີ່ `~/AppData/Roaming/Open Design/namespaces/release-stable-win/logs/daemon/latest.log`
+> log ຂອງ daemon ເອງທີ່ `~/AppData/Roaming/Open Design/namespaces/release-stable-win/logs/daemon/latest.log` — ສັ້ນແຕ່ກົງປະເດັນ ເຫັນ error/event ຫຼ້າສຸດຊັດເຈນກວ່າເດົາ error ຈາກ GUI toast
 
 ---
 
@@ -177,3 +215,31 @@ od --no-open
 
 > [!warning] "ເຮັດວຽກຕໍ່" ບໍ່ແມ່ນ resume ການ generate ເດີມ
 > chat completion API ບໍ່ມີກົນໄກ resume ແບບ token-level — ພິມ "ເຮັດວຽກຕໍ່" ຄືການເປີດ request ໃໝ່ທັງໝົດທີ່ມີຄວາມຄິດທີ່ຖືກຕັດເປັນ context ໃຫ້ໂມເດວອ່ານແລ້ວພະຍາຍາມສານຕໍ່ ບໍ່ແມ່ນຕໍ່ token ສຸດທ້າຍຈິງໆ ການເພີ່ມເພດານ `output` ຕັ້ງແຕ່ຕົ້ນດີກວ່າເພິ່ງ "ເຮັດວຽກຕໍ່" ເປັນທາງແກ້ຖາວອນ
+
+---
+
+## 9. ສິ່ງທີ່ plugin ແກ້ໃນ `experimental.chat.messages.transform` ຫາຍໄປຫຼັງ step ດຽວ — OpenCode ບໍ່ໄດ້ບັນທຶກໄວ້
+
+**Impact:** context ທີ່ graft-deep inject ເຂົ້າໄປ ໂມເດວເຫັນພຽງ step ທຳອິດຂອງ turn ພໍ agent ເອີ້ນ tool ແລ້ວ prompt ຂອງ step ຕໍ່ໄປບໍ່ມີ context ນັ້ນອີກ — ພົບເມື່ອ 2026-09-25 ລະຫວ່າງອັບເດດ plugin ໃຫ້ຮອງຮັບ graft 0.19.0
+
+**ສາເຫດ:** prompt loop ຂອງ OpenCode ໂຫຼດ message ທັງໝົດໃໝ່ຈາກ storage ຕອນຕົ້ນ**ທຸກ** step (`session/prompt.ts`) ແລ້ວຈຶ່ງເອີ້ນ hook ກັບສຳເນົາໃໝ່ນັ້ນ ສິ່ງທີ່ hook ເພີ່ມເຂົ້າໄປຈຶ່ງຢູ່ພຽງການເອີ້ນ LLM ຄັ້ງດຽວ plugin ລອກແບບຂອງ Claude Code ມາ (inject ຄັ້ງດຽວແລ້ວຂ້າມ message ນັ້ນ) ແຕ່ output ຂອງ hook `UserPromptSubmit` ໃນ Claude Code ຖືກຂຽນລົງ transcript ຖາວອນ — output ຂອງ transform ໃນ OpenCode ບໍ່ແມ່ນ ນອກຈາກນີ້ hook ດຽວກັນຍັງຖືກເອີ້ນຕອນ compaction (`session/compaction.ts`) ກັບ history ເກົ່ານຳ
+
+> [!important] ວິທີແກ້ — ເບິ່ງ hook ນີ້ວ່າເປັນ "ສ້າງ prompt ໃໝ່ທຸກຄັ້ງ" ບໍ່ແມ່ນ "ແກ້ history ຄັ້ງດຽວ"
+> ຄຳນວນສິ່ງທີ່ຈະ inject ຄັ້ງດຽວຕໍ່ message ເກັບ cache ຕາມ message ID ແລ້ວຕິດກັບຄືນທຸກຄັ້ງທີ່ຖືກເອີ້ນ ວຽກທີ່ແພງ (ຄື `graft ask`) ໃຫ້ແລ່ນສະເພາະຕອນ message **ສຸດທ້າຍ**ເປັນຂອງ user ຮອບ compaction ຈະໄດ້ບໍ່ໄປກະຕຸ້ນມັນ ໂຄ້ດເຕັມແລະເລື່ອງສະເພາະຂອງ OpenCode ອື່ນໆ (synthetic part, spawn ແບບ async): [[plugins]] ຫົວຂໍ້ graft-deep
+
+> [!tip] ບົດຮຽນ
+> hook ຊື່ຄ້າຍກັນໃນສອງ harness ບໍ່ໄດ້ແປວ່າເຮັດວຽກຄືກັນ ກ່ອນ port ພຶດຕິກຳຂ້າມກັນ ໃຫ້ອ່ານ source ຂອງ host ວ່າເອີ້ນ hook ຢູ່ໃສ ແລະ output ຂອງມັນຖືກເຮັດຫຍັງຕໍ່
+
+---
+
+## 10. `update-opencode.mjs` ມອງຂ້າມຄ່າແທ້ຂອງ SonarQube container ແບບງຽບໆ ເທິງ Windows
+
+**Impact:** `--recreate-sonarqube` ສ້າງ container ໃໝ່ດ້ວຍຊື່ volume ແບບ default ແລະ host port `9000` ສະເໝີ ບໍ່ວ່າ container ເດີມຈະໃຊ້ຄ່າຫຍັງແທ້ — ເທິງເຄື່ອງທີ່ SonarQube ແລ່ນທີ່ `9001` (ເພາະ `9000` ມີ service ອື່ນໃຊ້ຢູ່) ຖ້າແລ່ນໄປຈະຍ້າຍ SonarQube ກັບໄປ `9000` ແລະເຮັດໃຫ້ MCP config ທີ່ຊີ້ໄປ `9001` ພັງ
+
+**ສາເຫດ:** script ແລ່ນທຸກຄຳສັ່ງດ້ວຍ `shell: true` ເທິງ Windows (ທີ່ແທ້ຈຳເປັນພຽງກັບ `.cmd` shim ຂອງ npm) shell ຕໍ່ argument ກັນ**ໂດຍບໍ່ໃສ່ quote** `docker inspect sonarqube --format '{{json .Mounts}}'` ຈຶ່ງຖືກຕັດຕົງຊ່ອງຫວ່າງ docker fail ດ້ວຍ `template parsing error: unclosed action` — ແລ້ວ script ກໍຖອຍໄປໃຊ້ຄ່າ default ແບບງຽບໆ
+
+> [!important] ວິທີແກ້ (ຢູ່ໃນ script ປັດຈຸບັນແລ້ວ)
+> ໃຊ້ `shell: true` ສະເພາະ npm shim ທີ່ຈຳເປັນ (`opencode`, `graft`, `npm`) ສ່ວນເຄື່ອງມືທີ່ເປັນ `.exe` ແທ້ (`docker`, `git`, `winget`, `trivy`) ແລ່ນໂດຍບໍ່ຜ່ານ shell ຂັ້ນ recreate ຕອນນີ້ອ່ານທັງ named volume **ແລະ** host port ຈາກ container ເດີມ (ຖ້າບໍ່ມີ container ໃຊ້ `9001` ເປັນ default) ແລະ `docker inspect` ແລ່ນໄດ້ເຖິງແມ່ນຕອນ `--dry-run` preview ຈຶ່ງສະແດງຄ່າແທ້ — ເບິ່ງ [[updating]]
+
+> [!tip] ບົດຮຽນ
+> fallback ທີ່ປົກປິດ error ເຮັດໃຫ້ bug ເບິ່ງບໍ່ເຫັນ ຄວນ preview ດ້ວຍ `--dry-run` ກ່ອນສະເໝີ — ຕອນນີ້ມັນພິມຄຳສັ່ງ `docker run -p <port>:9000 -v …` ທີ່ຈະໃຊ້ແທ້ອອກມາໃຫ້ເບິ່ງ

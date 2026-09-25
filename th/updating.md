@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins, grill-me/grilling skill และ OpenDesign แต่ละตัว
 ---
 
@@ -28,6 +28,13 @@ node scripts/update-opencode.mjs --recreate-sonarqube   # เพิ่มกา�
 > - **sonarqube Server container** — ข้ามเป็น default เพราะต้อง stop+rm+recreate container ที่รันอยู่ ต้องใส่ `--recreate-sonarqube` ถึงจะทำ (สคริปต์จะ `docker inspect` container เดิมก่อนเพื่อใช้ volume names จริงที่มีอยู่ ไม่ hardcode ทับ)
 > - **trivy บน Linux/Ubuntu** — ไม่รัน `sudo` ให้อัตโนมัติ (ต้องใส่รหัสผ่าน) แค่ print คำสั่งที่ต้องรันเอง
 > - **graft-deep.js** และ **OpenDesign** — hand-written / GUI auto-updater ตามลำดับ สคริปต์แค่เตือนไว้ ไม่มีอะไรให้อัปเดตอัตโนมัติ
+
+> [!info] แก้ 2026-09-25 — port ของ SonarQube, การ quote argument และ index ของ trivy
+> - **`--recreate-sonarqube` ใช้ host port เดิมของ container** (และ named volume เดิม) แทนที่จะใช้ `9000` เสมอ — ถ้ายังไม่มี container จะใช้ `9001` เป็น default เพราะ `9000` มักมี service อื่นใช้อยู่แล้ว (ดู [[mcp-servers]] หัวข้อ sonarqube) ลองรัน `--dry-run --recreate-sonarqube` ก่อน: ตอนนี้มันพิมพ์คำสั่ง `docker run -p <port>:9000 -v …` พร้อมค่าจริงออกมาให้ดู
+> - บน Windows เฉพาะ npm shim (`opencode`, `graft`, `npm`) ที่รันผ่าน shell — เดิมทุกคำสั่งผ่าน shell ทำให้ `docker inspect --format '{{json .Mounts}}'` ถูกตัดตรงช่องว่าง การอ่าน volume เลยถอยไปใช้ค่า default แบบเงียบๆ — ดู [[gotchas]] ข้อ 10
+> - `trivy plugin update` ที่ fail เพราะ network (plugin index อยู่บน github.io ซึ่งบาง network บล็อก) ตอนนี้เป็น ⚠️ warning ถ้า `trivy plugin upgrade` ยังสำเร็จ ไม่ใช่ ❌ failure
+>
+> ถ้ารันจากสำเนาในเครื่อง (เช่น `~/.config/opencode/scripts/update-opencode.mjs`) ให้แทนที่ด้วย [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) ตัวใหม่
 
 ---
 
@@ -84,6 +91,9 @@ graft upgrade    # อัปเกรด global install ให้เป็นเ
 
 > [!warning] อัปเกรดแล้วอาจต้อง build กราฟใหม่
 > ถ้าเวอร์ชันใหม่เปลี่ยนรูปแบบกราฟ/wiring format ให้รัน `graft build` ซ้ำในแต่ละโปรเจกต์ที่ใช้งานอยู่ (ดู [[mcp-servers]] หัวข้อ graft) — เช็ค [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) ของ graft ก่อนอัปเกรดถ้ากังวลเรื่อง breaking change (repo ย้ายมาที่ `trailhq/Graft` แล้ว — ดู [[mcp-servers]])
+
+> [!important] อัปเกรด graft ทุกครั้ง ต้องเช็ค graft-deep ด้วย
+> graft-deep ลอกเกณฑ์การ inject มาจาก hook ของ Claude Code ใน graft เอง graft ออกเวอร์ชันใหม่จึงอาจเปลี่ยนสิ่งที่ plugin ควรทำได้ — 0.19.0 ก็เปลี่ยนจริง (ดู [[plugins]] หัวข้อ graft-deep → "เกณฑ์การ inject" มีรายชื่อไฟล์และคำสั่ง `grep` ที่ใช้เทียบ) เช็คเร็วๆ ว่ากราฟเดิมยังโหลดได้: รัน `graft check . --json` ในโปรเจกต์ ควรได้ `"graph": { "ok": true }`
 
 ---
 
@@ -169,16 +179,26 @@ curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/producti
 
 ไม่มีต้นทางให้ "อัปเดต" เพราะเขียนเอง — ถ้าอยากปรับปรุง แก้ไฟล์ `~/.config/opencode/plugin/graft-deep.js` ตรงๆ ได้เลย (ดูโค้ดเต็มที่ [[plugins]]) ไม่ต้องรีสตาร์ทอะไรเพิ่มนอกจากเปิด session ใหม่ของ opencode
 
+แต่ยังมีสองอย่างที่ต้องตามให้ทัน:
+
+1. **graft** — plugin ลอกแบบ prompt hook ของ Claude Code ใน graft เอง (เกณฑ์ที่ตัดสินว่าจะ inject เมื่อไหร่) ต้องเทียบทุกครั้งที่อัปเกรด graft — ดูกล่องใต้หัวข้อ graft ด้านบน
+2. **OpenCode** — plugin พึ่งวิธีที่ OpenCode เรียก `experimental.chat.messages.transform` (โหลด message ใหม่ทุก step, ถูกเรียกตอน compaction ด้วย, synthetic part) ถ้า OpenCode เวอร์ชันใหม่เปลี่ยนเรื่องนี้ สมมติฐานของ plugin จะพัง — ดู [[plugins]] หัวข้อ graft-deep → "OpenCode เรียก hook นี้อย่างไร" และ [[gotchas]] ข้อ 9
+
+ตรวจล่าสุด: graft 0.19.0 + OpenCode 1.18.32 (2026-09-25)
+
 ---
 
 ## OpenDesign (desktop app)
 
-เป็น Electron app ที่มีตัวอัปเดตในตัว (auto-updater) — โดยทั่วไปจะเช็คเวอร์ชันใหม่ให้เองตอนเปิดแอป ไม่ต้องสั่งอะไรเพิ่ม
+อัปเดตตัวเองผ่าน launcher ของตัวเอง (ตั้งแต่ 0.22) — เช็คเวอร์ชันใหม่ให้เองตอนเปิดแอป ไม่ต้องสั่งอะไรเพิ่ม
 
-ถ้าอยากเช็คด้วยตัวเอง เข้า **Settings → About** ในแอป (มีปุ่ม "Check for updates" หรือคล้ายกัน) หรือดาวน์โหลดตัวติดตั้งเวอร์ชันล่าสุดใหม่จาก [GitHub Releases](https://github.com/nexu-io/open-design/releases) ทับของเดิมได้โดยตรง
+ถ้าอยากเช็คด้วยตัวเอง เข้า **Settings → About** ในแอป หรือดาวน์โหลดตัวติดตั้งเวอร์ชันล่าสุดจาก [GitHub Releases](https://github.com/nexu-io/open-design/releases)
 
-> [!warning] อัปเดตแล้วเช็ค `od` shim อีกครั้ง (เฉพาะ Windows)
-> ถ้าอัปเดต OpenDesign แล้ว path ของ `daemon-cli.mjs` เปลี่ยน (เช่น เปลี่ยน version folder) shim ที่สร้างไว้ที่ [[gotchas]] ข้อ 4 อาจต้องแก้ path ให้ตรงกับตำแหน่งใหม่ — เช็คด้วย `od --help` ว่ายังทำงานถูกต้องหลังอัปเดต
+> [!note] เวอร์ชันที่รันจริงอยู่ที่ไหน (Windows)
+> ตั้งแต่ 0.22 แต่ละเวอร์ชันรันจาก `%APPDATA%\Open Design\launcher\channels\stable\namespaces\release-stable-win\versions\<version>\payload\` ตัวที่ active คือ `active.version` ใน `runtime.json` ข้างโฟลเดอร์ `versions\` ส่วนโฟลเดอร์ติดตั้งเดิมใต้ `Programs` ค้างอยู่ที่เวอร์ชันแรกที่ติดตั้ง
+
+> [!tip] หลังอัปเดตไม่ต้องแก้อะไรเอง (Windows) — ถ้าใช้ shim แบบตามเวอร์ชัน
+> shim `od.mjs` จาก [[gotchas]] ข้อ 4 อ่าน `runtime.json` ทุกครั้งที่ถูกเรียก จึงตามทุกการอัปเดตเอง และ MCP config ก็ไม่มี port ตายตัว เช็คด้วย `od --help` และ `opencode mcp list` (open-design ควร connected) ถ้ายังใช้ shim เก่าที่ชี้ตายตัวไป path เดียว ให้เปลี่ยน — มันจะรัน CLI เวอร์ชันเก่าต่อไปเรื่อยๆ
 
 ---
 
@@ -199,13 +219,16 @@ docker pull sonarsource/sonarqube-mcp
 
 ### ส่วนที่ 2 — SonarQube Server container (image `sonarqube:community`)
 
+> [!note] host port `9001` ไม่ใช่ `9000`
+> `9000` มักมี service อื่นในเครื่องใช้อยู่แล้ว setup นี้จึงเปิด SonarQube ที่ host port `9001` (ฝั่ง container ยังเป็น `9000`) `update-opencode.mjs --recreate-sonarqube` อ่าน port จาก container เดิม จึงคงค่าที่ใช้อยู่จริงไว้
+
 Container นี้เป็น service ที่รันค้างอยู่ตลอด (ไม่ใช่ spawn ต่อครั้งแบบ MCP) การอัปเดตคือ pull image ใหม่แล้ว recreate container — ข้อมูลไม่หายเพราะเก็บอยู่ใน named volume แยกต่างหาก:
 
 ```bash
 docker pull sonarqube:community
 docker stop sonarqube
 docker rm sonarqube
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
@@ -218,7 +241,7 @@ docker run -d --name sonarqube -p 9000:9000 \
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-เข้า **http://localhost:9000 → Administration → System** เพื่อดูเลขเวอร์ชันที่ยืนยันจากหน้าเว็บอีกที
+เข้า **http://localhost:9001 → Administration → System** เพื่อดูเลขเวอร์ชันที่ยืนยันจากหน้าเว็บอีกที
 
 > [!danger] ข้ามเวอร์ชันหลักหลายเวอร์ชันพร้อมกันอาจพัง
 > SonarQube (เหมือน database ทั่วไป) มักรองรับแค่การอัปเกรดข้าม major version ทีละ 1 ขั้น ถ้าปล่อยไว้นานแล้วอยากอัปเดตทีเดียวข้ามหลาย version ต้องเช็ค [Upgrade Guide ทางการ](https://docs.sonarsource.com/sonarqube-server/upgrading/) ก่อนเสมอ — บางครั้งต้อง upgrade ทีละขั้นตามลำดับ ไม่ใช่กระโดดตรงไปเวอร์ชันล่าสุด
@@ -244,6 +267,9 @@ trivy plugin update      # รีเฟรช plugin index ก่อน
 trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั้งไว้ (รวม mcp) เป็นเวอร์ชันล่าสุด
 ```
 
+> [!warning] `trivy plugin update` อาจ fail ในบาง network — แต่การ upgrade เองยังใช้ได้
+> `plugin update` แค่รีเฟรช plugin index ที่อยู่บน `aquasecurity.github.io` — เจอ timeout จริงที่นี่ (2026-09-25) ส่วน `trivy plugin upgrade` ยังเช็คกับ repo ของ plugin `mcp` เองได้และยืนยันว่าเป็นเวอร์ชันล่าสุด (`trivy plugin list` แสดงเวอร์ชัน) สคริปต์อัปเดตรายงานกรณีนี้เป็น warning ไม่ใช่ failure
+
 **3. Vulnerability database** — **auto-update ในตัว ไม่ต้องทำอะไรเลย** เช็คความสดของ DB เองทุกครั้งที่สแกน ดาวน์โหลดใหม่อัตโนมัติถ้า cache เก่าเกินไป (ต่างจาก 2 ส่วนบนที่ต้องสั่งเอง)
 
 > [!note] Trivy ไม่มี "server" ให้ต้องอัปเดตแยก
@@ -263,10 +289,10 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
 | i-have-adhd | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
 | grill-me / grilling | ✅ ต้องเช็ค diff เอง (vendored, ไม่มี manager) | curl raw URL เทียบ แล้ว merge การแก้กลับ |
-| graft-deep.js | ➖ ไม่มีอัปเดต (เขียนเอง) | แก้ไฟล์ตรงๆ |
-| OpenDesign | ❌ อัตโนมัติ (แต่เช็คเองได้) | ผ่าน UI ในแอป |
+| graft-deep.js | ➖ ไม่มีต้นทาง (เขียนเอง) — แต่ต้องเทียบกับ hook ของ graft ทุกครั้งที่อัปเกรด graft | แก้ไฟล์ตรงๆ ดู [[plugins]] |
+| OpenDesign | ❌ อัตโนมัติ (launcher auto-updater) | ผ่าน UI ในแอป — shim `od.mjs` ตามเวอร์ชันใหม่เอง |
 | sonarqube MCP wrapper (docker) | ⚠️ ต้องสั่งเอง (ไม่ auto เหมือน npx) | `docker pull sonarsource/sonarqube-mcp` |
-| sonarqube Server (container) | ✅ ต้องสั่งเอง | pull → stop → rm → recreate (เก็บ volume เดิม) |
+| sonarqube Server (container) | ✅ ต้องสั่งเอง | pull → stop → rm → recreate (volume เดิม + host port เดิม `9001`) |
 | trivy CLI | ✅ ต้องสั่งเอง | `winget upgrade AquaSecurity.Trivy` |
-| trivy plugin (mcp) | ✅ ต้องสั่งเอง (แยกจาก CLI) | `trivy plugin update && trivy plugin upgrade` |
+| trivy plugin (mcp) | ✅ ต้องสั่งเอง (แยกจาก CLI) | `trivy plugin update && trivy plugin upgrade` (รีเฟรช index อาจ fail ในบาง network — upgrade ยังใช้ได้) |
 | trivy vulnerability DB | ❌ อัตโนมัติ | — |

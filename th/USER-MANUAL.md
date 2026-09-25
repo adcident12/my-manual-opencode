@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft, grill-me/grilling และ OpenDesign
 ---
 
@@ -364,7 +364,7 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 
 - **เครื่องมือภายนอกต่อ opencode แล้ว timeout** → เช็คว่า default model ช้าไปไหม (ข้อ 1 ใน gotchas)
 - **ตั้ง env var/PATH ใหม่แล้วยังไม่เห็นผล** → restart แอปที่เกี่ยวข้องแบบเต็มรูปแบบ ไม่ใช่แค่ปิดหน้าต่าง (ข้อ 2)
-- **MCP `open-design` connected แต่เรียก tool ไม่ได้** → เช็คว่า daemon ของ OpenDesign รันอยู่จริงที่ port 7456 ไหม (ข้อ 4)
+- **MCP `open-design` connected แต่เรียก tool ไม่ได้** → config ต้องเป็น `["od", "mcp"]` เฉยๆ ไม่มี `--daemon-url` — ตั้งแต่ OpenDesign 0.22 daemon ใช้ port สุ่ม ไม่ใช่ 7456 แล้ว (ข้อ 4)
 - **คำสั่งเดียวกันได้ผลไม่ตรงกันระหว่าง terminal** → ทดสอบผ่าน PowerShell แทน Git Bash บน Windows (ข้อ 5)
 - **MCP `sonarqube` ขึ้น connected แต่เรียก tool แล้ว 401/403** → เช็คว่า token ที่ใช้เป็น "User Token" ไม่ใช่ "Global/Project Analysis Token" (ดู [[mcp-servers]] หัวข้อ sonarqube) — connection ตรวจแค่ว่าต่อ server ได้ ไม่ได้ตรวจสิทธิ์ token ตอนนั้น
 - **`trivy` ขึ้น `command not found` ทั้งที่ winget บอกติดตั้งสำเร็จ** → restart terminal (VS Code ต้องปิดทั้งแอป) — เจอ PATH staleness เดียวกับข้อ 2 (ดู [[mcp-servers]] หัวข้อ trivy)

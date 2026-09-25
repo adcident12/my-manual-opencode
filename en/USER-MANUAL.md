@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, grill-me/grilling, and the OpenDesign workflow
 ---
 
@@ -364,7 +364,7 @@ Full list with fixes at [[gotchas]] — the short version:
 
 - **An external tool connects to opencode then times out** → check whether the default model is too slow (item 1 in gotchas)
 - **Set a new env var/PATH but it's not taking effect** → fully restart the relevant app, not just close its window (item 2)
-- **The `open-design` MCP is connected but calling a tool fails** → check whether OpenDesign's daemon is actually running on port 7456 (item 4)
+- **The `open-design` MCP is connected but calling a tool fails** → the config must be plain `["od", "mcp"]` with no `--daemon-url` — since OpenDesign 0.22 the daemon uses a random port, not 7456 (item 4)
 - **The same command gives different results between terminals** → try PowerShell instead of Git Bash on Windows (item 5)
 - **The `sonarqube` MCP shows connected but calling a tool gives 401/403** → check whether the token used is a "User Token," not a "Global/Project Analysis Token" (see [[mcp-servers]], the sonarqube section) — the connection check only confirms it can reach the server, it doesn't check the token's permissions at that point
 - **`trivy` shows `command not found` even though winget said it installed successfully** → restart the terminal (VS Code needs the whole app closed) — the same PATH staleness as item 2 (see [[mcp-servers]], the trivy section)

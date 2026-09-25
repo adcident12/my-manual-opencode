@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: ຄູ່ມືການໃຊ້ງານ OpenCode ປະຈຳວັນ — vibe coding, graft workflow, grill-me/grilling ແລະ OpenDesign workflow
 ---
 
@@ -344,7 +344,7 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 
 - **ເຄື່ອງມືພາຍນອກຕໍ່ opencode ແລ້ວ timeout** → ກວດວ່າ default model ຊ້າໄປບໍ່ (ຂໍ້ 1)
 - **ຕັ້ງ env var/PATH ໃໝ່ແລ້ວຍັງບໍ່ເຫັນຜົນ** → restart ແອັບທີ່ກ່ຽວຂ້ອງແບບເຕັມຮູບແບບ (ຂໍ້ 2)
-- **MCP `open-design` connected ແຕ່ເອີ້ນ tool ບໍ່ໄດ້** → ກວດ daemon (ຂໍ້ 4)
+- **MCP `open-design` connected ແຕ່ເອີ້ນ tool ບໍ່ໄດ້** → config ຕ້ອງເປັນ `["od", "mcp"]` ເສີຍໆ ບໍ່ມີ `--daemon-url` — ຕັ້ງແຕ່ OpenDesign 0.22 daemon ໃຊ້ port ສຸ່ມ ບໍ່ແມ່ນ 7456 ແລ້ວ (ຂໍ້ 4)
 - **ຄຳສັ່ງດຽວກັນໄດ້ຜົນບໍ່ຕົງກັນລະຫວ່າງ terminal** → ທົດສອບຜ່ານ PowerShell ແທນ Git Bash (ຂໍ້ 5)
 - **MCP `sonarqube` ຂຶ້ນ connected ແຕ່ 401/403** → ກວດ token ວ່າເປັນ "User Token" ບໍ່ (ເບິ່ງ [[mcp-servers]])
 - **`trivy` ຂຶ້ນ `command not found`** → restart terminal (ເບິ່ງ [[mcp-servers]])

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: How to update/upgrade the OpenCode CLI, MCP servers, plugins, the grill-me/grilling skill, and OpenDesign, one at a time
 ---
 
@@ -28,6 +28,13 @@ Covers: the OpenCode CLI, graft (with an automatic fallback if `graft upgrade` h
 > - **The sonarqube Server container** — skipped by default, since it means stopping/removing a running container. Pass `--recreate-sonarqube` to do it (the script `docker inspect`s the existing container first, so it reuses the real volume names in place rather than hardcoding over them).
 > - **trivy on Linux/Ubuntu** — never runs `sudo` on its own (it would need a password); it just prints the exact command to run yourself.
 > - **graft-deep.js** and **OpenDesign** — hand-written / a GUI auto-updater, respectively. The script only prints a reminder; there's nothing for it to update automatically.
+
+> [!info] Fixed 2026-09-25 — the SonarQube port, argument quoting, and the trivy index
+> - **`--recreate-sonarqube` keeps the existing container's host port** (and named volumes) instead of always using `9000` — default `9001` if there's no container yet, since `9000` is often taken by another service (see [[mcp-servers]], sonarqube). Try `--dry-run --recreate-sonarqube` first: it now prints the exact `docker run -p <port>:9000 -v …` with the real values.
+> - On Windows, only the npm shims (`opencode`, `graft`, `npm`) run through a shell; before, every command did, which split `docker inspect --format '{{json .Mounts}}'` at the space so the volume lookup silently fell back to defaults — see [[gotchas]] item 10.
+> - `trivy plugin update` failing on the network (the plugin index lives on github.io, which some networks block) is now a ⚠️ warning when `trivy plugin upgrade` still succeeded, not a ❌ failure.
+>
+> Running it from a local copy (e.g. `~/.config/opencode/scripts/update-opencode.mjs`)? Replace that copy with the new [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs).
 
 ---
 
@@ -84,6 +91,9 @@ graft upgrade    # upgrade the global install to the latest version
 
 > [!warning] After upgrading, you may need to rebuild the graph
 > If a new version changes the graph/wiring format, re-run `graft build` in each project you use it in (see [[mcp-servers]], the graft section) — check graft's [CHANGELOG](https://github.com/trailhq/Graft/blob/main/CHANGELOG.md) before upgrading if you're worried about breaking changes (the repo has moved to `trailhq/Graft` — see [[mcp-servers]]).
+
+> [!important] After every graft upgrade, re-check graft-deep too
+> graft-deep copies the injection gate from graft's own Claude Code hook, so a graft release can change what the plugin should do — 0.19.0 did (see [[plugins]], graft-deep → "Injection gate", which lists the exact files and `grep` commands to compare). Quick check that the existing graphs still load: `graft check . --json` in a project should report `"graph": { "ok": true }`.
 
 ---
 
@@ -167,18 +177,28 @@ Compare against the existing files — if upstream has changed, **don't just cop
 
 ## graft-deep.js (a hand-written custom plugin)
 
-There's no upstream to "update" from, since it's hand-written — to improve it, just edit `~/.config/opencode/plugin/graft-deep.js` directly (full source is in [[plugins]]). Nothing else to restart besides opening a new OpenCode session.
+There's no upstream to "update" from, since it's hand-written — to improve it, edit `~/.config/opencode/plugin/graft-deep.js` directly (full source is in [[plugins]]). Nothing else to restart besides opening a new OpenCode session.
+
+It still has two things to keep in step with, though:
+
+1. **graft** — the plugin mirrors graft's own Claude Code prompt hook (the gate that decides when to inject). Compare after every graft upgrade — see the box under graft above.
+2. **OpenCode** — the plugin depends on how OpenCode calls `experimental.chat.messages.transform` (reloaded messages every step, also called during compaction, synthetic parts). If a new OpenCode version changes that, the plugin's assumptions break — see [[plugins]], graft-deep → "How OpenCode runs this hook", and [[gotchas]] item 9.
+
+Last checked: graft 0.19.0 + OpenCode 1.18.32 (2026-09-25).
 
 ---
 
 ## OpenDesign (desktop app)
 
-An Electron app with a built-in updater (auto-updater) — it generally checks for a new version itself when the app opens, nothing extra to run.
+Updates itself through its own launcher (since 0.22) — it checks for a new version when the app opens, nothing extra to run.
 
-To check yourself, go to **Settings → About** in the app (there's a "Check for updates" button or similar), or download the latest installer directly from [GitHub Releases](https://github.com/nexu-io/open-design/releases) and install it over the existing one.
+To check yourself, go to **Settings → About** in the app, or download the latest installer directly from [GitHub Releases](https://github.com/nexu-io/open-design/releases).
 
-> [!warning] After updating, check the `od` shim again (Windows only)
-> If updating OpenDesign changes `daemon-cli.mjs`'s path (e.g. a version-folder change), the shim built in [[gotchas]], item 4, may need its path updated to match the new location — check with `od --help` that it still works correctly after updating.
+> [!note] Where the running version actually lives (Windows)
+> Since 0.22 each version runs from `%APPDATA%\Open Design\launcher\channels\stable\namespaces\release-stable-win\versions\<version>\payload\`; the active one is `active.version` in `runtime.json` next to `versions\`. The original install folder under `Programs` stays on the first installed version.
+
+> [!tip] Nothing to fix by hand after an update (Windows) — if the shim is the version-following one
+> The `od.mjs` shim from [[gotchas]] item 4 reads `runtime.json` on every call, so it follows each update by itself, and the MCP config has no fixed port. Confirm with `od --help` and `opencode mcp list` (open-design should be connected). If you still have the older shim hardcoded to one path, replace it — it keeps running the old CLI.
 
 ---
 
@@ -199,13 +219,16 @@ docker pull sonarsource/sonarqube-mcp
 
 ### Part 2 — the SonarQube Server container (image `sonarqube:community`)
 
+> [!note] Host port `9001`, not `9000`
+> `9000` is often already taken by another local service, so this setup publishes SonarQube on host port `9001` (the container side stays `9000`). `update-opencode.mjs --recreate-sonarqube` reads the port from the existing container, so it keeps whatever you actually use.
+
 This container is a service meant to stay running permanently (not spawned per-use like the MCP) — updating it means pulling a new image and recreating the container. No data is lost, since it's kept in separate named volumes:
 
 ```bash
 docker pull sonarqube:community
 docker stop sonarqube
 docker rm sonarqube
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
@@ -218,7 +241,7 @@ Confirm the new version is actually running once the container starts successful
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-Go to **http://localhost:9000 → Administration → System** to confirm the version number from the web UI too.
+Go to **http://localhost:9001 → Administration → System** to confirm the version number from the web UI too.
 
 > [!danger] Skipping several major versions at once can break it
 > SonarQube (like most databases) usually only supports upgrading one major version at a time. If it's been left alone a long time and you want to update across several versions at once, always check the [official Upgrade Guide](https://docs.sonarsource.com/sonarqube-server/upgrading/) first — sometimes you need to upgrade step by step in sequence, not jump straight to the latest version.
@@ -244,6 +267,9 @@ trivy plugin update      # refresh the plugin index first
 trivy plugin upgrade     # upgrade installed plugins (including mcp) to the latest version
 ```
 
+> [!warning] `trivy plugin update` can fail on some networks — the upgrade itself may still work
+> `plugin update` only refreshes the plugin index, hosted on `aquasecurity.github.io`; seen timing out here (2026-09-25). `trivy plugin upgrade` still checked the `mcp` plugin's own repo and confirmed it up to date (`trivy plugin list` shows the version). The update script reports this case as a warning, not a failure.
+
 **3. The vulnerability database** — **auto-updates on its own, nothing to do** — checks the DB's freshness itself on every scan, downloading a new one automatically if the cache is too old (unlike the 2 parts above, which need a manual command).
 
 > [!note] Trivy has no "server" to update separately
@@ -263,10 +289,10 @@ trivy plugin upgrade     # upgrade installed plugins (including mcp) to the late
 | ponytail | ⚠️ Manual (if the lockfile pinned a version) | delete cache, then restart |
 | i-have-adhd | ✅ Manual (local clone) | `git pull`, then restart |
 | grill-me / grilling | ✅ Manual diffing (vendored, no manager) | curl the raw URL, compare, merge the fix back in |
-| graft-deep.js | ➖ No updates (hand-written) | edit the file directly |
-| OpenDesign | ❌ Automatic (but checkable manually) | via the app's UI |
+| graft-deep.js | ➖ No upstream (hand-written) — but compare with graft's hook after each graft upgrade | edit the file directly; see [[plugins]] |
+| OpenDesign | ❌ Automatic (launcher auto-updater) | via the app's UI; the `od.mjs` shim follows the new version by itself |
 | sonarqube MCP wrapper (docker) | ⚠️ Manual (not auto like npx) | `docker pull sonarsource/sonarqube-mcp` |
-| sonarqube Server (container) | ✅ Manual | pull → stop → rm → recreate (keeping the same volumes) |
+| sonarqube Server (container) | ✅ Manual | pull → stop → rm → recreate (same volumes + same host port, `9001`) |
 | trivy CLI | ✅ Manual | `winget upgrade AquaSecurity.Trivy` |
-| trivy plugin (mcp) | ✅ Manual (separate from the CLI) | `trivy plugin update && trivy plugin upgrade` |
+| trivy plugin (mcp) | ✅ Manual (separate from the CLI) | `trivy plugin update && trivy plugin upgrade` (index refresh may fail on some networks — upgrade still works) |
 | trivy vulnerability DB | ❌ Automatic | — |

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: ລາຍລະອຽດ MCP server ແຕ່ລະໂຕທີ່ຕັ້ງໄວ້ໃນ OpenCode — ຂັ້ນຕອນຕິດຕັ້ງ, config, ວິທີທົດສອບ, ຂໍ້ຄວນລະວັງ
 ---
 
@@ -187,34 +187,31 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
 
 1. ດາວໂຫຼດ **desktop app** ຈາກ [open-design.ai](https://open-design.ai/) ຫຼື [GitHub Releases](https://github.com/nexu-io/open-design/releases) ແລ້ວຕິດຕັ້ງຕາມປົກກະຕິ (ແນະນຳທີ່ສຸດ — zero config ບໍ່ຕ້ອງມີ Node/pnpm/clone ເອງ)
 
-2. **(ສະເພາະ Windows)** ຕົວຕິດຕັ້ງມັກບໍ່ເພີ່ມ `od` ເຂົ້າ PATH ໃຫ້ ຕ້ອງສ້າງ shim ເອງ — ເບິ່ງຂັ້ນຕອນເຕັມທີ່ [[gotchas]] ຂໍ້ 4 (ສະຫຼຸບສັ້ນໆ: ສ້າງໄຟລ໌ `~/AppData/Roaming/npm/od.cmd` ທີ່ເອີ້ນຕົວແອັບຈິງຜ່ານ `ELECTRON_RUN_AS_NODE=1`)
+2. **(ສະເພາະ Windows)** ຕົວຕິດຕັ້ງມັກບໍ່ເພີ່ມ `od` ເຂົ້າ PATH ໃຫ້ — ແລະຕັ້ງແຕ່ OpenDesign 0.22 ແອັບແລ່ນຈາກໂຟນເດີຂອງ launcher ທີ່ປ່ຽນທຸກຄັ້ງທີ່ອັບເດດ ຕ້ອງສ້າງ shim ທີ່ຕາມເວີຊັນເອງ: ສຳເນົາ [`scripts/od.mjs`](../scripts/od.mjs) ຈາກ repo ນີ້ໄປໄວ້ທີ່ `~/.config/opencode/scripts/od.mjs` ແລ້ວສ້າງ `~/AppData/Roaming/npm/od.cmd` ທີ່ເອີ້ນໄຟລ໌ນັ້ນ — ຂັ້ນຕອນເຕັມແລະເຫດຜົນຢູ່ທີ່ [[gotchas]] ຂໍ້ 4
 
-3. ກວດວ່າ `od` ໃຊ້ງານໄດ້ແລ້ວ (**ເປີດ terminal ໃໝ່** ຫຼັງເຮັດ step 2 ສະເໝີ):
+3. ກວດວ່າ `od` ໃຊ້ງານໄດ້ແລ້ວ (**ເປີດ terminal ໃໝ່** ຫຼັງເຮັດ step 2 ສະເໝີ — ແລະໃຊ້ PowerShell ເພາະໃນ Git Bash `od` ຄື octal-dump ຂອງ coreutils ເບິ່ງ [[gotchas]] ຂໍ້ 5):
 
    ```bash
    od --help
    ```
 
-4. ເຊື່ອມກັບ OpenCode:
-
-   ```bash
-   od mcp install opencode
-   ```
-
-   ຄຳສັ່ງນີ້ຈະຂຽນ config ໃຫ້ເອງທີ່ `~/.config/opencode/opencode.json`:
+4. ເຊື່ອມກັບ OpenCode — **ແກ້ config ເອງ** ທີ່ `~/.config/opencode/opencode.json` **ໂດຍບໍ່ໃສ່** `--daemon-url`:
 
    ```jsonc
    "open-design": {
      "type": "local",
-     "command": ["od", "mcp", "--daemon-url", "http://127.0.0.1:7456"],
+     "command": ["od", "mcp"],
      "timeout": 30000,
      "enabled": true
    }
    ```
 
-   ແນະນຳເພີ່ມ `"timeout": 30000` ເອງຖ້າ `od mcp install` ບໍ່ໃສ່ໃຫ້ (ຄ່າ default 5000ms ອາດບໍ່ພຽງພໍຕອນ daemon ຍັງບໍ່ warm)
+   > [!warning] ຢ່າລັອກ `--daemon-url http://127.0.0.1:7456` (ຊຶ່ງເປັນສິ່ງທີ່ `od mcp install opencode` ຂຽນໃຫ້)
+   > ຕັ້ງແຕ່ 0.22 daemon ຂອງ desktop app ຟັງຢູ່ທີ່ port ສຸ່ມ URL ທີ່ລັອກໄວ້ຈຶ່ງໄດ້ `MCP error -32000: Connection closed` ເຖິງແມ່ນຈະເປີດແອັບຢູ່ກໍຕາມ ຖ້າບໍ່ໃສ່ flag ນີ້ `od mcp` ຈະຖາມແອັບທີ່ແລ່ນຢູ່ວ່າຕອນນີ້ daemon ຢູ່ URL ໃດຜ່ານ pipe ໃນເຄື່ອງ `od.mjs` ຕັ້ງ env var ທີ່ຕ້ອງໃຊ້ໃຫ້ອັດຕະໂນມັດ config ຂ້າງເທິງຈຶ່ງບໍ່ມີ port ຕາຍຕົວແລະບໍ່ມີຄ່າສະເພາະເຄື່ອງເລີຍ (ລາຍລະອຽດ: [[gotchas]] ຂໍ້ 4 ຂັ້ນທີ 4) shim `od.mjs` ໃຊ້ໄດ້ສະເພາະ Windows — ເທິງ macOS/Linux ໃຫ້ສຳເນົາ `command`/`env` ທີ່ແອັບຄືນມາເອງຈາກ `GET <daemon>/api/mcp/install-info` ແທນການລັອກ port
 
-5. **ເປີດແອັບ OpenDesign ໄວ້** (ຫຼືແລ່ນ `od --no-open` ແບບ headless) — MCP ນີ້ເປັນພຽງ stdio proxy ໄປຫາ daemon ທີ່ `127.0.0.1:7456` ຖ້າບໍ່ມີ daemon ແລ່ນຢູ່ຈະເຊື່ອມຕໍ່ບໍ່ໄດ້ເລີຍ
+   ຄົງ `"timeout": 30000` ໄວ້ (ຄ່າ default 5000ms ອາດບໍ່ພຽງພໍຕອນ daemon ຍັງບໍ່ warm)
+
+5. **ເປີດແອັບ OpenDesign ໄວ້** — MCP ນີ້ເປັນ stdio proxy ໄປຫາ daemon ຂອງແອັບ ຖ້າແອັບປິດຢູ່ `od mcp` ຖືກອອກແບບໃຫ້ເປີດແອັບແບບ headless ເອງ (ຕາມ `--help` ຂອງມັນເອງ — ທີ່ທົດສອບແລ້ວມີພຽງກໍລະນີເປີດແອັບໄວ້)
 
 6. ທົດສອບ:
 
@@ -222,7 +219,7 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
    opencode mcp list      # ຄວນເຫັນ open-design connected
    ```
 
-**MCP tools ທີ່ໄດ້:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`
+**MCP tools ທີ່ໄດ້:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`, `get_artifact`, `write_file`, `delete_file`, `create_project`, `delete_project`, `list_skills`, `list_plugins`, `list_agents`, `collect_brief`, `confirm_brief`, `start_run`, `get_run`, `cancel_run`, `start_vela_login`, `get_vela_login_status` (22 tool ນັບຕາມ OpenDesign 0.22.2)
 
 > [!warning] ບັນຫາທີ່ພົບເລື້ອຍເທິງ Windows
 > ເບິ່ງລາຍລະອຽດເຕັມທີ່ [[gotchas]] ຂໍ້ 4 — ຄອບຄຸມທັງບັນຫາ PATH ແລະບັນຫາ native module ທີ່ shim ທຳມະດາແກ້ບໍ່ໄດ້
@@ -318,12 +315,15 @@ docker version
 ### ຂັ້ນຕອນທີ 1 — ແລ່ນ SonarQube Server container
 
 ```bash
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
   sonarqube:community
 ```
+
+> [!note] host port `9001` ບໍ່ແມ່ນ `9000`
+> `9000` ມັກມີ service ອື່ນໃນເຄື່ອງໃຊ້ຢູ່ແລ້ວ setup ນີ້ຈຶ່ງເປີດ SonarQube ທີ່ host port `9001` (ຝັ່ງ container ຍັງເປັນ `9000`) `update-opencode.mjs --recreate-sonarqube` ອ່ານ port ຈາກ container ເດີມ ຈຶ່ງຄົງຄ່າທີ່ໃຊ້ຢູ່ແທ້ໄວ້
 
 ໃຊ້ named volume 3 ໂຕໃຫ້ຂໍ້ມູນ/extension/log ຢູ່ຖາວອນຂ້າມ container restart — **ບໍ່ໃສ່ `--rm`** ເພາະຕ້ອງການໃຫ້ container ຄົງຢູ່ຖາວອນ ບໍ່ແມ່ນແບບ ephemeral ຄື MCP server
 
@@ -333,14 +333,14 @@ docker run -d --name sonarqube -p 9000:9000 \
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-ທົດສອບວ່າເວັບຂຶ້ນແລ້ວ: ເປີດ **http://localhost:9000**
+ທົດສອບວ່າເວັບຂຶ້ນແລ້ວ: ເປີດ **http://localhost:9001**
 
 > [!note] Embedded H2 database ພຽງພໍສຳລັບໃຊ້ຄົນດຽວ
 > SonarQube ເຕືອນວ່າ "Embedded database should be used for evaluation purposes only" — ສຳລັບໃຊ້ງານຄົນດຽວ/project ສ່ວນຕົວບໍ່ມີບັນຫາ ແຕ່ຖ້າຈະໃຊ້ກັບທີມຫຼື production ຈິງ ຕ້ອງປ່ຽນໄປຕໍ່ PostgreSQL ແຍກຕາມເອກະສານທາງການຂອງ SonarQube
 
 ### ຂັ້ນຕອນທີ 2 — Login ຄັ້ງທຳອິດ + ສ້າງ User Token
 
-1. ເຂົ້າ **http://localhost:9000** login ດ້ວຍ `admin` / `admin` (default) — ລະບົບບັງຄັບຕັ້ງລະຫັດຜ່ານໃໝ່ທັນທີ
+1. ເຂົ້າ **http://localhost:9001** login ດ້ວຍ `admin` / `admin` (default) — ລະບົບບັງຄັບຕັ້ງລະຫັດຜ່ານໃໝ່ທັນທີ
 2. ໄປທີ່ **My Account → Security**
 3. ທີ່ **Generate Tokens**: ຕັ້ງຊື່ (ເຊັ່ນ `opencode-mcp`), Expires in `No expiration` (ຫຼືກຳນົດເອງຖ້າຕ້ອງການ)
 
@@ -370,7 +370,7 @@ docker logs sonarqube | grep "SonarQube is operational"
   ],
   "environment": {
     "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
-    "SONARQUBE_URL": "http://host.docker.internal:9000"
+    "SONARQUBE_URL": "http://host.docker.internal:9001"
   },
   "timeout": 30000,
   "enabled": true
@@ -380,7 +380,7 @@ docker logs sonarqube | grep "SonarQube is operational"
 ຈຸດສຳຄັນທີ່ຕ່າງຈາກ config ຕົວຢ່າງທົ່ວໄປໃນເອກະສານຂອງ SonarQube ເອງ:
 
 - **ໃຊ້ full path ຂອງ `docker.exe`** ແທນຊື່ `docker` ເສີຍໆ
-- **`SONARQUBE_URL` ຕ້ອງເປັນ `http://host.docker.internal:9000`** ບໍ່ແມ່ນ `http://localhost:9000` — ເພາະໂຕ MCP server ແລ່ນຢູ່**ໃນ container ແຍກ** `localhost` ຂ້າງໃນນັ້ນໝາຍເຖິງໂຕ container ເອງ ບໍ່ແມ່ນເຄື່ອງຈິງ
+- **`SONARQUBE_URL` ຕ້ອງເປັນ `http://host.docker.internal:9001`** ບໍ່ແມ່ນ `http://localhost:9001` — ເພາະໂຕ MCP server ແລ່ນຢູ່**ໃນ container ແຍກ** `localhost` ຂ້າງໃນນັ້ນໝາຍເຖິງໂຕ container ເອງ ບໍ່ແມ່ນເຄື່ອງຈິງ
 - `-e SONARQUBE_TOKEN` (ບໍ່ມີ `=value` ຕໍ່ທ້າຍ) ບອກ Docker ໃຫ້ forward ຄ່າຈາກ environment ຂອງ process ທີ່ເອີ້ນ `docker run` (ຄື opencode ເອງ) ເຂົ້າ container
 
 **pre-pull image ກ່ອນໃຊ້ງານຈິງຄັ້ງທຳອິດ** (ກັນ timeout 30 ວິນາທີບໍ່ພຽງພໍຕອນຕ້ອງດາວໂຫຼດ image ~500MB+):
@@ -394,7 +394,7 @@ docker pull sonarsource/sonarqube-mcp
 **ທົດສອບ docker command ໂດຍກົງກ່ອນ** (ແຍກບັນຫາ MCP config ອອກຈາກບັນຫາ docker/network):
 
 ```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9000 sonarsource/sonarqube-mcp
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9001 sonarsource/sonarqube-mcp
 ```
 
 ຄວນເຫັນ log ແບບນີ້ (ລໍ input ຢູ່ເພາະເປັນ stdio transport — ປົກກະຕິ, ກົດ Ctrl+C ອອກໄດ້):

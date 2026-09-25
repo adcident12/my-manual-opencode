@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-14
+updated: 2026-09-25
 summary: Home page ng OpenCode CLI setup at usage manual — saklaw ang MCP servers, Plugins, at Skills (Agent Skills open standard) para sa vibe coding
 ---
 
@@ -22,7 +22,7 @@ Itong set ng dokumento ay talaan ng aktwal, gumaganang setup — mula sa pag-ins
 | **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (kumukuha ng files mula sa isang OpenDesign project), memory (natatandaan ang context kahit magpalit ng session), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — naka-disable hanggang may PAT), postgres/mysql (naka-disable by default, ine-enable per project) |
 | **Plugins** | superpowers (skill library mula sa obra/superpowers), graft-deep (custom plugin — auto-inject context na lang ngayon; ang auto-rebuild ng graph ay trabaho na ng graft CLI mismo), ponytail (ruleset na nagpapaikli ng hindi kinakailangang code — mula sa dietrichgebert/ponytail), i-have-adhd (pinipilit na maikli, diretso-sa-punto na sagot — mula sa ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, hindi plugin) | grill-me / grilling (mula sa mattpocock/skills) — isang batch interview na nagtatanong sa user sa mga round bago simulan ang trabaho, naka-wire sa `brainstorming` ng superpowers para hindi magbanggaan |
-| **Pangunahing config** | `~/.config/opencode/opencode.jsonc` (manu-manong sinulat) + `~/.config/opencode/opencode.json` (auto-sinulat ng `od mcp install`) |
+| **Pangunahing config** | `~/.config/opencode/opencode.jsonc` (manu-manong sinulat) + `~/.config/opencode/opencode.json` (entry ng open-design, mano-manong in-edit — **hindi** ang bersyong may nakapirming port na isinusulat ng `od mcp install`; tignan [[mcp-servers]]) |
 
 ---
 

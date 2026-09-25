@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Detalye ng bawat MCP server na naka-setup sa OpenCode — hakbang sa pag-install, config, paano subukan, at mga gotchas
 ---
 
@@ -187,34 +187,31 @@ Ang [nexu-io/open-design](https://github.com/nexu-io/open-design) ay isang AI to
 
 1. I-download ang **desktop app** mula sa [open-design.ai](https://open-design.ai/) o [GitHub Releases](https://github.com/nexu-io/open-design/releases) at i-install nang normal (pinaka-inirerekumenda — zero config, walang kailangang i-clone/Node/pnpm mismo)
 
-2. **(Windows lang)** kadalasang hindi idinadagdag ng installer ang `od` sa PATH — kailangan mong gumawa ng shim mismo. Buong hakbang sa [[gotchas]], item 4 (maikling bersyon: gumawa ng `~/AppData/Roaming/npm/od.cmd` na tumatawag sa tunay na app sa pamamagitan ng `ELECTRON_RUN_AS_NODE=1`)
+2. **(Windows lang)** kadalasang hindi idinadagdag ng installer ang `od` sa PATH — at mula OpenDesign 0.22, tumatakbo ang app mula sa isang launcher folder na nagbabago sa bawat update. Gumawa ng shim na sumusunod sa bersyon: kopyahin ang [`scripts/od.mjs`](../scripts/od.mjs) mula sa repo na ito papunta sa `~/.config/opencode/scripts/od.mjs`, tapos gumawa ng `~/AppData/Roaming/npm/od.cmd` na tumatawag dito. Buong hakbang at mga dahilan sa [[gotchas]], item 4.
 
-3. Kumpirmahin na gumagana ang `od` (**laging magbukas ng bagong terminal** pagkatapos ng step 2):
+3. Kumpirmahin na gumagana ang `od` (**laging magbukas ng bagong terminal** pagkatapos ng step 2 — at gumamit ng PowerShell: sa Git Bash, ang `od` ay ang octal-dump tool ng coreutils, tignan [[gotchas]] item 5):
 
    ```bash
    od --help
    ```
 
-4. I-wire ito sa OpenCode:
-
-   ```bash
-   od mcp install opencode
-   ```
-
-   Susulatan ka nito ng config sa `~/.config/opencode/opencode.json`:
+4. I-wire ito sa OpenCode — **mano-mano**, sa `~/.config/opencode/opencode.json`, **nang walang** `--daemon-url`:
 
    ```jsonc
    "open-design": {
      "type": "local",
-     "command": ["od", "mcp", "--daemon-url", "http://127.0.0.1:7456"],
+     "command": ["od", "mcp"],
      "timeout": 30000,
      "enabled": true
    }
    ```
 
-   Idagdag mismo ang `"timeout": 30000` kung hindi ito idinagdag ng `od mcp install` (ang default na 5000ms ay maaaring hindi sapat habang nagpapainit pa ang daemon).
+   > [!warning] Huwag i-pin ang `--daemon-url http://127.0.0.1:7456` (na siyang isinusulat ng `od mcp install opencode`)
+   > Mula 0.22, nakikinig sa random na port ang daemon ng desktop app, kaya nagfa-fail ang naka-pin na URL na may `MCP error -32000: Connection closed` kahit nakabukas ang app. Kapag walang flag, tinatanong ng `od mcp` ang tumatakbong app kung nasaang URL ang daemon nito ngayon sa pamamagitan ng isang lokal na pipe; awtomatikong sine-set ng `od.mjs` ang mga env var na kailangan nito, kaya walang nakapirming port at walang machine-specific na value ang config sa itaas (detalye: [[gotchas]] item 4, hakbang 4). Windows lang ang `od.mjs` shim — sa macOS/Linux, kopyahin ang `command`/`env` na ibinabalik mismo ng app sa `GET <daemon>/api/mcp/install-info` sa halip na mag-pin ng port.
 
-5. **Panatilihing bukas ang OpenDesign app** (o patakbuhin ang `od --no-open` nang headless) — ang MCP na ito ay isang stdio proxy lang papunta sa daemon sa `127.0.0.1:7456`; kung walang tumatakbong daemon, hindi ito makakakonekta.
+   Panatilihin ang `"timeout": 30000` (ang default na 5000ms ay maaaring hindi sapat habang nagpapainit pa ang daemon).
+
+5. **Panatilihing bukas ang OpenDesign app** — ang MCP na ito ay isang stdio proxy papunta sa daemon ng app. Kung sarado ang app, dinisenyo ang `od mcp` para buksan ito nang headless nang mag-isa (ayon sa sarili nitong `--help`; ang kaso lang na nakabukas ang app ang nasubukan dito).
 
 6. Subukan:
 
@@ -222,7 +219,7 @@ Ang [nexu-io/open-design](https://github.com/nexu-io/open-design) ay isang AI to
    opencode mcp list      # dapat makita ang open-design na connected
    ```
 
-**Mga MCP tool na makukuha mo:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`
+**Mga MCP tool na makukuha mo:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`, `get_artifact`, `write_file`, `delete_file`, `create_project`, `delete_project`, `list_skills`, `list_plugins`, `list_agents`, `collect_brief`, `confirm_brief`, `start_run`, `get_run`, `cancel_run`, `start_vela_login`, `get_vela_login_status` (22 tool sa OpenDesign 0.22.2)
 
 > [!warning] Karaniwang problema sa Windows
 > Buong detalye sa [[gotchas]], item 4 — saklaw ang parehong problema sa PATH at isang native-module na problema na hindi maaayos ng plain na shim.
@@ -321,12 +318,15 @@ Kung lumabas ang error na `open //./pipe/dockerDesktopLinuxEngine`, hindi pa buk
 ### Hakbang 1 — Patakbuhin ang SonarQube Server container
 
 ```bash
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
   sonarqube:community
 ```
+
+> [!note] Host port na `9001`, hindi `9000`
+> Kadalasang may ibang lokal na service nang gumagamit ng `9000`, kaya inilalathala ng setup na ito ang SonarQube sa host port na `9001` (`9000` pa rin sa panig ng container). Binabasa ng `update-opencode.mjs --recreate-sonarqube` ang port mula sa dating container, kaya pinapanatili nito ang talagang ginagamit mo.
 
 Gumagamit ng 3 named volumes para manatili ang data/extensions/logs kahit mag-restart ang container — **walang `--rm`**, dahil dapat manatili ang container na ito nang permanente, kaiba sa mga ephemeral na MCP server containers.
 
@@ -336,14 +336,14 @@ Maghintay na matapos ang bootstrap (karaniwang 1–2 minuto), makikita sa log:
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-Kumpirmahin na bukas na ang web UI: buksan ang **http://localhost:9000**.
+Kumpirmahin na bukas na ang web UI: buksan ang **http://localhost:9001**.
 
 > [!note] Sapat na ang embedded H2 database para sa mag-isang paggamit
 > Binabalaan ng SonarQube na "Embedded database should be used for evaluation purposes only" — okay lang para sa mag-isa/personal na project, pero lumipat sa hiwalay na PostgreSQL ayon sa opisyal na dokumento ng SonarQube kung gagamitin ng team o sa tunay na production.
 
 ### Hakbang 2 — Unang login + gumawa ng User Token
 
-1. Pumunta sa **http://localhost:9000**, mag-login gamit ang `admin` / `admin` (default) — pipilitin kang magpalit ng password agad
+1. Pumunta sa **http://localhost:9001**, mag-login gamit ang `admin` / `admin` (default) — pipilitin kang magpalit ng password agad
 2. Pumunta sa **My Account → Security**
 3. Sa ilalim ng **Generate Tokens**: bigyan ng pangalan (hal. `opencode-mcp`), Expires in `No expiration` (o pumili ng sarili mo)
 
@@ -373,7 +373,7 @@ I-set ang `SONARQUBE_TOKEN` sa value ng token na iyon (System Environment Variab
   ],
   "environment": {
     "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
-    "SONARQUBE_URL": "http://host.docker.internal:9000"
+    "SONARQUBE_URL": "http://host.docker.internal:9001"
   },
   "timeout": 30000,
   "enabled": true
@@ -383,7 +383,7 @@ I-set ang `SONARQUBE_TOKEN` sa value ng token na iyon (System Environment Variab
 Mga pangunahing pagkakaiba mula sa generic na halimbawang config sa opisyal na dokumento ng SonarQube:
 
 - **Ginagamit ang buong path ng `docker.exe`** sa halip na plain na `docker`, ayon sa dahilan sa prerequisite sa itaas.
-- **Ang `SONARQUBE_URL` ay dapat na `http://host.docker.internal:9000`**, hindi `http://localhost:9000` — dahil ang MCP server ay tumatakbo **sa sarili nitong hiwalay na container**, kung saan ang `localhost` ay tumutukoy sa container mismo, hindi sa tunay na makina. Ang `host.docker.internal` ang special na DNS name na ibinibigay ng Docker Desktop na laging tumuturo pabalik sa host machine.
+- **Ang `SONARQUBE_URL` ay dapat na `http://host.docker.internal:9001`**, hindi `http://localhost:9001` — dahil ang MCP server ay tumatakbo **sa sarili nitong hiwalay na container**, kung saan ang `localhost` ay tumutukoy sa container mismo, hindi sa tunay na makina. Ang `host.docker.internal` ang special na DNS name na ibinibigay ng Docker Desktop na laging tumuturo pabalik sa host machine.
 - Ang `-e SONARQUBE_TOKEN` (walang `=value` sa hulihan) ay nagsasabi sa Docker na i-forward ang value mula sa environment ng process na tumawag ng `docker run` (opencode mismo) papunta sa container — gumagana ito kasama ng `"environment"` block sa itaas na nagre-resolve ng `{env:SONARQUBE_TOKEN}` para makita ng opencode ang tunay na value bago ito ipasa.
 
 **I-pre-pull ang image bago ang unang tunay na paggamit** (iniiwasan ang timeout na 30 segundo na hindi sapat habang dina-download ang ~500MB+ na image):
@@ -397,7 +397,7 @@ docker pull sonarsource/sonarqube-mcp
 **Direktang subukan muna ang docker command** (hinihiwalay ang problema sa MCP config sa problema sa docker/network):
 
 ```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9000 sonarsource/sonarqube-mcp
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9001 sonarsource/sonarqube-mcp
 ```
 
 Dapat makita mo ang mga log na ganito (naghihintay ito ng input dahil stdio transport ito — normal, i-Ctrl+C para lumabas):

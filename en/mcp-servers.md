@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-13
+updated: 2026-09-25
 summary: Details on each MCP server set up in OpenCode — install steps, config, how to test, and gotchas
 ---
 
@@ -187,34 +187,31 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
 
 1. Download the **desktop app** from [open-design.ai](https://open-design.ai/) or [GitHub Releases](https://github.com/nexu-io/open-design/releases) and install normally (recommended — zero config, no need to clone/Node/pnpm anything yourself)
 
-2. **(Windows only)** the installer usually doesn't add `od` to PATH — you have to build a shim yourself. Full steps are in [[gotchas]], item 4 (short version: create `~/AppData/Roaming/npm/od.cmd` that calls the real app via `ELECTRON_RUN_AS_NODE=1`)
+2. **(Windows only)** the installer usually doesn't add `od` to PATH — and since OpenDesign 0.22 the app runs from a launcher folder that changes with every update. Build the version-following shim: copy [`scripts/od.mjs`](../scripts/od.mjs) from this repo to `~/.config/opencode/scripts/od.mjs`, then create `~/AppData/Roaming/npm/od.cmd` that calls it. Full steps and the reasons are in [[gotchas]], item 4.
 
-3. Confirm `od` works (**always open a new terminal** after step 2):
+3. Confirm `od` works (**always open a new terminal** after step 2 — and use PowerShell: in Git Bash, `od` is coreutils' octal-dump tool, see [[gotchas]] item 5):
 
    ```bash
    od --help
    ```
 
-4. Wire it up to OpenCode:
-
-   ```bash
-   od mcp install opencode
-   ```
-
-   This writes config for you at `~/.config/opencode/opencode.json`:
+4. Wire it up to OpenCode — **by hand**, in `~/.config/opencode/opencode.json`, **without** `--daemon-url`:
 
    ```jsonc
    "open-design": {
      "type": "local",
-     "command": ["od", "mcp", "--daemon-url", "http://127.0.0.1:7456"],
+     "command": ["od", "mcp"],
      "timeout": 30000,
      "enabled": true
    }
    ```
 
-   Add `"timeout": 30000` yourself if `od mcp install` didn't (the default 5000ms may not be enough while the daemon is still warming up).
+   > [!warning] Don't pin `--daemon-url http://127.0.0.1:7456` (which is what `od mcp install opencode` writes)
+   > Since 0.22 the desktop app's daemon listens on a random port, so a pinned URL fails with `MCP error -32000: Connection closed` even while the app is open. Without the flag, `od mcp` asks the running app for its daemon's current URL over a local pipe; `od.mjs` sets the env vars that needs automatically, so the config above has no fixed port and nothing machine-specific (details: [[gotchas]] item 4, step 4). The `od.mjs` shim is Windows-only — on macOS/Linux, copy the `command`/`env` the app itself returns at `GET <daemon>/api/mcp/install-info` instead of pinning a port.
 
-5. **Leave the OpenDesign app open** (or run `od --no-open` headless) — this MCP is just a stdio proxy to the daemon at `127.0.0.1:7456`; with no daemon running it can't connect at all.
+   Keep `"timeout": 30000` (the default 5000ms may not be enough while the daemon is still warming up).
+
+5. **Leave the OpenDesign app open** — this MCP is a stdio proxy to the app's daemon. If the app is closed, `od mcp` is designed to start it headless by itself (per its own `--help`; only the app-open case was tested here).
 
 6. Test:
 
@@ -222,7 +219,7 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
    opencode mcp list      # should show open-design connected
    ```
 
-**MCP tools you get:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`
+**MCP tools you get:** `list_projects`, `get_active_context`, `get_project`, `get_file`, `search_files`, `list_files`, `create_artifact`, `get_artifact`, `write_file`, `delete_file`, `create_project`, `delete_project`, `list_skills`, `list_plugins`, `list_agents`, `collect_brief`, `confirm_brief`, `start_run`, `get_run`, `cancel_run`, `start_vela_login`, `get_vela_login_status` (22 tools as of OpenDesign 0.22.2)
 
 > [!warning] Common Windows problems
 > Full details in [[gotchas]], item 4 — covers both the PATH issue and a native-module issue a plain shim can't fix.
@@ -321,12 +318,15 @@ If you get the error `open //./pipe/dockerDesktopLinuxEngine`, the app isn't ope
 ### Step 1 — Run the SonarQube Server container
 
 ```bash
-docker run -d --name sonarqube -p 9000:9000 \
+docker run -d --name sonarqube -p 9001:9000 \
   -v sonarqube_data:/opt/sonarqube/data \
   -v sonarqube_extensions:/opt/sonarqube/extensions \
   -v sonarqube_logs:/opt/sonarqube/logs \
   sonarqube:community
 ```
+
+> [!note] Host port `9001`, not `9000`
+> `9000` is often already taken by another local service, so this setup publishes SonarQube on host port `9001` (the container side stays `9000`). `update-opencode.mjs --recreate-sonarqube` reads the port from the existing container, so it keeps whatever you actually use.
 
 Uses 3 named volumes so data/extensions/logs persist across container restarts — **no `--rm`**, since this container is meant to stay around permanently, unlike the ephemeral MCP server containers.
 
@@ -336,14 +336,14 @@ Wait for bootstrap to finish (usually 1–2 minutes), checkable via the log:
 docker logs sonarqube | grep "SonarQube is operational"
 ```
 
-Confirm the web UI is up: open **http://localhost:9000**.
+Confirm the web UI is up: open **http://localhost:9001**.
 
 > [!note] The embedded H2 database is fine for solo use
 > SonarQube warns "Embedded database should be used for evaluation purposes only" — fine for solo/personal-project use, but switch to a separate PostgreSQL per SonarQube's own docs if used with a team or in real production.
 
 ### Step 2 — First login + create a User Token
 
-1. Go to **http://localhost:9000**, log in with `admin` / `admin` (default) — it forces a password change immediately
+1. Go to **http://localhost:9001**, log in with `admin` / `admin` (default) — it forces a password change immediately
 2. Go to **My Account → Security**
 3. Under **Generate Tokens**: give it a name (e.g. `opencode-mcp`), Expires in `No expiration` (or set your own)
 
@@ -373,7 +373,7 @@ Set `SONARQUBE_TOKEN` to that token's value (a System Environment Variable on Wi
   ],
   "environment": {
     "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
-    "SONARQUBE_URL": "http://host.docker.internal:9000"
+    "SONARQUBE_URL": "http://host.docker.internal:9001"
   },
   "timeout": 30000,
   "enabled": true
@@ -383,7 +383,7 @@ Set `SONARQUBE_TOKEN` to that token's value (a System Environment Variable on Wi
 Key differences from the generic example config in SonarQube's own docs:
 
 - **Uses `docker.exe`'s full path** instead of a bare `docker`, for the reason in the prerequisite above.
-- **`SONARQUBE_URL` must be `http://host.docker.internal:9000`**, not `http://localhost:9000` — because the MCP server runs **in its own separate container**, where `localhost` refers to that container itself, not the real machine. `host.docker.internal` is the special DNS name Docker Desktop provides that always points back to the host machine.
+- **`SONARQUBE_URL` must be `http://host.docker.internal:9001`**, not `http://localhost:9001` — because the MCP server runs **in its own separate container**, where `localhost` refers to that container itself, not the real machine. `host.docker.internal` is the special DNS name Docker Desktop provides that always points back to the host machine.
 - `-e SONARQUBE_TOKEN` (with no `=value` after it) tells Docker to forward the value from the environment of the process calling `docker run` (opencode itself) into the container — this works together with the `"environment"` block above, which resolves `{env:SONARQUBE_TOKEN}` so opencode sees the real value before passing it along.
 
 **Pre-pull the image before first real use** (avoids the 30-second timeout not being enough while a ~500MB+ image downloads):
@@ -397,7 +397,7 @@ docker pull sonarsource/sonarqube-mcp
 **Test the docker command directly first** (isolates an MCP-config problem from a docker/network problem):
 
 ```powershell
-& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9000 sonarsource/sonarqube-mcp
+& "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run --init --rm -i -e SONARQUBE_TOKEN -e SONARQUBE_URL=http://host.docker.internal:9001 sonarsource/sonarqube-mcp
 ```
 
 You should see logs like this (it's waiting for input because it's a stdio transport — normal, Ctrl+C to exit):
