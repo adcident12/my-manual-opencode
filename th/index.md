@@ -20,7 +20,7 @@ summary: Home page คู่มือการติดตั้งและใ�
 | **Model provider หลัก** | `home-llamacpp` — self-hosted llama.cpp server (URL เฉพาะของแต่ละคน), โมเดล `qwen3.8-27b` (Q4_K, context 131k) ผ่าน OpenAI-compatible endpoint |
 | **Model สำรอง (เร็ว)** | `opencode/deepseek-v4-flash-free` — built-in ของ OpenCode เอง ไม่ต้องตั้ง API key เพิ่ม ตอบเร็ว (~10 วินาที) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (จำ context ข้าม session — ใช้งานด้วยกฎใน global AGENTS.md), sonarqube (code quality/security — self-hosted ผ่าน Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **เปิดต่อโปรเจกต์:** open-design (นำเข้าไฟล์จากโปรเจกต์ OpenDesign), playwright (browser automation), postgres/mysql · github (ปิดไว้จนกว่าจะมี PAT) |
-| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-inject context; auto-rebuild graph เป็นของ graft CLI เองแล้ว), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม — จาก ayghri/i-have-adhd) |
+| **Plugins** | superpowers (skill library จาก obra/superpowers), graft-deep (custom plugin — auto-inject context; auto-rebuild graph เป็นของ graft CLI เองแล้ว), ponytail (ruleset ลดโค้ดที่ไม่จำเป็น — จาก dietrichgebert/ponytail), caveman (ตอบสั้น ตรงประเด็น — ใช้เฉพาะ skill จาก JuliusBrussee/caveman แทน i-have-adhd) |
 | **Skills** (Agent Skills open standard, ไม่ใช่ plugin) | grill-me / grilling (จาก mattpocock/skills) — batch-interview สัมภาษณ์ผู้ใช้เป็นรอบก่อนเริ่มงาน ผูกเข้ากับ `brainstorming` ของ superpowers ไม่ให้ชนกัน |
 | **Config หลัก** | `~/.config/opencode/opencode.jsonc` (ตั้งเอง) + `~/.config/opencode/opencode.json` (entry ของ open-design แก้เอง — **ไม่ใช่**แบบ port ตายตัวที่ `od mcp install` เขียนให้ ดู [[mcp-servers]]) |
 
@@ -32,10 +32,12 @@ summary: Home page คู่มือการติดตั้งและใ�
 - [[architecture]] — มอง stack ทั้งหมดผ่าน 4 layer ตามหน้าที่ (Knowledge/Reasoning/Execution/Governance) แทนตามกลไกทางเทคนิค เอาไว้ตอบว่าเครื่องมือใหม่แต่ละตัว "อยู่ layer ไหน"
 - [[setup]] — คู่มือติดตั้งแบบละเอียด ตั้งแต่**เครื่องเปล่า**ที่ยังไม่มี Node.js/Git จนถึงต่อ provider/MCP/plugin ครบ
 - [[mcp-servers]] — รายละเอียด MCP server แต่ละตัว ขั้นตอนติดตั้ง config และวิธีทดสอบ
-- [[plugins]] — superpowers, grill-me/grilling (batch-interview skill เสริม superpowers), custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น)
-- [[USER-MANUAL]] — วิธีใช้งานจริงวันต่อวัน: vibe coding, graft workflow, OpenDesign workflow
-- [[gotchas]] — ปัญหาที่เจอจริง 16 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, reasoning model output cap, prompt บวมจาก MCP, skill ชนกับ AGENTS.md, ฯลฯ)
+- [[plugins]] — superpowers, grill-me/grilling (batch-interview skill เสริม superpowers), custom plugin graft-deep (โค้ดเต็ม + Plugin Hook API), ponytail (code minimization ruleset) และ caveman (ตอบสั้น ตรงประเด็น — ใช้แทน i-have-adhd ซึ่งยังเป็นทางเลือก)
+- [[USER-MANUAL]] — **เริ่มใช้งานตั้งแต่ต้นจนจบ** (เปิด session → สั่ง → อนุมัติ → ตรวจ → commit) และวิธีใช้งานจริงวันต่อวัน: vibe coding, graft workflow, OpenDesign workflow
+- [[gotchas]] — ปัญหาที่เจอจริง 19 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, model ช้า, native module ABI mismatch, reasoning model output cap, prompt บวมจาก MCP, skill ชนกับ AGENTS.md, ฯลฯ)
 - [[updating]] — วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว
+- [config/](../config/README.md) — ไฟล์ที่ setup นี้เขียน/แก้เอง พร้อม copy: template `opencode.jsonc`, global `AGENTS.md`, plugin `graft-deep.js`
+- [AGENT-SETUP.md](../AGENT-SETUP.md) — ขั้นตอนติดตั้งสำหรับให้ AI agent อ่านแล้วทำตาม (สั่ง agent ว่า `อ่าน AGENT-SETUP.md แล้วติดตั้งตาม`)
 - [[tuning]] — วัดผลจริงว่า workflow ทำงานครบไหม (ขนาด prompt ต่อ turn, tool ที่ agent เรียกจริง, ทดสอบครบวงจร) พร้อมภาพผล, สคริปต์วัดซ้ำ และค่าที่แนะนำหลังปรับจูน
 
 ---

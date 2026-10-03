@@ -142,7 +142,18 @@ Then restart OpenCode and confirm with `/ponytail-help`.
 
 ---
 
+## caveman (installed by hand from tag-pinned files)
+
+Installed by downloading files from a pinned tag (see [[plugins]]), so nothing updates on its own. Watch for a new release at [github.com/JuliusBrussee/caveman/releases](https://github.com/JuliusBrussee/caveman/releases), change `T=` to the new tag, re-run the download block in [[plugins]] (it overwrites the files), then reopen OpenCode.
+
+> [!warning] Don't update with the installer
+> `bin/install.js` rewrites `opencode.jsonc` as plain JSON and drops the comments — [[gotchas]] item 18. `update-opencode.mjs` doesn't touch caveman (last tested version: v3.1.0, 2026-10-03).
+
+---
+
 ## i-have-adhd (installed via a local git clone)
+
+> [!note] This setup switched to caveman (2026-10-03) — this section only applies if you still have i-have-adhd installed. The update script skips this step by itself when the folder isn't there.
 
 Unlike superpowers/ponytail, this doesn't go through the `plugin` array as a git URL or npm package at all — the `plugin` array points directly at a `.mjs` file path inside the cloned source (see [[setup]] Part 4). So updating it is just a `git pull` of that source, with none of opencode/Bun's caching involved at all:
 
@@ -287,7 +298,8 @@ trivy plugin upgrade     # upgrade installed plugins (including mcp) to the late
 | graft | ✅ Manual | `graft upgrade` |
 | superpowers | ⚠️ Manual (caching issue) | delete cache, then restart |
 | ponytail | ⚠️ Manual (if the lockfile pinned a version) | delete cache, then restart |
-| i-have-adhd | ✅ Manual (local clone) | `git pull`, then restart |
+| caveman | ✅ Manual (tag-pinned files) | change the tag and re-download — never the installer |
+| i-have-adhd (if still used) | ✅ Manual (local clone) | `git pull`, then restart |
 | grill-me / grilling | ✅ Manual diffing (vendored, no manager) | curl the raw URL, compare, merge the fix back in |
 | graft-deep.js | ➖ No upstream (hand-written) — but compare with graft's hook after each graft upgrade | edit the file directly; see [[plugins]] |
 | OpenDesign | ❌ Automatic (launcher auto-updater) | via the app's UI; the `od.mjs` shim follows the new version by itself |

@@ -96,12 +96,14 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
    ```jsonc
    "chrome-devtools": {
      "type": "local",
-     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics"],
+     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
      "timeout": 30000
    }
    ```
 
    `--no-usage-statistics` ປິດການສົ່ງ telemetry ໄປທີ່ Google (ເປີດຢູ່ໂດຍ default ຖ້າບໍ່ໃສ່ flag ນີ້)
+
+   `--isolated` ໃຊ້ Chrome profile ຊົ່ວຄາວຕໍ່ການເປີດແຕ່ລະເທື່ອ — ຖ້າບໍ່ໃສ່ ທຸກ instance ຂອງ `chrome-devtools-mcp` ເທິງເຄື່ອງ (ລວມຂອງເຄື່ອງມືອື່ນ ເຊັ່ນ Claude Code) ຈະແຍ່ງ profile ດຽວກັນ ແລະໂຕທີ່ມາທີຫຼັງໄດ້ `The browser is already running` ([[gotchas]] ຂໍ້ 17) ຂໍ້ແລກປ່ຽນຄືບໍ່ມີ login/cookie ຄ້າງຂ້າມການເປີດ
 
 3. ທົດສອບ:
 

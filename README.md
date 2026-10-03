@@ -17,6 +17,14 @@ Detalyadong gabay sa pag-setup at paggamit ng OpenCode CLI — mula sa walang la
 | 🇵🇭 | **[Basahin sa Filipino →](fil/README.md)** |
 | 🇱🇦 | **[ອ່ານພາສາລາວ →](lo/README.md)** |
 
+## Beyond the pages / นอกจากหน้าเอกสาร
+
+| | |
+| --- | --- |
+| [`config/`](config/README.md) | The files this setup adds to OpenCode, ready to copy: `opencode.jsonc` template, global `AGENTS.md`, `graft-deep.js` · ไฟล์ที่ setup นี้ใช้จริง พร้อม copy |
+| [`AGENT-SETUP.md`](AGENT-SETUP.md) | Step-by-step setup instructions written for an AI agent to follow — tell your agent: *"read AGENT-SETUP.md and set this up"* · ขั้นตอนติดตั้งสำหรับให้ AI agent ทำตาม |
+| [`scripts/`](scripts/) | Update script, plus the measurement scripts used in `tuning.md` · สคริปต์อัปเดตและสคริปต์วัดผล |
+
 ---
 
 > [!note]

@@ -8,7 +8,7 @@ summary: ปัญหาที่เจอจริงระหว่างต�
 
 ภาพรวมที่ [[index]] · การตั้งค่าที่ [[setup]]
 
-รวมปัญหาที่เจอจริง 16 เรื่อง เรียงตามลำดับที่เจอระหว่างตั้งค่าจริง แต่ละข้อมีทั้ง **Impact** (ผลกระทบ) และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
+รวมปัญหาที่เจอจริง 19 เรื่อง เรียงตามลำดับที่เจอระหว่างตั้งค่าจริง แต่ละข้อมีทั้ง **Impact** (ผลกระทบ) และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้
 
 ---
 
@@ -329,3 +329,47 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 > }
 > ```
 > ตรวจลำดับด้วย `Get-Command od -All` (PowerShell) — ตัวแรกในรายการคือตัวที่ถูกเรียก
+
+---
+
+## 17. chrome-devtools เปิดเบราว์เซอร์ไม่ได้: "The browser is already running"
+
+**Impact:** agent เรียก `chrome-devtools_list_pages` แล้วได้ `The browser is already running for …\chrome-devtools-mcp\chrome-profile. Use --isolated to run multiple browser instances.` ตรวจในเบราว์เซอร์ไม่ได้ทั้ง session — ในโหมด `opencode run` agent ไปหาทางอื่นจนโดนปฏิเสธ permission แล้ว run จบกลางคันโดยงานไม่เสร็จ
+
+**สาเหตุ:** `chrome-devtools-mcp` ทุก instance ใช้ Chrome profile เดียวกัน (`~/.cache/chrome-devtools-mcp/chrome-profile`) โดย default — ถ้าเครื่องมืออื่นบนเครื่อง (เช่น Claude Code ที่ลง chrome-devtools ไว้เหมือนกัน หรือ OpenCode อีกหน้าต่าง) เปิด Chrome ค้างไว้ก่อน ตัวที่มาทีหลังจะเปิดไม่ได้
+
+> [!important] วิธีแก้
+> ใส่ `--isolated` ใน config ของ OpenCode — ใช้ profile ชั่วคราวต่อการเปิดแต่ละครั้ง จึงไม่ชนกับใคร:
+> ```jsonc
+> "chrome-devtools": {
+>   "type": "local",
+>   "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
+>   "timeout": 30000
+> }
+> ```
+> ข้อแลกเปลี่ยน: ไม่มี login/cookie ค้างข้ามการเปิด — ถ้าต้องทดสอบหน้าที่ต้อง login ค้าง ให้ใช้ `--user-data-dir=<โฟลเดอร์เฉพาะของ OpenCode>` แทน
+
+---
+
+## 18. installer ของเครื่องมือเสริมเขียน `opencode.jsonc` ทับ — comment หายทั้งไฟล์
+
+**Impact:** หลังรัน installer ของ plugin บางตัว (เจอกับ `caveman`: `bin/install.js --only opencode`) ไฟล์ `opencode.jsonc` ถูกเขียนใหม่เป็น JSON ธรรมดา comment ทุกบรรทัดที่อธิบายว่าทำไมตั้งค่าแบบนั้นหายไป และได้ skill/subagent/กฎใน AGENTS.md มามากกว่าที่ต้องการ
+
+**สาเหตุ:** installer อ่าน config → แก้ → serialize กลับด้วย `JSON.stringify` (โค้ดของ caveman เขียนไว้ตรงๆ ว่า "rewriting it drops them") มันเก็บ `opencode.jsonc.bak` ไว้ครั้งแรก แต่ถ้าไม่รู้ก็ไม่ได้ไปดู
+
+> [!important] วิธีแก้
+> ก่อนรัน installer ตัวไหนก็ตาม: (1) ดูว่ามี `--dry-run` ไหม แล้วอ่านว่ามันจะแตะไฟล์อะไร (2) ถ้ามันแก้ `opencode.jsonc` ให้ติดตั้งเองแทน — copy ไฟล์ของ plugin แล้วเพิ่มบรรทัดใน `plugin` array ด้วยมือ (ตัวอย่างเต็มของ caveman ที่ [[plugins]]) (3) สำรอง `~/.config/opencode/` ก่อนเสมอ
+
+---
+
+## 19. กฎที่เน้น "ประหยัด step" ทำให้ agent ข้ามการตรวจในเบราว์เซอร์
+
+**Impact:** หลังใส่ ruleset ด้าน token efficiency (ทดสอบกับ [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)) งานเดิมเสร็จใน 6 นาทีแทน 33 นาที — แต่เพราะ agent **หยุดหลังเทสต์ผ่านโดยไม่เปิดเบราว์เซอร์เลย** จึงไม่เจอ bug เมนูพังที่รอบก่อนเจอ
+
+**สาเหตุ:** กฎแบบ "เสร็จ = เกณฑ์ตรวจของงานผ่าน แล้วหยุด" + "อย่าสร้างการตรวจที่งานไม่ได้ขอ" ถูกต้องสำหรับงานที่มีเทสต์ครอบคลุม แต่กับงาน UI เทสต์ระดับ logic ผ่านไม่ได้แปลว่าหน้าจอใช้งานได้ — ขั้น 8 ของ [[USER-MANUAL]] จึงถูกตัดทิ้งเงียบๆ
+
+> [!important] วิธีแก้
+> เขียนกฎ "Verifying UI changes — once, in a real browser" ใน global AGENTS.md (ข้อความเต็มที่ [[tuning]]): งานที่เห็นในเบราว์เซอร์ต้องโหลดหน้า ทำ interaction ของงานนั้นหนึ่งครั้ง และดู console ก่อนรายงานว่าเสร็จ — หลังใส่กฎนี้การตรวจในเบราว์เซอร์กลับมา และเวลากลับไปเท่าเดิม (~36 นาที) แปลว่าต้นทุนของขั้นนี้เป็นของการตรวจเอง ไม่ใช่สิ่งที่ ruleset ลดให้ได้
+
+> [!tip] บทเรียน
+> ตัวเลข "เร็วขึ้น 80%" ต้องดูคู่กับ "ยังทำครบทุกขั้นไหม" เสมอ — วัดทั้งเวลาและลำดับ tool call ด้วย `session-report.mjs session <title>` ก่อนสรุปว่าดีขึ้น

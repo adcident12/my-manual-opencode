@@ -17,6 +17,7 @@ Ang kumpletong config ay hindi pareho sa gumaganang workflow. Ang lahat ng MCP s
 > | Gumagamit ng graft ang agent habang nag-e-explore (E2E, turn 1) | 0 tawag, 7 reads | **2 tawag, 2 reads** |
 > | memory MCP | 1 tawag sa 50 session, hindi kailanman nagawa ang file | **nagse-save at naaalala kahit magpalit ng session** |
 > | Paulit-ulit na pagbasa ng files | 76% ay agad pagkatapos ng compaction | `compaction.prune` + isang re-read rule (**hindi pa nakumpirma sa mahabang session**) |
+> | Pagdagdag ng Caveman + benjamin-plus (seksyon 8) | — | **walang nasusukat na improvement** — pinanatili ang Caveman dahil mas madaling basahin ang mga sagot (nagiging ~34.0k ang prompt), inalis ang benjamin-plus |
 
 Lahat ng scripts ay nasa [`scripts/`](../scripts/) — Node.js lang ang kailangan (≥ 22.5 para sa `session-report.mjs`, na gumagamit ng built-in na `node:sqlite`). Ang HTML source ng bawat larawan dito ay [`assets/tuning/report.html`](../assets/tuning/report.html).
 
@@ -132,6 +133,9 @@ Ang nangyari:
 
 ## 5. Ang binago (ang config na ginagamit pagkatapos ng testing)
 
+> [!tip] Ang huling resulta ay nasa mga tunay na file sa ilalim ng [`config/`](../config/README.md)
+> [`config/opencode.jsonc`](../config/opencode.jsonc) (template na kasama na ang lahat sa ibaba) at [`config/AGENTS.md`](../config/AGENTS.md) (lahat ng rule) — ipinapaliwanag ng mga subsection sa ibaba ang dahilan ng bawat bahagi.
+
 ### 5.1 Naka-off by default ang bihirang gamiting MCP servers, naka-on per project
 
 Sa `~/.config/opencode/opencode.jsonc`:
@@ -165,11 +169,20 @@ I-on para sa isang project lang sa `<project>/opencode.json` (mine-merge sa glob
 
 Ang `prune` (naka-off by default) ay tumatakbo sa dulo ng bawat prompt: tinatanggal nito ang tool outputs na mas luma sa huling 2 turn, laging iniiwan ang pinakabagong ~40k tokens, at kumikilos lang kapag higit sa ~20k tokens ang matatanggal (sinuri sa source ng OpenCode 1.18.34). Ang pag-prune nang malalaki at madalang ay pumipigil na ma-invalidate ang prompt cache ng llama.cpp bawat turn, habang pinadadalang ang buong compaction.
 
-### 5.3 Tatlong bagong rule sa global AGENTS.md
+### 5.3 Apat na bagong rule sa global AGENTS.md
 
-Idinagdag pagkatapos ng kasalukuyang grill-me rule ([[plugins]]) sa `~/.config/opencode/AGENTS.md` — nakasulat sa English dahil instructions ito para sa model (~480 tokens nang magkakasama):
+Idinagdag pagkatapos ng kasalukuyang grill-me rule ([[plugins]]) sa `~/.config/opencode/AGENTS.md` — nakasulat sa English dahil instructions ito para sa model (~610 tokens nang magkakasama). Idinagdag ang "Verifying UI changes" nang mas huli, dahil sa resulta sa seksyon 8:
 
 ```markdown
+## Verifying UI changes — once, in a real browser
+
+Passing tests is not enough for a change someone will see in a browser (a
+web page, a game). Before reporting done, verify it once with
+chrome-devtools: load the page, do the one interaction the task is about,
+and check the console for errors. Keep it to a handful of calls — a single
+short wait for the page to settle, no polling loops. If the page cannot
+load or throws, that is a failure to report or fix, not "done".
+
 ## Exploring a codebase — graft first, even inside a skill
 
 Skills such as `brainstorming` ("Explore project context — check files,
@@ -243,7 +256,7 @@ Kung may context7 key ka (opsyonal — gumagana kahit wala, may rate limit lang)
 
 - **Ang epekto ng `prune` + ng re-read rule** — masyadong maikli ang test sessions para mag-compact. Patakbuhin ulit ang `session-report.mjs rereads` pagkatapos ng ilang tunay na paggamit at ikumpara ang bahaging "after a compaction" sa orihinal na 76%
 - **Ang commit step** — para tumugma sa [[USER-MANUAL]] hakbang 9, magdagdag ng AGENTS.md rule na gumawa ng isang scoped commit pagkatapos pumasa ang verification (walang push) — ikaw ang magpapasya kung gusto mong kusang mag-commit ang agent
-- **Browser verification** — 37 tawag / 32 minuto para sa isang maliit na feature; wala pang nasubukang ayos
+- **Browser verification** — 37–40 tawag / 33–36 minuto para sa isang maliit na feature. Hindi nakatulong ang token-efficiency rule set (seksyon 8) — iyan ang gastos ng check mismo sa lokal na model; wala pang nasubukang paraan para bawasan ito
 - **Hindi kailanman tinawag ang trivy** — naka-enable pa rin ayon sa [[architecture]] (~1.7k tokens/turn). Kung 0 pa rin sa muling pagsukat, isaalang-alang na i-off ito at hayaang patakbuhin ng agent ang `trivy fs .` via bash, o ilagay sa CI ayon sa [[sdlc]]
 
 ---
@@ -255,6 +268,9 @@ Kung may context7 key ka (opsyonal — gumagana kahit wala, may rate limit lang)
 | [Langfuse](https://github.com/langfuse/langfuse) self-hosted + [opencode-observability-plugin](https://github.com/langfuse/opencode-observability-plugin) | buong trace ng bawat turn: prompt, generation, tool calls, reasoning, tokens | ✅ gumagana — pumasok ang traces sa lokal na Langfuse | iniimbak ang buong laman kasama ang tool output (mga file na binasa ng agent); 6 na Docker container, ~2.6 GB RAM — inalis ayon sa kagustuhan |
 | [opencode-observability](https://github.com/abekdwight/opencode-observability) | dashboard/monitor sa `127.0.0.1`, binabasa ang `opencode.db` | ✅ gumagana | Japanese ang ilang bahagi ng UI |
 | [token-optimizer](https://github.com/alexgreensh/token-optimizer) | quality score, compaction guidance, session continuity | sinuri mula sa source, hindi in-install | **walang** tool-output compression ang OpenCode plugin (galing sa Claude Code ang savings sa README nito); nagsisimula ang automatic nudges sa ≥ 25% context fill, na nalalampasan ng setup na ito mula turn 1; PolyForm Noncommercial license |
+| [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill) (JetBrains) | ~880 tokens ng rules: isang-pasadang recon, keyhole reads, madalang na poll, "tapos = pumasa ang check" | in-install via `instructions` at sinukat (seksyon 8) | walang bawas sa oras o tool calls kapag ginawa ang bawat hakbang, at pinalaktaw nito sa agent ang browser check ([[gotchas]] item 19) — inalis |
+| proxy ng [caveman](https://github.com/JuliusBrussee/caveman) | pinapaliit ang tool output bago umabot sa model | sinuri mula sa source, hindi in-install | nira-wrap ang OpenCode para lang sa `openai`/`anthropic` providers — hindi dumadaan dito ang self-hosted provider; naka-on ang telemetry by default (ginagamit ang **skill** ng caveman — [[plugins]]) |
+| [token-diet](https://github.com/Kulaxyz/token-diet) | isang pinagsamang rule set: maikling sagot + YAGNI + keyhole reads + limit sa tests | sinuri mula sa README, hindi in-install | sabay na kapareho ng caveman, ponytail, at ng AGENTS.md rules; salungat sa TDD ng superpowers ang rule nitong "≤ 10 tests bawat session"; walang installer para sa OpenCode |
 
 > [!warning] Kung ikaw mismo ang magse-self-host ng Langfuse
 > - Mina-map ng opisyal na compose ang ClickHouse sa host port `9000` — banggaan ito sa SonarQube sa `9000`. Alisin ang hindi kailangang ports sa isang `docker-compose.override.yml` (`ports: !reset []`) sa halip na i-edit ang opisyal na file
@@ -264,3 +280,37 @@ Kung may context7 key ka (opsyonal — gumagana kahit wala, may rate limit lang)
 
 > [!tip] Pamantayan sa pagdagdag ng tool
 > Bago mag-install ng bago, itanong ang dalawang bagay: (1) saang layer ng [[architecture]] ito, at may kapareho na ba? (2) ano ang inilalagay nito sa prompt bawat turn? — sukatin gamit ang seksyon 1 bago at pagkatapos mag-install.
+
+---
+
+## 8. Pagsubok sa Caveman + benjamin-plus (2026-10-03) — halimbawa ng pagsukat bago magpasya
+
+Dalawang "token efficiency" add-on ang sabay na idinagdag at sinukat gamit ang mga paraan sa pahinang ito: ang **[caveman](https://github.com/JuliusBrussee/caveman)** skill (maikling sagot — kapalit ng i-have-adhd) at ang **[benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)** (5 rule tungkol sa pag-explore / pagbasa / pag-poll, ini-inject sa pamamagitan ng `"instructions"`). Ang test task ay ang nasa seksyon 4 (magdagdag ng pause feature) sa isang kopya ng sample game, isang run bawat configuration.
+
+| | Bago | Parehong idinagdag | Pareho + ang rule na "Verifying UI changes" |
+| --- | --- | --- | --- |
+| Prompt bawat turn | ~32.6k | ~34.8k (+2.1k) | ~34.9k |
+| Turn 1 (explore + disenyo): oras / output tokens | 6.0 min / 3,541 | 7.5 min / 5,379 | 8.3 min / 6,133 |
+| Turn 1: graft / read | 2 / 2 | 4 / 1 | 3 / 5 |
+| Turn 2 (implement + verify): oras | 32.6 min | **6.0 min** | 36.1 min |
+| Turn 2: output tokens | 25,308 | **4,051** | 28,031 |
+| Turn 2: tool calls / chrome-devtools | 60 / 37 | **10 / 0** | 66 / 40 |
+| Browser check + nahanap ang sirang-menu na bug | ✅ | ❌ nilaktawan | ✅ |
+| 5 test suites | pasado | pasado | pasado |
+
+Ang sinasabi ng mga numero:
+
+- **Pinakamaganda ang hitsura ng gitnang column, pero mabilis ito dahil may nilaktawang trabaho** — huminto ang agent nang pumasa ang tests at hindi kailanman binuksan ang browser, ayon sa "tapos = pumasa ang sariling check ng task" ng benjamin-plus, kaya hindi nito nakita ang bug na nahanap ng unang run ([[gotchas]] item 19)
+- **Kapag ipinatupad ang bawat hakbang (kanang column), bumalik ang gastos sa simula** — malapit sa unang run ang oras, output, at chrome-devtools calls, kaya walang isa man sa dalawang add-on ang nagpamura sa parehong trabaho
+- **Hindi bumuti ang turn 1** — mas mahabang oras at mas maraming output, at mas mabigat na prompt bawat turn (caveman ~1.2k, benjamin-plus ~0.9k)
+- **Mas maikli at mas madaling basahin ang huling sagot** (~9%) — ang nag-iisang epektong nakita mula sa caveman, tugma sa nasukat ng JetBrains (−8.5% output sa coding work)
+
+**Desisyon:** panatilihin ang caveman (istilo ng sagot + `/caveman-commit` / `/caveman-review`, tinatanggap ang ~1.2k tokens/turn) · alisin ang benjamin-plus · panatilihin ang rule na "Verifying UI changes" at ang `--isolated` ng chrome-devtools
+
+> [!warning] Mga limitasyon ng pagsukat na ito
+> Isang run bawat configuration, at malaki ang pagbabago ng model sa pagitan ng mga run (5.7 at 7.5 minuto ang nasukat sa turn 1 ng parehong configuration sa dalawang run) — sinusuportahan nito ang "walang nakikitang improvement", hindi ang "mas lumala". Kailangan ng ilang run bawat configuration para sa tiyak na hatol.
+
+> [!tip] Mga aral tungkol sa pagsukat
+> 1. Laging sukatin ang **pagkakasunod ng tool calls** kasama ng oras (`session-report.mjs session <title>`) — ang di-pangkaraniwang mabilis na run ay kadalasang nangangahulugang may nawalang hakbang
+> 2. Tingnan ang `finish` value ng huling step — isang run ang natapos sa `tool-calls` (hindi `stop`) dahil bumangga ang Chrome profile sa ibang tool ([[gotchas]] item 17), kaya natapos ang run sa gitna ng task at hindi magamit ang mga numero nito
+> 3. Huwag gumamit ng chrome-devtools mula sa ibang tool sa parehong makina habang may tumatakbong test run, maliban kung naka-set ang `--isolated`

@@ -11,6 +11,10 @@ summary: Detalyadong gabay sa pag-install ng OpenCode mula sa walang laman na ma
 > [!tip] Pagkakasunod-sunod ng pagbabasa
 > Sundin ang Part 0 → 1 → 2 → 3 → 4 → 5 nang sunod-sunod, huwag laktawan — bawat Part ay umaasa sa natapos na sa nakaraang Part.
 
+> [!tip] Dalawang shortcut
+> - **Mga file na handang kopyahin** — nasa [`config/`](../config/README.md) ang bawat file na isinulat o in-edit nang manu-mano ng setup na ito: template ng `opencode.jsonc` (kasama ang bawat block sa pahinang ito), ang global `AGENTS.md`, `plugin/graft-deep.js`. Ipinapaliwanag ng pahinang ito kung ano ang bawat bahagi at bakit; ang `config/` ang huling resulta.
+> - **Ipagawa sa AI agent** — magbukas ng agent (OpenCode, Claude Code, …) sa repo na ito at sabihing `basahin ang AGENT-SETUP.md at i-setup ito`. Ang [`AGENT-SETUP.md`](../AGENT-SETUP.md) ay ang parehong proseso ng pahinang ito sa anyong kayang sundin ng agent, may check pagkatapos ng bawat hakbang at mga rule laban sa pag-overwrite ng kasalukuyang config o pagsulat ng secrets sa files.
+
 ---
 
 ## Part 0 — Ihanda ang makina (para sa walang laman na makina)
@@ -272,6 +276,9 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 
 I-restart ang OpenCode at i-type ang `/i-have-adhd` sa isang session para i-on ito — buong detalye ng toggle/always-on sa [[plugins]].
 
+> [!info] Caveman na ang pinapatakbo ng aktwal na setup sa halip na i-have-adhd (2026-10-03)
+> Mabuting halimbawa pa rin ang i-have-adhd ng "plugin mula sa lokal na clone", pero ang naka-install ay **caveman** — parehong trabaho (maikling sagot), in-install sa katulad na paraan: ikaw mismo ang naglalagay ng files at itinuturo ang `plugin` sa path (hindi kailanman ang installer nito). Buong hakbang sa [[plugins]], caveman — **isa lang ang i-install, hindi pareho**.
+
 ### Plugin na sarili mong sinulat (custom .js)
 
 Ilagay ang `.js` file kahit saan (inirerekumenda ang `~/.config/opencode/plugin/<name>.js` para sa isang bagay na gagamitin ng bawat project), pagkatapos idagdag ang path nito sa `plugin` array:
@@ -334,12 +341,13 @@ Ang `AGENTS.md` ay isang instruction file na binabasa ng OpenCode sa bawat sessi
 > [!tip] Kailan dapat sumulat sa global sa halip na project
 > Sumulat sa global kapag dapat "laging" mag-apply ang rule sa bawat project (hal. paraan ng pag-reconcile ng dalawang skill na maaaring magbanggaan). Sumulat sa project kapag specific ito sa context ng repo na iyon (hal. context graph ng graft) — tunay na halimbawa na kailangang isulat sa global ay nasa [[plugins]], seksyong grill-me/grilling.
 
-May 4 na seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning:
+May 5 seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning (ang buong file, handang kopyahin: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | Seksyon | Bakit naroon | Buong teksto |
 | --- | --- | --- |
 | Grill me — complements superpowers brainstorming | pinipigilang magbanggaan ang dalawang gate | [[plugins]] |
 | Exploring a codebase — graft first, even inside a skill | dahil sa unang hakbang ng `brainstorming`, nilalaktawan ng agent ang graft ([[gotchas]] item 12) | [[tuning]] |
+| Verifying UI changes — once, in a real browser | ang pagpasa ng tests ay hindi nangangahulugang gumagana ang screen — pinipigilang laktawan ng agent ang browser check ([[gotchas]] item 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% ng paulit-ulit na reads ay agad pagkatapos ng compaction ([[gotchas]] item 13) | [[tuning]] |
 | Memory — facts that must outlive this session | hindi kailanman nagamit ang memory MCP nang walang rule ([[gotchas]] item 14) | [[tuning]] |
 

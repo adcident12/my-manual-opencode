@@ -293,6 +293,9 @@ Isang sinukat na halimbawa (graft 0.19.0, isang totoong Next.js repo): ang promp
 
 ### Buong code
 
+> [!tip] File na handang kopyahin: [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js)
+> Parehong file ang code sa ibaba — ang nasa `config/` ang ituring na source kapag kinokopya sa `~/.config/opencode/plugin/`.
+
 ```js
 /**
  * Graft deep-integration plugin for OpenCode (global, cross-platform).
@@ -538,7 +541,79 @@ node scripts/uninstall.js
 
 ---
 
+## caveman — maikli, diretso-sa-punto na sagot (ginagamit sa halip na i-have-adhd)
+
+Ang [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (Apache-2.0) ay may dalawang bahagi: isang **skill** na nagpapaikli ng sagot ng agent, at isang **proxy** na nagpapaliit ng tool output bago ito umabot sa model. **Ang skill lang** ang ginagamit ng setup na ito (kung bakit hindi ang proxy: dulo ng seksyong ito).
+
+Mga rule ng skill: sagot muna, saka ang dahilan · walang bati, ulit, o pangwakas · maiikling salita · isang ideya bawat pangungusap · sumagot sa wika ng user · **laging nakasulat nang buo ang code, commands, paths, numero, at error text** · kusa itong bumabalik sa buong pangungusap para sa security warnings at mga aksyong hindi na mababawi.
+
+> [!info] Bakit nito pinalitan ang i-have-adhd (2026-10-03)
+> Pareho ang trabaho ng dalawa (kontrolin ang istilo ng sagot); kapag sabay, nagpapatong ang dalawang rule set. Kusang naka-on ang caveman sa bawat session, puwedeng i-toggle (`/caveman off`), at may kasamang `/caveman-commit` / `/caveman-review`. Gumagana pa rin ang i-have-adhd bilang alternatibo (susunod na seksyon) — pero **huwag patakbuhin ang dalawa nang sabay**.
+
+### I-install sa OpenCode — nang manu-mano, hindi gamit ang installer
+
+> [!warning] Huwag patakbuhin ang `bin/install.js --only opencode` kung `.jsonc` na may comments ang config mo
+> Isinusulat ulit ng installer ang `opencode.jsonc` bilang plain JSON — **nawawala ang lahat ng comment** (nag-iiwan ito ng `.bak`) — at nag-i-install ng 9 na skills + 3 `cavecrew` subagents + isang rule block sa global AGENTS.md, na higit sa kailangan ng setup na ito ([[gotchas]] item 18).
+
+I-download lang ang mga file na ginagamit, mula sa naka-pin na tag:
+
+```bash
+T=v3.1.0; R=https://raw.githubusercontent.com/JuliusBrussee/caveman/$T; C=~/.config/opencode
+mkdir -p $C/plugins/caveman $C/commands
+curl -fsSL $R/src/plugins/opencode/plugin.js    -o $C/plugins/caveman/plugin.js
+curl -fsSL $R/src/plugins/opencode/package.json -o $C/plugins/caveman/package.json
+curl -fsSL $R/src/hooks/caveman-config.js       -o $C/plugins/caveman/caveman-config.cjs   # dapat maging .cjs ang extension
+curl -fsSL $R/src/hooks/caveman-parse.js        -o $C/plugins/caveman/caveman-parse.cjs
+for s in caveman caveman-commit caveman-review; do
+  mkdir -p $C/skills/$s
+  curl -fsSL $R/skills/$s/SKILL.md                  -o $C/skills/$s/SKILL.md
+  curl -fsSL $R/src/plugins/opencode/commands/$s.md -o $C/commands/$s.md
+done
+```
+
+Idagdag nang manu-mano ang path ng plugin sa `plugin` array ng `opencode.jsonc` (subfolder ang `plugins/caveman/`, kaya hindi ito auto-load ng OpenCode):
+
+```jsonc
+{ "plugin": ["C:/Users/<user>/.config/opencode/plugins/caveman/plugin.js"] }
+```
+
+> [!note] Walang rule block sa global AGENTS.md
+> Habang aktibo ang isang mode, inilalagay ng plugin ang buong `skills/caveman/SKILL.md` (~1.07k tokens) sa system prompt bawat turn sa pamamagitan ng `experimental.chat.system.transform`. Magiging doble ito ng AGENTS.md block na isinusulat ng installer, at patuloy pa iyong gagana kahit pagkatapos ng `/caveman off`. Walang network call at walang ini-spawn na process ang plugin (ang flag file na `~/.config/opencode/.caveman-active` lang ang binabasa/isinusulat nito).
+
+Tiyakin: buksan ulit ang OpenCode → nakalista sa `opencode debug skill` ang `caveman`, `caveman-commit`, `caveman-review`, at `caveman` ang laman ng `~/.config/opencode/.caveman-active`.
+
+### Mga command
+
+| Command | Ginagawa |
+| --- | --- |
+| `/caveman` · `/caveman off` · `/caveman status` | i-on / i-off / ipakita ang mode (pinapatay din ito ng pag-type ng `normal mode` o `stop caveman`) |
+| `/caveman-commit` | sumusulat ng Conventional Commits message para sa naka-stage na changes — **hindi** nito pinapatakbo ang `git commit` |
+| `/caveman-review [files]` | nire-review ang diff, isang linya bawat finding, may 🔴/🟡/🟢 na severity |
+
+Itakda ang default mode gamit ang env var na `CAVEMAN_DEFAULT_MODE`.
+
+### Ang nasukat sa setup na ito
+
+- **Gastos:** ~1.2k pang prompt tokens bawat turn (ang ~1,070-token na rule set + 3 skill entries) — mula ~32.6k tungong ~34.0k
+- **Epekto:** bahagyang umikli ang huling sagot (~9% sa test) at mas madaling basahin, pero **hindi nasusukat na bumaba ang kabuuang output tokens** ng turn — sa coding work, karamihan ng output ay tool calls at code, na hindi ginagalaw ng skill (8.5% ang nasukat ng JetBrains sa 86 na tunay na task). Gamitin dahil mas madaling basahin, hindi dahil nakakatipid — detalye sa [[tuning]] seksyon 8
+
+> [!note] Bakit hindi ang proxy ng caveman
+> (1) Kapag nira-wrap nito ang OpenCode, ang `baseURL` lang ng `openai` at `anthropic` providers ang nire-redirect nito — hindi dumadaan dito ang custom provider (hal. self-hosted llama.cpp) (2) nagpapadala ang CLI ng telemetry by default, kasama ang IP (pinapatay ng `caveman telemetry off`) (3) nagdadagdag ito ng 5 MCP tools sa bawat prompt — hindi nasubukan dito
+
+### Alisin
+
+Tanggalin ang path sa `plugin` array, saka burahin ang `~/.config/opencode/plugins/caveman/`, `skills/caveman*/`, `commands/caveman*.md`, at ang file na `.caveman-active`.
+
+### I-update
+
+Palitan ang `T=` ng bagong tag at patakbuhin ulit ang download block — tignan [[updating]].
+
+---
+
 ## i-have-adhd — pinipilit ang maikli, diretso-sa-punto na sagot
+
+> [!warning] Isang alternatibo — caveman na ang ginagamit ng setup na ito (2026-10-03)
+> Pinanatili ang seksyong ito para sa mas gusto ang opt-in bawat session kaysa laging naka-on. Isa lang ang i-install, hindi pareho.
 
 Ang [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (39k+ stars, MIT) ay isang skill na binabago ang **istilo ng sagot** ng agent, hindi isang code ruleset gaya ng ponytail — pinipilit ang 10 rules: laging sabihin muna ang susunod na aksyon, malinaw na bilangin ang mga step, magtapos ng isang concrete na susunod na step, tanggalin ang tangents/preamble/closers ("Hope this helps!"), listahan na hanggang 5 item lang, magbigay ng tunay na numerikal na estimate ng oras, sabihin ang errors nang malinaw walang labis. Sumusuporta sa Claude Code, Cursor, Gemini, Kimi, Qwen, at OpenCode sa isang package.
 

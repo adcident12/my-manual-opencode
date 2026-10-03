@@ -293,6 +293,9 @@ A measured example (graft 0.19.0, a real Next.js repo): the prompt "who calls th
 
 ### Full code
 
+> [!tip] Ready-to-copy file: [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js)
+> The code below is the same file — treat the one in `config/` as the source when copying it to `~/.config/opencode/plugin/`.
+
 ```js
 /**
  * Graft deep-integration plugin for OpenCode (global, cross-platform).
@@ -538,7 +541,79 @@ node scripts/uninstall.js
 
 ---
 
+## caveman — short, to-the-point replies (used instead of i-have-adhd)
+
+[JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (Apache-2.0) has two parts: a **skill** that makes the agent reply shorter, and a **proxy** that shrinks tool output before it reaches the model. This setup uses **only the skill** (why not the proxy: end of this section).
+
+The skill's rules: answer first, then the reason · no greeting, recap, or closer · short words · one idea per sentence · reply in the user's language · **code, commands, paths, numbers, and error text are always written out in full** · it drops back to full sentences on its own for security warnings and irreversible actions.
+
+> [!info] Why it replaced i-have-adhd (2026-10-03)
+> Both do the same job (control reply style); running both stacks two rule sets. caveman turns on by itself every session, can be toggled (`/caveman off`), and brings `/caveman-commit` / `/caveman-review`. i-have-adhd still works as an alternative (next section) — but **don't run both**.
+
+### Install on OpenCode — by hand, not with the installer
+
+> [!warning] Don't run `bin/install.js --only opencode` if your config is a commented `.jsonc`
+> The installer rewrites `opencode.jsonc` as plain JSON — **every comment is lost** (it keeps a `.bak`) — and installs 9 skills + 3 `cavecrew` subagents + a rule block in the global AGENTS.md, which is more than this setup needs ([[gotchas]] item 18).
+
+Download only the files that are used, from a pinned tag:
+
+```bash
+T=v3.1.0; R=https://raw.githubusercontent.com/JuliusBrussee/caveman/$T; C=~/.config/opencode
+mkdir -p $C/plugins/caveman $C/commands
+curl -fsSL $R/src/plugins/opencode/plugin.js    -o $C/plugins/caveman/plugin.js
+curl -fsSL $R/src/plugins/opencode/package.json -o $C/plugins/caveman/package.json
+curl -fsSL $R/src/hooks/caveman-config.js       -o $C/plugins/caveman/caveman-config.cjs   # the extension must become .cjs
+curl -fsSL $R/src/hooks/caveman-parse.js        -o $C/plugins/caveman/caveman-parse.cjs
+for s in caveman caveman-commit caveman-review; do
+  mkdir -p $C/skills/$s
+  curl -fsSL $R/skills/$s/SKILL.md                  -o $C/skills/$s/SKILL.md
+  curl -fsSL $R/src/plugins/opencode/commands/$s.md -o $C/commands/$s.md
+done
+```
+
+Add the plugin's path to the `plugin` array of `opencode.jsonc` by hand (`plugins/caveman/` is a subfolder, so OpenCode doesn't auto-load it):
+
+```jsonc
+{ "plugin": ["C:/Users/<user>/.config/opencode/plugins/caveman/plugin.js"] }
+```
+
+> [!note] No rule block in the global AGENTS.md
+> While a mode is active, the plugin puts the whole `skills/caveman/SKILL.md` (~1.07k tokens) into the system prompt every turn through `experimental.chat.system.transform`. The AGENTS.md block the installer writes would duplicate it and keep applying after `/caveman off`. The plugin makes no network calls and spawns no processes (it only reads/writes the flag file `~/.config/opencode/.caveman-active`).
+
+Check: reopen OpenCode → `opencode debug skill` lists `caveman`, `caveman-commit`, `caveman-review`, and `~/.config/opencode/.caveman-active` contains `caveman`.
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `/caveman` · `/caveman off` · `/caveman status` | turn on / off / show the mode (typing `normal mode` or `stop caveman` also turns it off) |
+| `/caveman-commit` | writes a Conventional Commits message for the staged changes — it does **not** run `git commit` |
+| `/caveman-review [files]` | reviews the diff, one line per finding, with a 🔴/🟡/🟢 severity |
+
+Set the default mode with the env var `CAVEMAN_DEFAULT_MODE`.
+
+### What was measured on this setup
+
+- **Cost:** ~1.2k more prompt tokens per turn (the ~1,070-token rule set + 3 skill entries) — from ~32.6k to ~34.0k
+- **Effect:** the final reply got slightly shorter (~9% in the test) and easier to read, but the turn's **total output tokens did not drop measurably** — in coding work most output is tool calls and code, which the skill doesn't touch (JetBrains measured 8.5% over 86 real tasks). Use it because it reads better, not because it saves — details in [[tuning]] section 8
+
+> [!note] Why not caveman's proxy
+> (1) When it wraps OpenCode it only redirects the `openai` and `anthropic` providers' `baseURL` — a custom provider (e.g. a self-hosted llama.cpp) doesn't go through it (2) the CLI sends telemetry by default, including the IP (`caveman telemetry off` disables it) (3) it adds 5 MCP tools to every prompt — not tested here
+
+### Remove
+
+Take the path out of the `plugin` array, then delete `~/.config/opencode/plugins/caveman/`, `skills/caveman*/`, `commands/caveman*.md`, and the `.caveman-active` file.
+
+### Update
+
+Change `T=` to the new tag and re-run the download block — see [[updating]].
+
+---
+
 ## i-have-adhd — forces terse, to-the-point replies
+
+> [!warning] An alternative — this setup now uses caveman instead (2026-10-03)
+> This section is kept for anyone who prefers opt-in per session over always-on. Install one or the other, not both.
 
 [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (39k+ stars, MIT) is a skill that changes the agent's **reply style**, not a code ruleset like ponytail — enforces 10 rules: always state the next action first, number steps clearly, end with one concrete next step, cut tangents/preamble/closers ("Hope this helps!"), lists capped at 5 items, give real numeric time estimates, state errors plainly with no fluff. Supports Claude Code, Cursor, Gemini, Kimi, Qwen, and OpenCode all in one package.
 

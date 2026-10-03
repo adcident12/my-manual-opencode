@@ -20,7 +20,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 | **Primary model provider** | `home-llamacpp` — a self-hosted llama.cpp server (URL specific to each machine), model `qwen3.8-27b` (Q4_K, 131k context) via an OpenAI-compatible endpoint |
 | **Fallback model (fast)** | `opencode/deepseek-v4-flash-free` — built into OpenCode itself, no extra API key needed, fast replies (~10s) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (context that persists across sessions — driven by a global AGENTS.md rule), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **enabled per project:** open-design (pulls files from an OpenDesign project), playwright (browser automation), postgres/mysql · github (disabled until a PAT exists) |
-| **Plugins** | superpowers (skill library from obra/superpowers), graft-deep (custom plugin — auto-inject context only now; auto-rebuilding the graph is graft CLI's own job), ponytail (a ruleset that trims unnecessary code — from dietrichgebert/ponytail), i-have-adhd (forces terse, to-the-point replies — from ayghri/i-have-adhd) |
+| **Plugins** | superpowers (skill library from obra/superpowers), graft-deep (custom plugin — auto-inject context only now; auto-rebuilding the graph is graft CLI's own job), ponytail (a ruleset that trims unnecessary code — from dietrichgebert/ponytail), caveman (short, to-the-point replies — only the skill from JuliusBrussee/caveman, used instead of i-have-adhd) |
 | **Skills** (Agent Skills open standard, not a plugin) | grill-me / grilling (from mattpocock/skills) — a batch interview that questions the user in rounds before starting work, wired to superpowers' `brainstorming` so the two don't collide |
 | **Main config** | `~/.config/opencode/opencode.jsonc` (hand-written) + `~/.config/opencode/opencode.json` (open-design entry, hand-edited — **not** the fixed-port version `od mcp install` writes; see [[mcp-servers]]) |
 
@@ -32,10 +32,12 @@ This set of docs records a real, working setup — from installing the CLI on a 
 - [[architecture]] — the whole stack viewed through 4 functional layers (Knowledge/Reasoning/Execution/Governance) instead of by technical mechanism, for answering "which layer does this new tool belong to"
 - [[setup]] — a detailed install guide, from a **blank machine** with no Node.js/Git all the way to a fully wired provider/MCP/plugin setup
 - [[mcp-servers]] — details on every MCP server: install steps, config, and how to test each one
-- [[plugins]] — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and i-have-adhd (terse, to-the-point replies)
-- [[USER-MANUAL]] — real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
-- [[gotchas]] — 16 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.)
+- [[plugins]] — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and caveman (short, to-the-point replies — used instead of i-have-adhd, which remains an alternative)
+- [[USER-MANUAL]] — **start to finish** (open a session → ask → approve → check → commit) and real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
+- [[gotchas]] — 19 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.)
 - [[updating]] — how to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time
+- [config/](../config/README.md) — the files this setup writes or edits by hand, ready to copy: the `opencode.jsonc` template, global `AGENTS.md`, `graft-deep.js` plugin
+- [AGENT-SETUP.md](../AGENT-SETUP.md) — setup instructions written for an AI agent to follow (tell your agent: `read AGENT-SETUP.md and set this up`)
 - [[tuning]] — measuring whether the workflow really happens (prompt size per turn, which tools the agent really calls, an end-to-end test), with result images, scripts to repeat it, and the recommended settings after tuning
 
 ---

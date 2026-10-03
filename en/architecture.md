@@ -86,7 +86,8 @@ Job: the last gate confirming quality/security before a commit — a failure her
 
 Following the same pattern [[sdlc]] already uses for Security/Documentation (not a separate phase — threaded through every phase instead) — these two shouldn't be forced into any one layer either:
 
-- **[[plugins#i-have-adhd — forces terse, to-the-point replies\|i-have-adhd]]** — only changes response style, doesn't touch any layer's logic
+- **caveman** ([[plugins]] — used instead of i-have-adhd since 2026-10-03) — only changes response style, doesn't touch any layer's logic
+- **The "Verifying UI changes" rule in the global `AGENTS.md`** ([[tuning]]) — makes work visible in a browser pass EXECUTION's real check before it reaches GOVERNANCE
 - **The reconciliation rule in the global `AGENTS.md`** (see [[plugins]], grill-me/grilling) — a policy governing how two REASONING-layer skills cooperate, not a layer itself
 - `using-superpowers`, `writing-skills` — meta-level skills (bootstrapping itself, authoring new skills) that don't run in the normal cycle
 

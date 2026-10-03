@@ -1,7 +1,7 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
 updated: 2026-10-03
-summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, grill-me/grilling, and the OpenDesign workflow
+summary: OpenCode usage manual, start to finish (open a session, ask, approve, check, commit) and day to day — vibe coding, the graft workflow, grill-me/grilling, and the OpenDesign workflow
 ---
 
 # 📘 OpenCode Usage Manual for Vibe Coding
@@ -12,6 +12,7 @@ summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, g
 
 ## 📋 Table of Contents
 
+- **⭐ Start to finish** — read this first: what you do once, and how each piece of work is started, discussed, approved, checked, and finished
 - Overview — this setup's architecture + the project-level and agent-level workflow cycles
 - Starting a new project — a 6-step checklist
 - General vibe coding with opencode — including a full worked example (one real request through to a commit) and how to use grill-me/grilling
@@ -21,7 +22,157 @@ summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, g
 - Common problems
 
 > [!tip] Beginners, read in this order
-> Section 1 (understand the overview first) → 2 (follow the real checklist on your first project) → 3 (try real requests using the example) — do these first 3 sections and you'll be set for day-to-day use. Sections 4–7 are reference material — open them when you actually need them.
+> **⭐ Start to finish** (right below — what to do, and when) → section 2 (follow the real checklist on your first project) → section 3 (try real requests using the example). Sections 1 and 4–7 are reference material — open them when you actually need them.
+
+---
+
+## ⭐ Start to finish
+
+Setup per [[setup]] is done — this section answers one question: **you sit down at the machine; what do you do, in what order, until the work is finished?** There are three levels, done at very different frequencies:
+
+| When | What | Takes |
+| --- | --- | --- |
+| **A. Once per machine** | Check the setup is ready | ~2 min |
+| **B. Once per project** | Build the graft index + the project's AGENTS.md | ~5 min (section 2) |
+| **C. Every piece of work** | The 7-step loop: open → ask → approve → agent works → check → commit → close | depends on the work |
+
+```mermaid
+graph TD
+    S["Setup done (setup)"] --> A["A. Check the machine<br/>once"]
+    A --> B["B. Prepare the project<br/>once per repo (section 2)"]
+    B --> C1["1. Open a session<br/>opencode / opencode -c"]
+    C1 --> C2["2. Ask in plain language"]
+    C2 --> K{"What kind of work?"}
+    K -->|question / small fix| C4
+    K -->|new feature / bug / large work| C3["3. Answer questions + approve the design<br/>(no code written yet)"]
+    C3 --> C4["4. The agent works<br/>edit → tests → browser check"]
+    C4 --> C5{"5. You check the result<br/>summary + git diff"}
+    C5 -->|not right yet| C2
+    C5 -->|good| C6["6. Commit<br/>(the agent doesn't commit by itself)"]
+    C6 --> C7["7. Close the work<br/>/new for the next one"]
+    C7 -->|next piece of work| C2
+```
+
+### A. Once per machine — check the setup is ready
+
+Open a **new** terminal (env vars you just set aren't visible in an old one — [[gotchas]] item 2) and run:
+
+```bash
+opencode --version       # the CLI is installed
+opencode mcp list        # enabled MCP servers must show connected
+opencode debug skill     # the skills that loaded
+opencode run "say hi"    # the model answers
+```
+
+✅ **You should see:**
+- `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` as `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` as `disabled` (normal — they're turned on per project)
+- `debug skill`: 27 skills — 15 from superpowers, 6 from ponytail, 3 from caveman, `grill-me`, `grilling`, `customize-opencode`. Many more than that means another tool's skills are leaking in ([[gotchas]] item 15)
+- `run "say hi"`: a reply. If it takes more than 1–2 minutes see [[gotchas]] item 1
+
+### B. Once per project — prepare the repo
+
+Follow **section 2** (6 steps): `graft build` → `graft init --agents agents --no-global` → enable project-specific MCP servers if needed (a database, `open-design`, `playwright`) → ask one question that needs real code references. Once done, never again for that repo.
+
+### C. Every piece of work — the 7-step loop
+
+**Step 1 — Open a session**
+
+```bash
+cd my-project
+git status          # should be clean, or on this work's branch — so it's obvious what the agent changed
+opencode            # a new session
+opencode -c         # or: continue the last session
+```
+
+Inside the TUI: `/sessions` picks an older session · `/new` starts a fresh one · `/models` switches model · `/help` lists every command
+
+> [!tip] One piece of work = one session
+> The base prompt already weighs ~34k tokens of the 131k context ([[tuning]]) — always `/new` for new work. A session that spans several tasks compacts often, and the agent has to re-read the same files.
+
+**Step 2 — Ask in plain language**
+
+Say **what you want to end up with**, not how to do it and not which tool to use — the agent picks its path from the kind of request:
+
+| You type something like | The agent will | You need to |
+| --- | --- | --- |
+| `how does ring collection work` (a question / explain) | find the code with graft and answer with `file:line` references | read — done at this step |
+| `fix the typo on the menu screen` (a small fix) | just edit → run tests | skip to step 5 |
+| `please add a pause feature to the game` (a new feature) | call `brainstorming` → explore with graft → ask questions or propose a design → **stop and wait** | go to step 3 |
+| `the game freezes when I jump` (a bug) | call `systematic-debugging` — find the cause before fixing | confirm the cause, then let it fix |
+| `move the level system to zones` (large, multi-file work) | write a spec under `docs/superpowers/specs/` + a plan (`writing-plans`) | read the spec, then approve |
+| `grill me about <idea>` (not building yet, just thinking it through) | ask in `grilling` rounds — no spec, no code | answer the questions |
+
+**Step 3 — Answer questions and approve the design** (new features / large work only)
+
+The agent writes **no code** until this step is done. It arrives in one of two shapes:
+
+- **A batch of questions** (`❓ Q1 … ➡️ recommendation`) — answer briefly with the options, e.g. `A B A` or `go with all recommendations`
+- **One design ending in "Approve?"** (when the work is narrow enough) — reply `go ahead`, or say what to change, e.g. `no touch button needed`
+
+Read the design carefully here — this is the cheapest point to change direction, before the model spends many minutes implementing.
+
+**Step 4 — The agent works** (you just wait)
+
+What happens, in order: ponytail checks whether something existing can be reused before writing new code → edits with a todo list → runs tests → **for anything visible in a browser, opens Chrome through chrome-devtools and checks it once** (a rule in the global AGENTS.md — [[tuning]]) → summarizes.
+
+- `Esc` stops it mid-way · `/undo` reverts the last message together with its file changes (the project must be a git repo) · `/redo` re-applies
+- **The browser check is the slowest step** — measured at ~30–36 minutes for a small feature on a local model, but it's the step that finds bugs the tests don't cover ([[tuning]] sections 4 and 8). Work with no UI skips it
+- If the agent stops silently with no summary, the model usually hit its output ceiling ([[gotchas]] item 8) — type `continue`
+
+**Step 5 — Check the result before accepting it**
+
+Read the agent's closing summary — it should say which files changed, the test result, the browser check result, and what it **deliberately left out**. Then look at the real thing:
+
+```bash
+git diff            # does it match the summary? any file touched that shouldn't be?
+```
+
+Want a second opinion? Ask in the same session:
+
+| Command | What you get |
+| --- | --- |
+| `/caveman-review` | a one-line-per-finding review of the diff, with severity |
+| `/ponytail-review` | code in the diff that's more than needed |
+| `scan this project with sonarqube and trivy` | quality / vulnerability checks — for work touching dependencies, auth, or data (the agent does **not** run these on every task) |
+
+Not right yet → say what to fix in the same session (back to step 2).
+
+**Step 6 — Commit**
+
+The agent does **not** commit by itself (tested — the work ends with the files left in the working tree). Pick one:
+
+```bash
+git add -A
+```
+
+```
+/caveman-commit          ← gives you a Conventional Commits message (it does not run git commit)
+commit this for me        ← or have the agent commit, then check the message
+```
+
+Push yourself when ready — nothing runs automatically in CI in this setup ([[sdlc]]).
+
+**Step 7 — Close the work**
+
+- Next piece of work → `/new` (or `/exit` and reopen)
+- A preference or decision you want remembered across sessions → type `remember that <thing>` — the agent saves it to memory, and the next session searches memory before asking again
+- A long session nearing the context limit with work still unfinished → `/compact`
+- No need to rebuild graft yourself — the CLI refreshes the graph before every answer
+
+### Commands you'll use most
+
+| To | Type |
+| --- | --- |
+| Open a new session / continue the last one | `opencode` / `opencode -c` |
+| Start new work in the same TUI | `/new` |
+| Go back to an older session | `/sessions` |
+| Stop the agent / revert the last message | `Esc` / `/undo` |
+| Shrink a long session's context | `/compact` |
+| Get full, uncompressed replies / go back to terse | `/caveman off` (or `normal mode`) / `/caveman` |
+| A commit message / a review of the diff | `/caveman-commit` / `/caveman-review` |
+| Turn ponytail's intensity down or up | `/ponytail lite\|full\|ultra\|off` |
+| Think an idea through without building it | `grill me about <topic>` |
+| Run without opening the TUI | `opencode run "<request>"`, then `opencode run -c "<answer>"` |
 
 ---
 
@@ -36,7 +187,7 @@ graph LR
     B -->|plugin| F[superpowers - skills]
     B -->|plugin| G[graft-deep - inject context]
     B -->|plugin| L[ponytail - code minimization]
-    B -->|plugin, opt-in| M["i-have-adhd - terse output<br/>(/i-have-adhd per session)"]
+    B -->|plugin| M["caveman - terse output<br/>(on by itself, /caveman off to stop)"]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
     E -.->|pulls generated files| I[real project frontend+backend]
 ```
@@ -95,8 +246,8 @@ graph LR
 > [!note] Plugin ponytail
 > The ponytail plugin (see [[plugins]]) is the last gate before actually writing code (node L) — it forces the agent to walk the decision ladder (don't write it if unnecessary → reuse what's there → is there a standard library → a native feature → an already-installed dependency → a one-liner → only then write minimal new code). Works alongside superpowers/graft-deep without overlapping (superpowers picks the workflow, graft-deep finds context, ponytail controls how much code gets written).
 
-> [!note] Plugin i-have-adhd — deliberately not in the per-turn cycle above
-> Unlike superpowers/graft-deep/ponytail, which run automatically every turn — i-have-adhd (see [[plugins]]) is **opt-in per session**: you have to type `/i-have-adhd` yourself before it takes effect (it only changes reply style to be terse/to-the-point, it doesn't touch tool orchestration). Good for when you want a fast answer, not a long explanation — turn it off any time with `stop adhd mode`.
+> [!note] Plugin caveman — deliberately not in the per-turn cycle above
+> caveman (see [[plugins]]) only changes the **reply style** to short and to the point; it doesn't touch tool orchestration, so it isn't a node in the diagram. It turns on by itself every session (unlike i-have-adhd, which it replaced and which had to be typed on). Turn it off with `/caveman off` or `normal mode` when you want a full explanation. Code, commands, and error text are always written out in full.
 
 > [!note] Skill grill-me / grilling — not a separate plugin, wired into node C
 > Not a separate node in the diagram, because it's a skill (a standalone `SKILL.md` file following the Agent Skills open standard — see [[setup]]), not a plugin — but it works at the same node C as superpowers: when the agent picks `brainstorming` for building a new feature, it uses `grilling`'s batch question format instead of asking one at a time (or calls `grilling` on its own if the user just wants to interview an idea, not implement it right away). Real usage is in section 3 below; full install/reconciliation detail is in [[plugins]].
@@ -179,7 +330,7 @@ Try asking something that needs real code references, e.g. `summarize this proje
 opencode debug skill
 ```
 
-✅ **You should see:** all 14 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s skills (`ponytail`, `ponytail-review`, ...), `i-have-adhd`, and `grill-me`/`grilling` if installed (see [[plugins]] for what each one is).
+✅ **You should see:** 15 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s 6 skills (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, and `grill-me`/`grilling` if installed — 27 in total with OpenCode's own `customize-opencode` (see [[plugins]] for what each one is).
 
 > [!tip] Done all 6 steps? Go straight to section 3
 > No need to repeat this checklist for the same project again — just open `opencode` and use it per section 3. Only redo this checklist when starting a genuinely new project.
@@ -214,14 +365,14 @@ The "agent's per-request workflow" diagram in section 1 is an abstract overview 
 5. **Answer the questions** — a short reply, e.g. `go with your recommendations`
 6. **ponytail checks the decision ladder** — before writing new code, checks whether there's something existing to reuse (visible in the resulting code usually editing an existing file/adding a field to an existing data structure, rather than building a parallel new system)
 7. **Write/edit code**, with a todo list tracking progress
-8. **Run tests + verify in the browser** (via the playwright/chrome-devtools MCP, for a web project)
-9. **Commit** as one scoped commit, with a short, to-the-point message
+8. **Run tests + verify in the browser** (via the chrome-devtools MCP, for work visible in a browser — the "Verifying UI changes" rule in the global AGENTS.md)
+9. **Commit** as one scoped commit, with a short, to-the-point message — in the re-test the agent did **not** commit by itself; you have to ask (`/caveman-commit` for a message, or type `commit this for me`). See step 6 of "Start to finish"
 
 > [!tip] It's normal not to see every step
 > Small requests (fixing a typo, a general question) skip straight past steps 2–6 and go directly to steps 7–9 — going through every step like this only happens for work that's genuinely "building a new feature."
 
 > [!info] Re-tested headless (2026-10-03) — real result per step
-> A small feature ("add a pause feature …") in a copy of the sample game: step 2 ✅ · step 3 ❌ on the first run (the agent followed brainstorming's "check files" step instead of using graft) → ✅ after adding a rule to the global AGENTS.md · step 4 skipped because the task was narrow enough for one design + approval · steps 6–8 ✅ · step 9 ⚠️ didn't commit on its own — test procedure, result images, and open items in [[tuning]] section 4
+> A small feature ("add a pause feature …") in a copy of the sample game: step 2 ✅ · step 3 ❌ on the first run (the agent followed brainstorming's "check files" step instead of using graft) → ✅ after adding a rule to the global AGENTS.md · step 4 skipped because the task was narrow enough for one design + approval · steps 6–7 ✅ · step 8 ✅ once the "Verifying UI changes" rule is in place (with a rule set that only optimizes for fewer steps, the agent skips the browser check — [[gotchas]] item 19) · step 9 ⚠️ didn't commit on its own — test procedure, result images, and open items in [[tuning]] sections 4 and 8
 
 ### Using grill-me / grilling before starting a new feature (if installed)
 

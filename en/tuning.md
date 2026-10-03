@@ -17,6 +17,7 @@ A complete config is not the same as a working workflow. Every MCP server showin
 > | Agent uses graft while exploring (E2E, turn 1) | 0 calls, 7 reads | **2 calls, 2 reads** |
 > | memory MCP | 1 call in 50 sessions, file never created | **stores and recalls across sessions** |
 > | Re-reading files | 76% happen right after a compaction | `compaction.prune` + a re-read rule (**not yet verified on a long session**) |
+> | Adding Caveman + benjamin-plus (section 8) | — | **no measurable improvement** — Caveman kept because replies read better (prompt becomes ~34.0k), benjamin-plus removed |
 
 All scripts are in [`scripts/`](../scripts/) — they need only Node.js (≥ 22.5 for `session-report.mjs`, which uses the built-in `node:sqlite`). The HTML source of every image on this page is [`assets/tuning/report.html`](../assets/tuning/report.html).
 
@@ -132,6 +133,9 @@ What happened:
 
 ## 5. What was changed (the config in use after testing)
 
+> [!tip] The end result is in real files under [`config/`](../config/README.md)
+> [`config/opencode.jsonc`](../config/opencode.jsonc) (a template with everything below already in it) and [`config/AGENTS.md`](../config/AGENTS.md) (all the rules) — the subsections below explain the reason for each part.
+
 ### 5.1 Rarely used MCP servers off by default, on per project
 
 In `~/.config/opencode/opencode.jsonc`:
@@ -165,11 +169,20 @@ Turn one on for a single project in `<project>/opencode.json` (merged with the g
 
 `prune` (off by default) runs at the end of each prompt: it drops tool outputs older than the last 2 turns, always keeping the newest ~40k tokens, and only acts once there is more than ~20k tokens to drop (checked in the OpenCode 1.18.34 source). Pruning in large, infrequent chunks keeps llama.cpp's prompt cache from being invalidated every turn, while making full compactions less frequent.
 
-### 5.3 Three new rules in the global AGENTS.md
+### 5.3 Four new rules in the global AGENTS.md
 
-Appended after the existing grill-me rule ([[plugins]]) in `~/.config/opencode/AGENTS.md` (~480 tokens together):
+Appended after the existing grill-me rule ([[plugins]]) in `~/.config/opencode/AGENTS.md` (~610 tokens together). "Verifying UI changes" was added later, because of the result in section 8:
 
 ```markdown
+## Verifying UI changes — once, in a real browser
+
+Passing tests is not enough for a change someone will see in a browser (a
+web page, a game). Before reporting done, verify it once with
+chrome-devtools: load the page, do the one interaction the task is about,
+and check the console for errors. Keep it to a handful of calls — a single
+short wait for the page to settle, no polling loops. If the page cannot
+load or throws, that is a failure to report or fix, not "done".
+
 ## Exploring a codebase — graft first, even inside a skill
 
 Skills such as `brainstorming` ("Explore project context — check files,
@@ -243,7 +256,7 @@ If you have a context7 key (optional — it works without one, just rate-limited
 
 - **The effect of `prune` + the re-read rule** — the test sessions were too short to compact at all. Run `session-report.mjs rereads` again after some real use and compare the "after a compaction" share against the original 76%
 - **The commit step** — to match [[USER-MANUAL]] step 9, add an AGENTS.md rule to make one scoped commit after verification passes (no push) — decide yourself whether you want the agent committing on its own
-- **Browser verification** — 37 calls / 32 minutes for a small feature; no tested fix yet
+- **Browser verification** — 37–40 calls / 33–36 minutes for a small feature. A token-efficiency rule set didn't help (section 8) — that is the cost of the check itself on a local model; no tested way to reduce it yet
 - **trivy never called** — still enabled per [[architecture]] (~1.7k tokens/turn). If it is still 0 on a re-measure, consider turning it off and having the agent run `trivy fs .` via bash, or put it in CI per [[sdlc]]
 
 ---
@@ -255,6 +268,9 @@ If you have a context7 key (optional — it works without one, just rate-limited
 | [Langfuse](https://github.com/langfuse/langfuse) self-hosted + [opencode-observability-plugin](https://github.com/langfuse/opencode-observability-plugin) | full trace of every turn: prompt, generation, tool calls, reasoning, tokens | ✅ works — traces landed in the local Langfuse | stores full content including tool output (files the agent read); 6 Docker containers, ~2.6 GB RAM — removed by preference |
 | [opencode-observability](https://github.com/abekdwight/opencode-observability) | dashboard/monitor on `127.0.0.1`, reads `opencode.db` | ✅ works | parts of the UI are in Japanese |
 | [token-optimizer](https://github.com/alexgreensh/token-optimizer) | quality score, compaction guidance, session continuity | evaluated from source, not installed | the OpenCode plugin has **no** tool-output compression (the savings in its README come from Claude Code); automatic nudges start at ≥ 25% context fill, which this setup exceeds from turn 1; PolyForm Noncommercial license |
+| [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill) (JetBrains) | ~880 tokens of rules: one-pass recon, keyhole reads, poll rarely, "done = the check passes" | installed via `instructions` and measured (section 8) | no drop in time or tool calls once every step is done, and it made the agent skip the browser check ([[gotchas]] item 19) — removed |
+| [caveman](https://github.com/JuliusBrussee/caveman)'s proxy | shrinks tool output before it reaches the model | evaluated from source, not installed | wraps OpenCode only for the `openai`/`anthropic` providers — a self-hosted provider doesn't go through it; telemetry on by default (caveman's **skill** is in use — [[plugins]]) |
+| [token-diet](https://github.com/Kulaxyz/token-diet) | one combined rule set: terse replies + YAGNI + keyhole reads + a test cap | evaluated from the README, not installed | overlaps caveman, ponytail, and the AGENTS.md rules all at once; its "≤ 10 tests per session" rule conflicts with superpowers' TDD; no OpenCode installer |
 
 > [!warning] If you self-host Langfuse yourself
 > - The official compose maps ClickHouse to host port `9000` — that collides with SonarQube on `9000`. Drop unneeded ports in a `docker-compose.override.yml` (`ports: !reset []`) instead of editing the official file
@@ -264,3 +280,37 @@ If you have a context7 key (optional — it works without one, just rate-limited
 
 > [!tip] Criteria for adding a tool
 > Before installing anything new, ask two things: (1) which layer of [[architecture]] is it in, and does it duplicate something already there? (2) what does it put into the prompt every turn? — measure with section 1 before and after installing.
+
+---
+
+## 8. Trying Caveman + benjamin-plus (2026-10-03) — an example of measuring before deciding
+
+Two "token efficiency" add-ons were added together and measured with the methods on this page: the **[caveman](https://github.com/JuliusBrussee/caveman)** skill (terse replies — instead of i-have-adhd) and **[benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)** (5 rules about exploring / reading / polling, injected through `"instructions"`). The test task is the one from section 4 (add a pause feature) in a copy of the sample game, one run per configuration.
+
+| | Before | Both added | Both + the "Verifying UI changes" rule |
+| --- | --- | --- | --- |
+| Prompt per turn | ~32.6k | ~34.8k (+2.1k) | ~34.9k |
+| Turn 1 (explore + design): time / output tokens | 6.0 min / 3,541 | 7.5 min / 5,379 | 8.3 min / 6,133 |
+| Turn 1: graft / read | 2 / 2 | 4 / 1 | 3 / 5 |
+| Turn 2 (implement + verify): time | 32.6 min | **6.0 min** | 36.1 min |
+| Turn 2: output tokens | 25,308 | **4,051** | 28,031 |
+| Turn 2: tool calls / chrome-devtools | 60 / 37 | **10 / 0** | 66 / 40 |
+| Browser check + found the broken-menu bug | ✅ | ❌ skipped | ✅ |
+| 5 test suites | pass | pass | pass |
+
+What the numbers say:
+
+- **The middle column looks best, but it's fast because it skipped work** — the agent stopped once the tests passed and never opened the browser, per benjamin-plus's "done = the task's own check passes", so it missed the bug the first run found ([[gotchas]] item 19)
+- **Once every step is enforced (right column), the cost is back where it started** — time, output, and chrome-devtools calls are close to the first run, so neither add-on made the same work cheaper
+- **Turn 1 didn't improve** — more time and more output, and a heavier prompt every turn (caveman ~1.2k, benjamin-plus ~0.9k)
+- **The final reply is shorter and easier to read** (~9%) — the one effect seen from caveman, in line with what JetBrains measured (−8.5% output on coding work)
+
+**Decision:** keep caveman (reply style + `/caveman-commit` / `/caveman-review`, accepting ~1.2k tokens/turn) · remove benjamin-plus · keep the "Verifying UI changes" rule and chrome-devtools `--isolated`
+
+> [!warning] Limits of this measurement
+> One run per configuration, and the model varies a lot between runs (turn 1 of the same configuration measured 5.7 and 7.5 minutes on two runs) — this supports "no visible improvement", not "worse". A firm verdict needs several runs per configuration.
+
+> [!tip] Lessons about measuring
+> 1. Always measure the **tool-call sequence** together with time (`session-report.mjs session <title>`) — an unusually fast run usually means a step went missing
+> 2. Look at the last step's `finish` value — one run ended with `tool-calls` (not `stop`) because the Chrome profile collided with another tool ([[gotchas]] item 17), so the run ended mid-task and its numbers were unusable
+> 3. Don't use chrome-devtools from another tool on the same machine while a test run is going, unless `--isolated` is set

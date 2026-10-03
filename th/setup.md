@@ -11,6 +11,10 @@ summary: คู่มือติดตั้ง OpenCode แบบละเอ�
 > [!tip] ลำดับการอ่าน
 > ทำตามลำดับ Part 0 → 1 → 2 → 3 → 4 → 5 ตามที่เขียนไว้ อย่าข้าม เพราะแต่ละ Part ขึ้นกับของที่ทำเสร็จใน Part ก่อนหน้า
 
+> [!tip] ทางลัด 2 ทาง
+> - **ไฟล์พร้อม copy** — ทุกไฟล์ที่ setup นี้เขียน/แก้เองอยู่ใน [`config/`](../config/README.md): template ของ `opencode.jsonc` (ครบทุก block ในหน้านี้), global `AGENTS.md`, `plugin/graft-deep.js` — หน้านี้อธิบายว่าแต่ละส่วนคืออะไรและทำไม ส่วน `config/` คือผลลัพธ์สุดท้าย
+> - **ให้ AI agent ติดตั้งให้** — เปิด agent (OpenCode, Claude Code ฯลฯ) ใน repo นี้แล้วสั่ง `อ่าน AGENT-SETUP.md แล้วติดตั้งตาม` — [`AGENT-SETUP.md`](../AGENT-SETUP.md) เป็นขั้นตอนเดียวกับหน้านี้ในรูปแบบที่ agent ทำตามได้ มีจุดตรวจทุกขั้น และกฎห้ามเขียนทับ config เดิม/ห้ามเขียน secret ลงไฟล์
+
 ---
 
 ## Part 0 — เตรียมเครื่องให้พร้อม (สำหรับเครื่องเปล่า)
@@ -272,6 +276,9 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 
 รีสตาร์ท OpenCode แล้วพิมพ์ `/i-have-adhd` ในเซสชันเพื่อเปิดใช้ — รายละเอียด toggle/always-on ทั้งหมดดูที่ [[plugins]]
 
+> [!info] setup ที่ใช้จริงตอนนี้ใช้ caveman แทน i-have-adhd (2026-10-03)
+> i-have-adhd ยังเป็นตัวอย่างที่ดีของ "plugin จาก local clone" แต่ตัวที่ติดตั้งอยู่จริงคือ **caveman** — ทำหน้าที่เดียวกัน (ตอบสั้น) และติดตั้งด้วยวิธีคล้ายกัน คือวางไฟล์เองแล้วชี้ `plugin` ไปที่ path (ห้ามใช้ installer ของมัน) ขั้นตอนเต็มที่ [[plugins]] หัวข้อ caveman — **ติดตั้งตัวใดตัวหนึ่งเท่านั้น**
+
 ### Plugin ที่เขียนเอง (custom .js)
 
 วางไฟล์ `.js` ที่ไหนก็ได้ (แนะนำ `~/.config/opencode/plugin/<name>.js` สำหรับใช้ทุกโปรเจกต์) แล้วเพิ่ม path ใน `plugin` array:
@@ -334,12 +341,13 @@ description: อธิบายสั้นๆ ว่า skill นี้ใช�
 > [!tip] เมื่อไหร่ควรเขียนที่ global แทน project
 > เขียนที่ global เมื่อกฎนั้นควร apply "ทุกโปรเจกต์เสมอ" (เช่น วิธี reconcile skill สองตัวที่อาจชนกัน) เขียนที่ project เมื่อเป็นบริบทเฉพาะ repo นั้น (เช่น context graph ของ graft) — ตัวอย่างจริงที่ต้องเขียนที่ global ดูที่ [[plugins]] หัวข้อ grill-me/grilling
 
-global AGENTS.md ที่ใช้จริงหลังปรับจูนมี 4 หัวข้อ:
+global AGENTS.md ที่ใช้จริงหลังปรับจูนมี 5 หัวข้อ (ไฟล์เต็มพร้อม copy: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | หัวข้อ | ทำไมต้องมี | ข้อความเต็ม |
 | --- | --- | --- |
 | Grill me — complements superpowers brainstorming | กัน gate สองตัวชนกัน | [[plugins]] |
 | Exploring a codebase — graft first, even inside a skill | ขั้นแรกของ `brainstorming` ทำให้ agent ข้าม graft ([[gotchas]] ข้อ 12) | [[tuning]] |
+| Verifying UI changes — once, in a real browser | เทสต์ผ่านไม่ได้แปลว่าหน้าจอใช้ได้ — กัน agent ข้ามการตรวจในเบราว์เซอร์ ([[gotchas]] ข้อ 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% ของการอ่านไฟล์ซ้ำเกิดหลัง compaction ([[gotchas]] ข้อ 13) | [[tuning]] |
 | Memory — facts that must outlive this session | memory MCP ไม่เคยถูกใช้ถ้าไม่มีกฎ ([[gotchas]] ข้อ 14) | [[tuning]] |
 

@@ -8,7 +8,7 @@ summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP
 
 Buod sa [[index]] · Setup sa [[setup]]
 
-16 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup. Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
+19 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup. Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
 
 ---
 
@@ -329,3 +329,47 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 > }
 > ```
 > Tingnan ang pagkakasunod gamit ang `Get-Command od -All` (PowerShell) — ang unang entry ang tatakbo.
+
+---
+
+## 17. Hindi makapagbukas ng browser ang chrome-devtools: "The browser is already running"
+
+**Impact:** Tinatawag ng agent ang `chrome-devtools_list_pages` at nakakakuha ng `The browser is already running for …\chrome-devtools-mcp\chrome-profile. Use --isolated to run multiple browser instances.` Walang browser check na magagawa sa buong session — sa ilalim ng `opencode run`, naghanap ang agent ng ibang paraan, tinanggihan ang permission, at natapos ang run sa gitna ng task nang hindi tapos ang trabaho.
+
+**Sanhi:** By default, iisang Chrome profile ang ginagamit ng bawat instance ng `chrome-devtools-mcp` (`~/.cache/chrome-devtools-mcp/chrome-profile`). Kung may ibang tool sa makina (hal. Claude Code na may chrome-devtools din, o pangalawang OpenCode window) na nakabukas na ang Chrome doon, hindi makakapagsimula ang mas huli.
+
+> [!important] Ayos
+> Idagdag ang `--isolated` sa config ng OpenCode — pansamantalang profile bawat launch, kaya hindi ito bumabangga sa kahit ano:
+> ```jsonc
+> "chrome-devtools": {
+>   "type": "local",
+>   "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
+>   "timeout": 30000
+> }
+> ```
+> Kapalit: walang login/cookie na natitira sa pagitan ng mga launch — kung kailangang subukan ang mga page na may tuloy-tuloy na login, gamitin ang `--user-data-dir=<folder na OpenCode lang ang gumagamit>`.
+
+---
+
+## 18. Isinusulat ulit ng installer ng isang add-on ang `opencode.jsonc` — nawawala ang lahat ng comment
+
+**Impact:** Pagkatapos patakbuhin ang installer ng ilang plugin (naranasan sa `caveman`: `bin/install.js --only opencode`), naisusulat ulit ang `opencode.jsonc` bilang plain JSON, nawawala ang bawat comment na nagpapaliwanag kung bakit ganoon ang setting, at mas maraming skills / subagents / AGENTS.md rules ang nakukuha mo kaysa sa gusto mo.
+
+**Sanhi:** Binabasa ng installer ang config, ine-edit, at sine-serialize pabalik gamit ang `JSON.stringify` (tahasang sinasabi ng code ng caveman: "rewriting it drops them"). Nag-iiwan ito ng `opencode.jsonc.bak` sa unang beses, pero hindi mo iyon hahanapin kung hindi mo alam.
+
+> [!important] Ayos
+> Bago patakbuhin ang anumang installer: (1) tingnan kung may `--dry-run`, at basahin kung aling files ang gagalawin nito (2) kung ine-edit nito ang `opencode.jsonc`, mag-install nang manu-mano — kopyahin ang files ng plugin at ikaw mismo ang magdagdag ng linya sa `plugin` array (buong halimbawa ng caveman sa [[plugins]]) (3) laging i-back up muna ang `~/.config/opencode/`
+
+---
+
+## 19. Dahil sa rule set na "bawasan ang steps", nilalaktawan ng agent ang browser check
+
+**Impact:** Nang idagdag ang isang token-efficiency rule set (sinubukan sa [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)), natapos ang parehong task sa 6 na minuto sa halip na 33 — pero dahil **huminto ang agent nang pumasa ang tests nang hindi man lang binubuksan ang browser**, hindi nito nakita ang sirang-menu na bug na nahanap ng naunang run.
+
+**Sanhi:** Tama ang mga rule gaya ng "tapos = pumasa ang sariling check ng task, saka huminto" at "huwag gumawa ng check na hindi hiningi ng task" para sa trabahong may mahusay na test coverage. Para sa UI work, ang pagpasa ng logic-level tests ay hindi nangangahulugang gumagana ang screen — kaya tahimik na natanggal ang hakbang 8 ng [[USER-MANUAL]].
+
+> [!important] Ayos
+> Sumulat ng rule na "Verifying UI changes — once, in a real browser" sa global AGENTS.md (buong teksto sa [[tuning]]): ang trabahong makikita sa browser ay dapat mag-load ng page, gawin ang isang interaction ng task, at tingnan ang console bago iulat na tapos. Sa rule na iyon, bumalik ang browser check — at bumalik din ang oras (~36 minuto), na nagpapakitang sa check mismo ang gastos, hindi sa bagay na kayang alisin ng rule set.
+
+> [!tip] Aral
+> Ang "80% na mas mabilis" ay laging dapat basahin katabi ng "ginawa pa rin ba nito ang bawat hakbang" — sukatin ang oras at ang pagkakasunod ng tool calls gamit ang `session-report.mjs session <title>` bago tawaging improvement ang isang bagay.

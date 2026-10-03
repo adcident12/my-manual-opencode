@@ -293,6 +293,9 @@ graft 0.19.0 ເລີກໃຊ້ threshold `coverage` ຄ່າດຽວ (plug
 
 ### ໂຄ້ດເຕັມ
 
+> [!tip] ໄຟລ໌ພ້ອມ copy: [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js)
+> ໂຄ້ດຂ້າງລຸ່ມຄືໄຟລ໌ດຽວກັນ — ໃຊ້ໄຟລ໌ໃນ `config/` ເປັນຕົ້ນສະບັບເວລາ copy ໄປວາງທີ່ `~/.config/opencode/plugin/`
+
 ```js
 /**
  * Graft deep-integration plugin for OpenCode (global, cross-platform).
@@ -538,7 +541,79 @@ node scripts/uninstall.js
 
 ---
 
+## caveman — ຕອບສັ້ນ ກົງປະເດັນ (ໃຊ້ແທນ i-have-adhd)
+
+[JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (Apache-2.0) ມີສອງສ່ວນ: **skill** ທີ່ເຮັດໃຫ້ agent ຕອບສັ້ນລົງ ກັບ **proxy** ທີ່ບີບຜົນຂອງ tool ກ່ອນສົ່ງໃຫ້ໂມເດວ — setup ນີ້ໃຊ້**ສະເພາະ skill** (ເຫດຜົນທີ່ບໍ່ໃຊ້ proxy ຢູ່ທ້າຍຫົວຂໍ້)
+
+ກົດຂອງ skill: ຕອບຄຳຕອບກ່ອນແລ້ວຈຶ່ງເຫດຜົນ · ບໍ່ມີຄຳທັກທາຍ/ຄຳທວນ/ຄຳປິດທ້າຍ · ໃຊ້ຄຳສັ້ນ · ໜຶ່ງປະໂຫຍກໜຶ່ງຄວາມຄິດ · ຕອບເປັນພາສາດຽວກັບຜູ້ໃຊ້ · **code, ຄຳສັ່ງ, path, ຕົວເລກ ແລະຂໍ້ຄວາມ error ຂຽນເຕັມສະເໝີ** · ກັບໄປຂຽນເຕັມປະໂຫຍກເອງເມື່ອເປັນຄຳເຕືອນດ້ານຄວາມປອດໄພ ຫຼືການກະທຳທີ່ຍ້ອນບໍ່ໄດ້
+
+> [!info] ເປັນຫຍັງຈຶ່ງແທນ i-have-adhd (2026-10-03)
+> ສອງໂຕເຮັດໜ້າທີ່ດຽວກັນ (ຄຸມ style ການຕອບ) ເປີດພ້ອມກັນຈະມີກົດສອງຊຸດຊ້ອນກັນ caveman ເປີດເອງທຸກ session, ສະຫຼັບໂໝດໄດ້ (`/caveman off`) ແລະມີ `/caveman-commit` / `/caveman-review` ມານຳ — i-have-adhd ຍັງໃຊ້ໄດ້ເປັນທາງເລືອກ (ຫົວຂໍ້ຕໍ່ໄປ) ແຕ່**ຢ່າເປີດທັງສອງ**
+
+### ຕິດຕັ້ງເທິງ OpenCode — ເຮັດເອງ ບໍ່ໃຊ້ installer
+
+> [!warning] ຢ່າແລ່ນ `bin/install.js --only opencode` ຖ້າ config ເປັນ `.jsonc` ທີ່ມີ comment
+> installer ຂຽນ `opencode.jsonc` ໃໝ່ເປັນ JSON ທຳມະດາ — **comment ທັງໝົດຫາຍ** (ມັນເກັບ `.bak` ໄວ້ໃຫ້) ແລະລົງ skill 9 ໂຕ + subagent `cavecrew` 3 ໂຕ + ບລັອກກົດໃນ global AGENTS.md ຊຶ່ງເກີນທີ່ setup ນີ້ຕ້ອງໃຊ້ ([[gotchas]] ຂໍ້ 18)
+
+ດາວໂຫຼດສະເພາະໄຟລ໌ທີ່ໃຊ້ ຈາກ tag ທີ່ລັອກໄວ້:
+
+```bash
+T=v3.1.0; R=https://raw.githubusercontent.com/JuliusBrussee/caveman/$T; C=~/.config/opencode
+mkdir -p $C/plugins/caveman $C/commands
+curl -fsSL $R/src/plugins/opencode/plugin.js    -o $C/plugins/caveman/plugin.js
+curl -fsSL $R/src/plugins/opencode/package.json -o $C/plugins/caveman/package.json
+curl -fsSL $R/src/hooks/caveman-config.js       -o $C/plugins/caveman/caveman-config.cjs   # ຕ້ອງປ່ຽນນາມສະກຸນເປັນ .cjs
+curl -fsSL $R/src/hooks/caveman-parse.js        -o $C/plugins/caveman/caveman-parse.cjs
+for s in caveman caveman-commit caveman-review; do
+  mkdir -p $C/skills/$s
+  curl -fsSL $R/skills/$s/SKILL.md                  -o $C/skills/$s/SKILL.md
+  curl -fsSL $R/src/plugins/opencode/commands/$s.md -o $C/commands/$s.md
+done
+```
+
+ເພີ່ມ path ຂອງ plugin ລົງໃນ `plugin` array ຂອງ `opencode.jsonc` ດ້ວຍມື (folder `plugins/caveman/` ເປັນ folder ຍ່ອຍ OpenCode ບໍ່ auto-load ໃຫ້):
+
+```jsonc
+{ "plugin": ["C:/Users/<user>/.config/opencode/plugins/caveman/plugin.js"] }
+```
+
+> [!note] ບໍ່ຕ້ອງຕໍ່ກົດເຂົ້າ global AGENTS.md
+> ເມື່ອໂໝດເປີດຢູ່ plugin ໃສ່ `skills/caveman/SKILL.md` ທັງໄຟລ໌ (~1.07k tokens) ເຂົ້າ system prompt ທຸກ turn ຜ່ານ `experimental.chat.system.transform` ຢູ່ແລ້ວ — ບລັອກໃນ AGENTS.md ທີ່ installer ຂຽນໃຫ້ຈະຊ້ຳ ແລະຍັງເຮັດວຽກຕໍ່ເຖິງວ່າສັ່ງ `/caveman off` plugin ບໍ່ມີ network call ແລະບໍ່ spawn process (ອ່ານ/ຂຽນພຽງໄຟລ໌ flag `~/.config/opencode/.caveman-active`)
+
+ກວດ: ເປີດ OpenCode ໃໝ່ → `opencode debug skill` ຕ້ອງມີ `caveman`, `caveman-commit`, `caveman-review` ແລະໄຟລ໌ `~/.config/opencode/.caveman-active` ມີຄຳວ່າ `caveman`
+
+### ຄຳສັ່ງ
+
+| ຄຳສັ່ງ | ເຮັດຫຍັງ |
+| --- | --- |
+| `/caveman` · `/caveman off` · `/caveman status` | ເປີດ / ປິດ / ເບິ່ງໂໝດ (ພິມ `normal mode` ຫຼື `stop caveman` ກໍປິດໄດ້) |
+| `/caveman-commit` | ຂຽນຂໍ້ຄວາມ commit ແບບ Conventional Commits ສຳລັບໄຟລ໌ທີ່ stage ໄວ້ — **ບໍ່ໄດ້ແລ່ນ `git commit` ໃຫ້** |
+| `/caveman-review [files]` | ຣີວິວ diff ແບບໜຶ່ງແຖວຕໍ່ປະເດັນ ພ້ອມລະດັບ 🔴/🟡/🟢 |
+
+ຕັ້ງໂໝດເລີ່ມຕົ້ນດ້ວຍ env var `CAVEMAN_DEFAULT_MODE`
+
+### ຜົນທີ່ວັດໄດ້ເທິງ setup ນີ້
+
+- **ຕົ້ນທຶນ:** prompt ຕໍ່ turn ເພີ່ມ ~1.2k tokens (ruleset ~1,070 + ລາຍການ skill 3 ໂຕ) — ຈາກ ~32.6k ເປັນ ~34.0k
+- **ຜົນ:** ຄຳຕອບສຸດທ້າຍສັ້ນລົງເລັກນ້ອຍ (~9% ໃນການທົດສອບ) ແລະອ່ານງ່າຍຂຶ້ນ ແຕ່ **output tokens ລວມຂອງທັງ turn ບໍ່ຫຼຸດລົງແບບວັດໄດ້** — ໃນວຽກຂຽນ code output ສ່ວນໃຫຍ່ຄື tool call ກັບ code ຊຶ່ງ skill ບໍ່ແຕະ (JetBrains ວັດໄດ້ 8.5% ໃນວຽກແທ້ 86 ວຽກ) ໃຊ້ເພາະອ່ານງ່າຍ ບໍ່ແມ່ນເພາະປະຢັດ — ລາຍລະອຽດທີ່ [[tuning]] ຂໍ້ 8
+
+> [!note] ເປັນຫຍັງບໍ່ໃຊ້ proxy ຂອງ caveman
+> (1) ຕອນ wrap OpenCode ມັນປ່ຽນ `baseURL` ສະເພາະ provider `openai` ແລະ `anthropic` — provider ແບບກຳນົດເອງ (ເຊັ່ນ llama.cpp ທີ່ host ເອງ) ບໍ່ຜ່ານ proxy (2) CLI ສົ່ງ telemetry ເປັນຄ່າເລີ່ມຕົ້ນ ລວມ IP (`caveman telemetry off` ປິດໄດ້) (3) ເພີ່ມ MCP tool 5 ໂຕເຂົ້າ prompt ທຸກ turn — ຍັງບໍ່ໄດ້ທົດສອບ
+
+### ຖອດ
+
+ລຶບ path ອອກຈາກ `plugin` array ແລ້ວລຶບ `~/.config/opencode/plugins/caveman/`, `skills/caveman*/`, `commands/caveman*.md` ແລະໄຟລ໌ `.caveman-active`
+
+### ອັບເດດ
+
+ປ່ຽນ `T=` ເປັນ tag ໃໝ່ແລ້ວແລ່ນບລັອກດາວໂຫຼດຊ້ຳ — ເບິ່ງ [[updating]]
+
+---
+
 ## i-have-adhd — ບັງຄັບຕອບກົງປະເດັນ ບໍ່ອ້ອມແອ້ມ
+
+> [!warning] ທາງເລືອກ — setup ນີ້ໃຊ້ caveman ແທນແລ້ວ (2026-10-03)
+> ຫົວຂໍ້ນີ້ເກັບໄວ້ສຳລັບຄົນທີ່ຢາກໄດ້ແບບ opt-in ຕໍ່ session ແທນແບບເປີດຕະຫຼອດ ຕິດຕັ້ງໂຕໃດໂຕໜຶ່ງເທົ່ານັ້ນ
 
 [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (39k+ stars, MIT) ເປັນ skill ທີ່ປ່ຽນ **ຮູບແບບການຕອບຂອງ agent** ບໍ່ແມ່ນ code ruleset ຄື ponytail — ບັງຄັບ 10 ກົດ: ບອກ next action ກ່ອນສະເໝີ, ເລກ step ໃຫ້ຊັດ, ຈົບດ້ວຍ concrete next step ດຽວ, ຕັດ tangent/preamble/closer ("Hope this helps!"), list ບໍ່ເກີນ 5 ຂໍ້, ບອກເວລາເປັນຕົວເລກຈິງ, error ເວົ້າກົງໆ ບໍ່ມີນ້ຳ ຮອງຮັບ Claude Code, Cursor, Gemini, Kimi, Qwen ແລະ OpenCode ໃນຕົວດຽວກັນ
 

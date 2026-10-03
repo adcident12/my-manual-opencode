@@ -96,12 +96,14 @@ MCP server ที่ควบคุมเบราว์เซอร์จริ
    ```jsonc
    "chrome-devtools": {
      "type": "local",
-     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics"],
+     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
      "timeout": 30000
    }
    ```
 
    `--no-usage-statistics` ปิดการส่ง telemetry ไปที่ Google (เปิดอยู่โดย default ถ้าไม่ใส่ flag นี้)
+
+   `--isolated` ใช้ Chrome profile ชั่วคราวต่อการเปิดแต่ละครั้ง — ถ้าไม่ใส่ ทุก instance ของ `chrome-devtools-mcp` บนเครื่อง (รวมของเครื่องมืออื่น เช่น Claude Code) จะแย่ง profile เดียวกัน และตัวที่มาทีหลังได้ `The browser is already running` ([[gotchas]] ข้อ 17) ข้อแลกเปลี่ยนคือไม่มี login/cookie ค้างข้ามการเปิด
 
 3. ทดสอบ:
 

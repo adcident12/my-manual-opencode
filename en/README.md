@@ -15,17 +15,19 @@ A detailed setup and usage manual for [OpenCode](https://opencode.ai/) CLI — f
 | [architecture.md](architecture.md) | The whole stack viewed through 4 functional layers (Knowledge/Reasoning/Execution/Governance) instead of by technical mechanism |
 | [setup.md](setup.md) | **Start here if nothing is installed yet** — Node.js, Git, OpenCode CLI, provider, MCP, plugins, every step |
 | [mcp-servers.md](mcp-servers.md) | Details on each MCP server (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) with its own install steps |
-| [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin, `ponytail` (full source + the OpenCode Plugin Hook API), and `i-have-adhd` (terse, to-the-point reply style) |
-| [USER-MANUAL.md](USER-MANUAL.md) | Real day-to-day usage — vibe coding, the graft workflow, the OpenDesign → OpenCode workflow |
-| [gotchas.md](gotchas.md) | 16 real problems hit in practice, with fixes (Windows PATH/env snapshotting, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.) |
+| [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin, `ponytail` (full source + the OpenCode Plugin Hook API), and `caveman` (short, to-the-point replies — used instead of `i-have-adhd`) |
+| [USER-MANUAL.md](USER-MANUAL.md) | **Start to finish** (open a session → ask → approve → check → commit) and real day-to-day usage — vibe coding, the graft workflow, the OpenDesign → OpenCode workflow |
+| [gotchas.md](gotchas.md) | 19 real problems hit in practice, with fixes (Windows PATH/env snapshotting, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.) |
 | [updating.md](updating.md) | How to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time |
 | [tuning.md](tuning.md) | **Measure, then tune** — prompt size per turn, which tools the agent really calls, an end-to-end workflow test (with result images and scripts in `scripts/`) |
+| [../config/](../config/README.md) | **Ready-to-copy files** — the `opencode.jsonc` template, global `AGENTS.md`, and `graft-deep.js` plugin this setup actually uses |
+| [../AGENT-SETUP.md](../AGENT-SETUP.md) | **Let an AI agent do the setup** — the same procedure as setup.md in a form an agent can follow, with a check after every step |
 
 ## Stack covered
 
 - **OpenCode CLI** + a self-hosted/cloud model provider
 - **MCP servers**: context7, playwright, chrome-devtools, [graft](https://github.com/trailhq/Graft) (code-graph), [OpenDesign](https://github.com/nexu-io/open-design), memory (persistent context), [SonarQube](https://github.com/SonarSource/sonarqube-mcp-server) (code quality/security, self-hosted), [Trivy](https://github.com/aquasecurity/trivy-mcp) (vulnerability/secret/misconfig scan, standalone CLI), [GitHub](https://github.com/github/github-mcp-server) (issues/PR), postgres/mysql
-- **Plugins**: [superpowers](https://github.com/obra/superpowers) (skill library) + a custom `graft-deep` plugin + [ponytail](https://github.com/dietrichgebert/ponytail) (code-minimization ruleset) + [i-have-adhd](https://github.com/ayghri/i-have-adhd) (terse, action-first output style)
+- **Plugins**: [superpowers](https://github.com/obra/superpowers) (skill library) + a custom `graft-deep` plugin + [ponytail](https://github.com/dietrichgebert/ponytail) (code-minimization ruleset) + [caveman](https://github.com/JuliusBrussee/caveman) (terse replies — skill only; replaces i-have-adhd)
 - **Skills (Agent Skills open standard, not a plugin)**: [grill-me / grilling](https://github.com/mattpocock/skills) — a batch interview that complements superpowers' `brainstorming`
 
 ---

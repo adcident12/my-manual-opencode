@@ -8,7 +8,7 @@ summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ�
 
 ພາບລວມທີ [[index]] · ການຕັ້ງຄ່າທີ [[setup]]
 
-ລວມບັນຫາທີ່ພົບຈິງ 16 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
+ລວມບັນຫາທີ່ພົບຈິງ 19 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
 
 ---
 
@@ -329,3 +329,47 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 > }
 > ```
 > ກວດລຳດັບດ້ວຍ `Get-Command od -All` (PowerShell) — ໂຕທຳອິດໃນລາຍການຄືໂຕທີ່ຖືກເອີ້ນ
+
+---
+
+## 17. chrome-devtools ເປີດ browser ບໍ່ໄດ້: "The browser is already running"
+
+**Impact:** agent ເອີ້ນ `chrome-devtools_list_pages` ແລ້ວໄດ້ `The browser is already running for …\chrome-devtools-mcp\chrome-profile. Use --isolated to run multiple browser instances.` ກວດໃນ browser ບໍ່ໄດ້ທັງ session — ໃນໂໝດ `opencode run` agent ໄປຫາທາງອື່ນຈົນຖືກປະຕິເສດ permission ແລ້ວ run ຈົບກາງທາງໂດຍວຽກບໍ່ແລ້ວ
+
+**ສາເຫດ:** `chrome-devtools-mcp` ທຸກ instance ໃຊ້ Chrome profile ດຽວກັນ (`~/.cache/chrome-devtools-mcp/chrome-profile`) ໂດຍ default — ຖ້າເຄື່ອງມືອື່ນເທິງເຄື່ອງ (ເຊັ່ນ Claude Code ທີ່ລົງ chrome-devtools ໄວ້ຄືກັນ ຫຼື OpenCode ອີກໜ້າຕ່າງ) ເປີດ Chrome ຄ້າງໄວ້ກ່ອນ ໂຕທີ່ມາທີຫຼັງຈະເປີດບໍ່ໄດ້
+
+> [!important] ວິທີແກ້
+> ໃສ່ `--isolated` ໃນ config ຂອງ OpenCode — ໃຊ້ profile ຊົ່ວຄາວຕໍ່ການເປີດແຕ່ລະເທື່ອ ຈຶ່ງບໍ່ຂັດກັບໃຜ:
+> ```jsonc
+> "chrome-devtools": {
+>   "type": "local",
+>   "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
+>   "timeout": 30000
+> }
+> ```
+> ຂໍ້ແລກປ່ຽນ: ບໍ່ມີ login/cookie ຄ້າງຂ້າມການເປີດ — ຖ້າຕ້ອງທົດສອບໜ້າທີ່ຕ້ອງ login ຄ້າງ ໃຫ້ໃຊ້ `--user-data-dir=<folder ສະເພາະຂອງ OpenCode>` ແທນ
+
+---
+
+## 18. installer ຂອງເຄື່ອງມືເສີມຂຽນ `opencode.jsonc` ທັບ — comment ຫາຍທັງໄຟລ໌
+
+**Impact:** ຫຼັງແລ່ນ installer ຂອງ plugin ບາງໂຕ (ພົບກັບ `caveman`: `bin/install.js --only opencode`) ໄຟລ໌ `opencode.jsonc` ຖືກຂຽນໃໝ່ເປັນ JSON ທຳມະດາ comment ທຸກແຖວທີ່ອະທິບາຍວ່າເປັນຫຍັງຕັ້ງຄ່າແບບນັ້ນຫາຍໄປ ແລະໄດ້ skill/subagent/ກົດໃນ AGENTS.md ມາຫຼາຍກວ່າທີ່ຕ້ອງການ
+
+**ສາເຫດ:** installer ອ່ານ config → ແກ້ → serialize ກັບດ້ວຍ `JSON.stringify` (code ຂອງ caveman ຂຽນໄວ້ຊັດໆວ່າ "rewriting it drops them") ມັນເກັບ `opencode.jsonc.bak` ໄວ້ເທື່ອທຳອິດ ແຕ່ຖ້າບໍ່ຮູ້ກໍບໍ່ໄດ້ໄປເບິ່ງ
+
+> [!important] ວິທີແກ້
+> ກ່ອນແລ່ນ installer ໂຕໃດກໍຕາມ: (1) ເບິ່ງວ່າມີ `--dry-run` ບໍ ແລ້ວອ່ານວ່າມັນຈະແຕະໄຟລ໌ຫຍັງ (2) ຖ້າມັນແກ້ `opencode.jsonc` ໃຫ້ຕິດຕັ້ງເອງແທນ — copy ໄຟລ໌ຂອງ plugin ແລ້ວເພີ່ມແຖວໃນ `plugin` array ດ້ວຍມື (ຕົວຢ່າງເຕັມຂອງ caveman ທີ່ [[plugins]]) (3) ສຳຮອງ `~/.config/opencode/` ກ່ອນສະເໝີ
+
+---
+
+## 19. ກົດທີ່ເນັ້ນ "ປະຢັດ step" ເຮັດໃຫ້ agent ຂ້າມການກວດໃນ browser
+
+**Impact:** ຫຼັງໃສ່ ruleset ດ້ານ token efficiency (ທົດສອບກັບ [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)) ວຽກເດີມແລ້ວໃນ 6 ນາທີແທນ 33 ນາທີ — ແຕ່ເພາະ agent **ຢຸດຫຼັງ test ຜ່ານໂດຍບໍ່ເປີດ browser ເລີຍ** ຈຶ່ງບໍ່ພົບ bug menu ພັງທີ່ຮອບກ່ອນພົບ
+
+**ສາເຫດ:** ກົດແບບ "ແລ້ວ = ເກນກວດຂອງວຽກຜ່ານ ແລ້ວຢຸດ" + "ຢ່າສ້າງການກວດທີ່ວຽກບໍ່ໄດ້ຂໍ" ຖືກຕ້ອງສຳລັບວຽກທີ່ມີ test ຄອບຄຸມ ແຕ່ກັບວຽກ UI test ລະດັບ logic ຜ່ານບໍ່ໄດ້ໝາຍຄວາມວ່າໜ້າຈໍໃຊ້ງານໄດ້ — ຂັ້ນ 8 ຂອງ [[USER-MANUAL]] ຈຶ່ງຖືກຕັດຖິ້ມງຽບໆ
+
+> [!important] ວິທີແກ້
+> ຂຽນກົດ "Verifying UI changes — once, in a real browser" ໃນ global AGENTS.md (ຂໍ້ຄວາມເຕັມທີ່ [[tuning]]): ວຽກທີ່ເຫັນໃນ browser ຕ້ອງໂຫຼດໜ້າ ເຮັດ interaction ຂອງວຽກນັ້ນໜຶ່ງເທື່ອ ແລະເບິ່ງ console ກ່ອນລາຍງານວ່າແລ້ວ — ຫຼັງໃສ່ກົດນີ້ການກວດໃນ browser ກັບມາ ແລະເວລາກັບໄປເທົ່າເດີມ (~36 ນາທີ) ໝາຍຄວາມວ່າຕົ້ນທຶນຂອງຂັ້ນນີ້ເປັນຂອງການກວດເອງ ບໍ່ແມ່ນສິ່ງທີ່ ruleset ຫຼຸດໃຫ້ໄດ້
+
+> [!tip] ບົດຮຽນ
+> ຕົວເລກ "ໄວຂຶ້ນ 80%" ຕ້ອງເບິ່ງຄູ່ກັບ "ຍັງເຮັດຄົບທຸກຂັ້ນບໍ" ສະເໝີ — ວັດທັງເວລາແລະລຳດັບ tool call ດ້ວຍ `session-report.mjs session <title>` ກ່ອນສະຫຼຸບວ່າດີຂຶ້ນ

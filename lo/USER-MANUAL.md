@@ -1,7 +1,7 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
 updated: 2026-10-03
-summary: ຄູ່ມືການໃຊ້ງານ OpenCode ປະຈຳວັນ — vibe coding, graft workflow, grill-me/grilling ແລະ OpenDesign workflow
+summary: ຄູ່ມືການໃຊ້ງານ OpenCode ຕັ້ງແຕ່ຕົ້ນຈົນຈົບ (ເປີດ session, ສັ່ງວຽກ, ອະນຸມັດ, ກວດຜົນ, commit) ແລະປະຈຳວັນ — vibe coding, graft workflow, grill-me/grilling ແລະ OpenDesign workflow
 ---
 
 # 📘 ຄູ່ມືການໃຊ້ງານ OpenCode ສຳລັບ Vibe Coding
@@ -12,6 +12,7 @@ summary: ຄູ່ມືການໃຊ້ງານ OpenCode ປະຈຳວັ�
 
 ## 📋 ສາລະບານ
 
+- **⭐ ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ** — ອ່ານສ່ວນນີ້ກ່ອນ: ຕ້ອງເຮັດຫຍັງເທື່ອດຽວ ແລະທຸກເທື່ອທີ່ມີວຽກຕ້ອງເລີ່ມ ລົມ ອະນຸມັດ ກວດ ແລະຈົບວຽກແນວໃດ
 - ພາບລວມ — architecture ຂອງ setup ນີ້ + workflow cycle ລະດັບ project ແລະ agent
 - ເລີ່ມວຽກໃນ project ໃໝ່ — checklist 6 ຂັ້ນຕອນ ພ້ອມຈຸດກວດສອບທຸກຂັ້ນ
 - Vibe coding ທົ່ວໄປກັບ opencode — ລວມຕົວຢ່າງເຕັມ 1 ຮອບການເຮັດວຽກຈິງ (ຈາກຄຳສັ່ງເຖິງ commit) ແລະວິທີໃຊ້ grill-me/grilling
@@ -21,7 +22,157 @@ summary: ຄູ່ມືການໃຊ້ງານ OpenCode ປະຈຳວັ�
 - ບັນຫາທີ່ພົບເລື້ອຍ
 
 > [!tip] ມືໃໝ່ເລີ່ມອ່ານຕາມລຳດັບນີ້
-> ຫົວຂໍ້ 1 (ເຂົ້າໃຈພາບລວມກ່ອນ) → 2 (ເຮັດຕາມ checklist ຈິງໃນ project ທຳອິດ) → 3 (ລອງສັ່ງວຽກຈິງຕາມຕົວຢ່າງ) — ເຮັດຄົບ 3 ຫົວຂໍ້ທຳອິດແລ້ວຈະໃຊ້ງານປະຈຳວັນໄດ້ເອງ ຫົວຂໍ້ 4-7 ເປັນແບບອ້າງອິງ ເປີດເບິ່ງຕອນຕ້ອງໃຊ້
+> **⭐ ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ** (ຂ້າງລຸ່ມນີ້ — ຮູ້ວ່າຕ້ອງເຮັດຫຍັງເມື່ອໃດ) → ຫົວຂໍ້ 2 (ເຮັດຕາມ checklist ຈິງໃນ project ທຳອິດ) → ຫົວຂໍ້ 3 (ລອງສັ່ງວຽກຈິງຕາມຕົວຢ່າງ) — ຫົວຂໍ້ 1 ແລະ 4-7 ເປັນແບບອ້າງອິງ ເປີດເບິ່ງຕອນຕ້ອງໃຊ້
+
+---
+
+## ⭐ ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ
+
+ຕິດຕັ້ງຕາມ [[setup]] ຄົບແລ້ວ — ສ່ວນນີ້ຕອບຄຳຖາມດຽວ: **ນັ່ງລົງໜ້າເຄື່ອງແລ້ວຕ້ອງເຮັດຫຍັງ ຕາມລຳດັບໃດ ຈົນວຽກແລ້ວ** ມີສາມລະດັບ ເຮັດເລື້ອຍບໍ່ເທົ່າກັນ:
+
+| ເຮັດເມື່ອໃດ | ເຮັດຫຍັງ | ໃຊ້ເວລາ |
+| --- | --- | --- |
+| **ກ. ເທື່ອດຽວຕໍ່ເຄື່ອງ** | ກວດວ່າ setup ພ້ອມໃຊ້ | ~2 ນາທີ |
+| **ຂ. ເທື່ອດຽວຕໍ່ project** | ສ້າງ graft index + AGENTS.md ຂອງ project | ~5 ນາທີ (ຫົວຂໍ້ 2) |
+| **ຄ. ທຸກເທື່ອທີ່ມີວຽກ** | ວົງຈອນ 7 ຂັ້ນ: ເປີດ → ສັ່ງ → ອະນຸມັດ → agent ເຮັດ → ກວດ → commit → ປິດ | ຕາມຂະໜາດວຽກ |
+
+```mermaid
+graph TD
+    S["ຕິດຕັ້ງແລ້ວ (setup)"] --> A["ກ. ກວດເຄື່ອງ<br/>ເທື່ອດຽວ"]
+    A --> B["ຂ. ກຽມ project<br/>ເທື່ອດຽວຕໍ່ repo (ຫົວຂໍ້ 2)"]
+    B --> C1["1. ເປີດ session<br/>opencode / opencode -c"]
+    C1 --> C2["2. ສັ່ງວຽກເປັນພາສາຄົນ"]
+    C2 --> K{"ວຽກແບບໃດ?"}
+    K -->|ຖາມ / ແກ້ນ້ອຍ| C4
+    K -->|feature ໃໝ່ / bug / ວຽກໃຫຍ່| C3["3. ຕອບຄຳຖາມ + ອະນຸມັດການອອກແບບ<br/>(agent ຍັງບໍ່ຂຽນ code)"]
+    C3 --> C4["4. agent ລົງມື<br/>ແກ້ code → test → ກວດໃນ browser"]
+    C4 --> C5{"5. ທ່ານກວດຜົນ<br/>ບົດສະຫຼຸບ + git diff"}
+    C5 -->|ຍັງບໍ່ແມ່ນ| C2
+    C5 -->|ຜ່ານ| C6["6. commit<br/>(agent ບໍ່ commit ເອງ)"]
+    C6 --> C7["7. ປິດວຽກ<br/>/new ສຳລັບວຽກຕໍ່ໄປ"]
+    C7 -->|ວຽກຕໍ່ໄປ| C2
+```
+
+### ກ. ເທື່ອດຽວຕໍ່ເຄື່ອງ — ກວດວ່າ setup ພ້ອມ
+
+ເປີດ terminal **ໃໝ່** (env var ທີ່ຫາກໍຕັ້ງຈະຍັງບໍ່ມີຜົນໃນ terminal ເດີມ — [[gotchas]] ຂໍ້ 2) ແລ້ວແລ່ນ:
+
+```bash
+opencode --version       # ຕິດຕັ້ງ CLI ແລ້ວ
+opencode mcp list        # MCP ທີ່ເປີດໃຊ້ຕ້ອງຂຶ້ນ connected
+opencode debug skill     # skill ທີ່ໂຫຼດໄດ້
+opencode run "say hi"    # ໂມເດວຕອບກັບໄດ້
+```
+
+✅ **ຕ້ອງເຫັນ:**
+- `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` ຂຶ້ນ `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` ຂຶ້ນ `disabled` (ປົກກະຕິ — ເປີດຕໍ່ project)
+- `debug skill`: 27 ໂຕ — superpowers 15, ponytail 6, caveman 3, `grill-me`, `grilling`, `customize-opencode` ຖ້າເຫັນຫຼາຍກວ່ານີ້ຫຼາຍ ໝາຍຄວາມວ່າ skill ຂອງເຄື່ອງມືອື່ນປົນເຂົ້າມາ ([[gotchas]] ຂໍ້ 15)
+- `run "say hi"`: ໄດ້ຄຳຕອບກັບ ຖ້າຊ້າເກີນ 1–2 ນາທີເບິ່ງ [[gotchas]] ຂໍ້ 1
+
+### ຂ. ເທື່ອດຽວຕໍ່ project — ກຽມ repo
+
+ເຮັດຕາມ **ຫົວຂໍ້ 2** (6 ຂັ້ນ): `graft build` → `graft init --agents agents --no-global` → ເປີດ MCP ສະເພາະ project ຖ້າຕ້ອງໃຊ້ (ຖານຂໍ້ມູນ, `open-design`, `playwright`) → ລອງຖາມຄຳຖາມທີ່ຕ້ອງອ້າງ code ແທ້ ເຮັດແລ້ວບໍ່ຕ້ອງເຮັດຊ້ຳອີກສຳລັບ repo ນັ້ນ
+
+### ຄ. ທຸກເທື່ອທີ່ມີວຽກ — ວົງຈອນ 7 ຂັ້ນ
+
+**ຂັ້ນ 1 — ເປີດ session**
+
+```bash
+cd my-project
+git status          # ຄວນສະອາດ ຫຼືຢູ່ເທິງ branch ຂອງວຽກນີ້ — ຈະໄດ້ເຫັນຊັດວ່າ agent ແກ້ຫຍັງ
+opencode            # session ໃໝ່
+opencode -c         # ຫຼື: ເຮັດວຽກເດີມຕໍ່ຈາກ session ຫຼ້າສຸດ
+```
+
+ໃນ TUI: `/sessions` ເລືອກ session ເກົ່າ · `/new` ເລີ່ມ session ໃໝ່ · `/models` ປ່ຽນໂມເດວ · `/help` ເບິ່ງຄຳສັ່ງທັງໝົດ
+
+> [!tip] ໜຶ່ງວຽກ = ໜຶ່ງ session
+> prompt ພື້ນຖານໜັກ ~34k tokens ຈາກ context 131k ([[tuning]]) — ວຽກໃໝ່ໃຫ້ `/new` ສະເໝີ session ທີ່ຍາວຂ້າມຫຼາຍວຽກຈະ compact ເລື້ອຍ ແລະ agent ຕ້ອງອ່ານໄຟລ໌ເດີມຊ້ຳ
+
+**ຂັ້ນ 2 — ສັ່ງວຽກເປັນພາສາຄົນ**
+
+ບອກ**ຜົນລັບທີ່ຢາກໄດ້** ບໍ່ຕ້ອງບອກວິທີເຮັດ ແລະບໍ່ຕ້ອງສັ່ງໃຫ້ໃຊ້ tool ໂຕໃດ — agent ເລືອກເສັ້ນທາງເອງຈາກຊະນິດຂອງຄຳຂໍ:
+
+| ທ່ານພິມປະມານນີ້ | agent ຈະເຮັດ | ທ່ານຕ້ອງເຮັດ |
+| --- | --- | --- |
+| `ລະບົບເກັບແຫວນເຮັດວຽກແນວໃດ` (ຖາມ/ໃຫ້ອະທິບາຍ) | ຫາ code ດ້ວຍ graft ແລ້ວຕອບໂດຍອ້າງ `file:line` | ອ່ານ — ຈົບທີ່ຂັ້ນນີ້ |
+| `ແກ້ຄຳຜິດໃນໜ້າ menu` (ແກ້ນ້ອຍ) | ແກ້ເລີຍ → ແລ່ນ test | ຂ້າມໄປຂັ້ນ 5 |
+| `ຊ່ວຍເພີ່ມລະບົບ pause ໃຫ້ເກມ` (feature ໃໝ່) | ເອີ້ນ `brainstorming` → ສຳຫຼວດດ້ວຍ graft → ຖາມຄຳຖາມຫຼືສະເໜີການອອກແບບ → **ຢຸດລໍ** | ໄປຂັ້ນ 3 |
+| `ກົດໂດດແລ້ວເກມຄ້າງ` (bug) | ເອີ້ນ `systematic-debugging` — ຫາສາເຫດໃຫ້ໄດ້ກ່ອນແກ້ | ຢືນຢັນສາເຫດ ແລ້ວໃຫ້ແກ້ |
+| `ຍ້າຍລະບົບດ່ານເປັນແບບ zone` (ວຽກໃຫຍ່ຫຼາຍໄຟລ໌) | ຂຽນ spec ທີ່ `docs/superpowers/specs/` + ແຜນ (`writing-plans`) | ອ່ານ spec ແລ້ວອະນຸມັດ |
+| `grill me about <ໄອເດຍ>` (ຍັງບໍ່ເຮັດ ພຽງຢາກຄິດໃຫ້ຕົກ) | ຖາມເປັນຮອບແບບ `grilling` ບໍ່ມີ spec ບໍ່ຂຽນ code | ຕອບຄຳຖາມ |
+
+**ຂັ້ນ 3 — ຕອບຄຳຖາມ ແລະອະນຸມັດການອອກແບບ** (ສະເພາະ feature ໃໝ່/ວຽກໃຫຍ່)
+
+agent ຈະ**ບໍ່ຂຽນ code** ຈົນກວ່າຈະຜ່ານຂັ້ນນີ້ ມັນຈະມາໃນສອງຮູບແບບ:
+
+- **ຄຳຖາມເປັນຊຸດ** (`❓ Q1 … ➡️ ຄຳແນະນຳ`) — ຕອບສັ້ນໆເປັນຕົວເລືອກ ເຊັ່ນ `A B A` ຫຼື `ຕາມແນະນຳທັງໝົດ`
+- **ການອອກແບບດຽວພ້ອມຄຳຖາມ "Approve?"** (ວຽກແຄບພໍ) — ຕອບ `go ahead` ຫຼືບອກສິ່ງທີ່ຢາກປ່ຽນ ເຊັ່ນ `ບໍ່ຕ້ອງມີປຸ່ມ touch`
+
+ອ່ານການອອກແບບຕອນນີ້ໃຫ້ດີ — ເປັນຈຸດທີ່ແກ້ທິດທາງໄດ້ຖືກທີ່ສຸດ ກ່ອນທີ່ໂມເດວຈະໃຊ້ເວລາຫຼາຍນາທີລົງມືເຮັດ
+
+**ຂັ້ນ 4 — agent ລົງມື** (ທ່ານພຽງລໍ)
+
+ລຳດັບທີ່ເກີດຂຶ້ນ: ponytail ກວດວ່າມີຂອງເດີມໃຫ້ໃຊ້ກ່ອນຂຽນໃໝ່ → ແກ້ code ພ້ອມ todo list → ແລ່ນ test → **ຖ້າເປັນວຽກທີ່ເຫັນໃນ browser ຈະເປີດ Chrome ຜ່ານ chrome-devtools ກວດໜຶ່ງຮອບ** (ກົດໃນ global AGENTS.md — [[tuning]]) → ສະຫຼຸບຜົນ
+
+- ກົດ `Esc` ເພື່ອຢຸດກາງທາງ · `/undo` ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດພ້ອມການແກ້ໄຟລ໌ຂອງຂໍ້ຄວາມນັ້ນ (project ຕ້ອງເປັນ git repo) · `/redo` ເຮັດຊ້ຳ
+- **ຂັ້ນກວດໃນ browser ໃຊ້ເວລາດົນທີ່ສຸດ** — ວັດໄດ້ ~30–36 ນາທີສຳລັບ feature ນ້ອຍເທິງໂມເດວ local ແຕ່ເປັນຂັ້ນທີ່ພົບ bug ທີ່ test ບໍ່ຄອບຄຸມ ([[tuning]] ຂໍ້ 4 ແລະ 8) ຖ້າວຽກບໍ່ກ່ຽວກັບ UI ຂັ້ນນີ້ຈະຖືກຂ້າມ
+- ຖ້າ agent ຢຸດງຽບກາງທາງໂດຍບໍ່ສະຫຼຸບ ມັກເປັນເພາະໂມເດວຊົນເພດານ output ([[gotchas]] ຂໍ້ 8) — ພິມ `continue`
+
+**ຂັ້ນ 5 — ກວດຜົນກ່ອນຮັບວຽກ**
+
+ອ່ານບົດສະຫຼຸບທ້າຍຂອງ agent — ຄວນບອກ: ແກ້ໄຟລ໌ໃດ, ຜົນ test, ຜົນກວດໃນ browser ແລະສິ່ງທີ່**ຕັ້ງໃຈບໍ່ເຮັດ** ຈາກນັ້ນເບິ່ງຂອງແທ້:
+
+```bash
+git diff            # ຕົງກັບທີ່ສະຫຼຸບບໍ ມີໄຟລ໌ທີ່ບໍ່ຄວນຖືກແຕະຫຼືບໍ່
+```
+
+ຢາກໄດ້ຄວາມເຫັນທີສອງ ສັ່ງໃນ session ເດີມ:
+
+| ຄຳສັ່ງ | ໄດ້ຫຍັງ |
+| --- | --- |
+| `/caveman-review` | ຣີວິວ diff ແບບໜຶ່ງແຖວຕໍ່ປະເດັນ ພ້ອມລະດັບຄວາມຮ້າຍແຮງ |
+| `/ponytail-review` | ຫາ code ທີ່ເກີນຈຳເປັນໃນ diff |
+| `scan project ນີ້ດ້ວຍ sonarqube ແລະ trivy` | ກວດຄຸນນະພາບ/ຊ່ອງໂຫວ່ — ໃຊ້ກັບວຽກທີ່ແຕະ dependency, auth ຫຼືຂໍ້ມູນ (agent **ບໍ່**ແລ່ນເອງທຸກວຽກ) |
+
+ຍັງບໍ່ແມ່ນ → ບອກສິ່ງທີ່ຕ້ອງແກ້ໃນ session ເດີມ (ກັບໄປຂັ້ນ 2)
+
+**ຂັ້ນ 6 — commit**
+
+agent **ບໍ່ commit ເອງ** (ທົດສອບແລ້ວ — ວຽກຈົບໂດຍປະໄຟລ໌ໄວ້ໃນ working tree) ເລືອກທາງໃດທາງໜຶ່ງ:
+
+```bash
+git add -A
+```
+
+```
+/caveman-commit          ← ໄດ້ຂໍ້ຄວາມ commit ແບບ Conventional Commits (ບໍ່ໄດ້ແລ່ນ git commit ໃຫ້)
+commit ໃຫ້ແດ່              ← ຫຼືສັ່ງໃຫ້ agent commit ເອງ ແລ້ວກວດຂໍ້ຄວາມ
+```
+
+push ເອງເມື່ອພ້ອມ — ບໍ່ມີ CI ແລ່ນອັດຕະໂນມັດໃນ setup ນີ້ ([[sdlc]])
+
+**ຂັ້ນ 7 — ປິດວຽກ**
+
+- ວຽກຕໍ່ໄປ → `/new` (ຫຼື `/exit` ແລ້ວເປີດໃໝ່)
+- ມີຄວາມມັກ/ຂໍ້ຕັດສິນໃຈທີ່ຢາກໃຫ້ຈື່ຂ້າມ session → ພິມ `ຈື່ໄວ້ວ່າ <ເລື່ອງ>` — agent ບັນທຶກລົງ memory ແລະ session ໜ້າຈະຄົ້ນກ່ອນຖາມຊ້ຳ
+- session ຍາວຈົນ context ໃກ້ເຕັມແຕ່ວຽກຍັງບໍ່ຈົບ → `/compact`
+- ບໍ່ຕ້ອງ rebuild graft ເອງ — CLI refresh graph ກ່ອນຕອບທຸກເທື່ອ
+
+### ຄຳສັ່ງທີ່ໃຊ້ເລື້ອຍ
+
+| ຕ້ອງການ | ພິມ |
+| --- | --- |
+| ເປີດ session ໃໝ່ / ຕໍ່ session ຫຼ້າສຸດ | `opencode` / `opencode -c` |
+| ເລີ່ມວຽກໃໝ່ໃນ TUI ເດີມ | `/new` |
+| ກັບໄປ session ເກົ່າ | `/sessions` |
+| ຢຸດ agent / ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດ | `Esc` / `/undo` |
+| ຫຍໍ້ context ຂອງ session ຍາວ | `/compact` |
+| ໃຫ້ຕອບແບບເຕັມ ບໍ່ຫຍໍ້ / ກັບມາຕອບສັ້ນ | `/caveman off` (ຫຼື `normal mode`) / `/caveman` |
+| ຂໍ້ຄວາມ commit / ຣີວິວ diff | `/caveman-commit` / `/caveman-review` |
+| ຫຼຸດ/ເພີ່ມຄວາມເຂັ້ມຂອງ ponytail | `/ponytail lite\|full\|ultra\|off` |
+| ຄິດໄອເດຍໃຫ້ຕົກກ່ອນ ຍັງບໍ່ເຮັດ | `grill me about <ເລື່ອງ>` |
+| ສັ່ງແບບບໍ່ເປີດ TUI | `opencode run "<ຄຳສັ່ງ>"` ແລ້ວຕໍ່ດ້ວຍ `opencode run -c "<ຄຳຕອບ>"` |
 
 ---
 
@@ -36,7 +187,7 @@ graph LR
     B -->|plugin| F[superpowers - skills]
     B -->|plugin| G[graft-deep - inject context]
     B -->|plugin| L[ponytail - code minimization]
-    B -->|plugin, opt-in| M["i-have-adhd - terse output<br/>(/i-have-adhd ຕໍ່ session)"]
+    B -->|plugin| M["caveman - terse output<br/>(ເປີດເອງ, /caveman off ເພື່ອປິດ)"]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
     E -.->|ດຶງໄຟລ໌ generate ໄວ້| I[project ຈິງ frontend+backend]
 ```
@@ -95,8 +246,8 @@ graph LR
 > [!note] Plugin ponytail
 > plugin ponytail (ເບິ່ງ [[plugins]]) ເປັນ gate ສຸດທ້າຍກ່ອນລົງມືຂຽນໂຄ້ດຈິງ (node L) — ບັງຄັບໃຫ້ agent ໄລ່ decision ladder ເຮັດວຽກຄຽງຄູ່ກັບ superpowers/graft-deep ໂດຍບໍ່ຊ້ຳຊ້ອນ (superpowers ເລືອກ workflow, graft-deep ຫາ context, ponytail ຄວບຄຸມປະລິມານໂຄ້ດທີ່ຂຽນອອກມາ)
 
-> [!note] Plugin i-have-adhd — ບໍ່ຢູ່ໃນ cycle ຕໍ່ turn ຂ້າງເທິງ (ຕັ້ງໃຈ)
-> ຕ່າງຈາກ superpowers/graft-deep/ponytail ທີ່ເຮັດວຽກອັດຕະໂນມັດທຸກ turn — i-have-adhd (ເບິ່ງ [[plugins]]) ເປັນ **opt-in ຕໍ່ session**: ຕ້ອງພິມ `/i-have-adhd` ເອງກ່ອນຈຶ່ງຈະເລີ່ມມີຜົນ — ປິດດ້ວຍ `stop adhd mode` ເມື່ອໃດກໍໄດ້
+> [!note] Plugin caveman — ບໍ່ຢູ່ໃນ cycle ຕໍ່ turn ຂ້າງເທິງ (ຕັ້ງໃຈ)
+> caveman (ເບິ່ງ [[plugins]]) ປ່ຽນພຽງ**style ການຕອບ**ໃຫ້ສັ້ນແລະກົງປະເດັນ ບໍ່ແຕະ tool orchestration ຈຶ່ງບໍ່ເປັນ node ໃນແຜນພາບ — ເປີດເອງທຸກ session (ຕ່າງຈາກ i-have-adhd ທີ່ມັນມາແທນ ຊຶ່ງຕ້ອງພິມເປີດເອງ) ປິດດ້ວຍ `/caveman off` ຫຼື `normal mode` ເມື່ອຢາກໄດ້ຄຳອະທິບາຍເຕັມ code, ຄຳສັ່ງ ແລະຂໍ້ຄວາມ error ຍັງຂຽນເຕັມສະເໝີ
 
 > [!note] Skill grill-me / grilling — ບໍ່ແມ່ນ plugin ແຍກ ແຕ່ຜູກກັບ node C
 > ບໍ່ໄດ້ຢູ່ໃນ diagram ເປັນ node ແຍກ ເພາະເປັນ skill (ໄຟລ໌ `SKILL.md` ດ່ຽວໆ ຕາມ Agent Skills open standard — ເບິ່ງ [[setup]]) ບໍ່ແມ່ນ plugin ແຕ່ເຮັດວຽກທີ່ node C ດຽວກັນກັບ superpowers: ເມື່ອ agent ເລືອກ `brainstorming` ສຳລັບວຽກສ້າງ feature ໃໝ່ ຈະໃຊ້ format ຄຳຖາມແບບ batch ຂອງ `grilling` ແທນການຖາມເທື່ອລະຂໍ້ ວິທີໃຊ້ຈິງເບິ່ງຫົວຂໍ້ 3 ລຸ່ມນີ້ ລາຍລະອຽດການຕິດຕັ້ງ/reconcile ເຕັມໆ ເບິ່ງທີ່ [[plugins]]
@@ -175,7 +326,7 @@ opencode
 opencode debug skill
 ```
 
-✅ **ຕ້ອງເຫັນ:** skill ຈາກ `superpowers` ຄົບ 14 ໂຕ, skill ຂອງ `ponytail`, `i-have-adhd`, ແລະ `grill-me`/`grilling` ຖ້າຕິດຕັ້ງໄວ້
+✅ **ຕ້ອງເຫັນ:** skill ຈາກ `superpowers` 15 ໂຕ, skill ຂອງ `ponytail` 6 ໂຕ, `caveman`/`caveman-commit`/`caveman-review`, ແລະ `grill-me`/`grilling` ຖ້າຕິດຕັ້ງໄວ້ — ລວມ 27 ໂຕກັບ `customize-opencode` ທີ່ມາກັບ OpenCode
 
 > [!tip] ເຮັດຄົບ 6 ຂັ້ນແລ້ວໄປຫົວຂໍ້ 3 ໄດ້ເລີຍ
 > ຈາກນີ້ບໍ່ຕ້ອງເຮັດ checklist ນີ້ຊ້ຳອີກສຳລັບ project ເດີມ
@@ -208,14 +359,14 @@ opencode run -m home-llamacpp/qwen3.8-27b "..."   # ລະບຸໂມເດວ�
 5. **ຕອບຄຳຖາມ** — ພິມສັ້ນໆ ເຊັ່ນ `ຕາມແນະນຳທັງໝົດ`
 6. **ponytail ກວດ decision ladder** — ກ່ອນຂຽນໂຄ້ດໃໝ່ ກວດວ່າມີຂອງເດີມໃຫ້ reuse ບໍ່
 7. **ຂຽນ/ແກ້ໂຄ້ດ** ພ້ອມ todo list ກຳກັບຄວາມຄືບໜ້າ
-8. **ແລ່ນ test + ກວດໃນ browser** (ຜ່ານ playwright/chrome-devtools MCP ຖ້າເປັນເວັບ)
-9. **commit** ເປັນ scoped commit ດຽວ ພ້ອມຂໍ້ຄວາມສັ້ນກົງປະເດັນ
+8. **ແລ່ນ test + ກວດໃນ browser** (ຜ່ານ chrome-devtools MCP ຖ້າເປັນວຽກທີ່ເຫັນໃນ browser — ກົດ "Verifying UI changes" ໃນ global AGENTS.md)
+9. **commit** ເປັນ scoped commit ດຽວ ພ້ອມຂໍ້ຄວາມສັ້ນກົງປະເດັນ — ໃນການທົດສອບຊ້ຳ agent **ບໍ່ commit ເອງ** ຕ້ອງສັ່ງ (`/caveman-commit` ໃຫ້ຂໍ້ຄວາມ ຫຼືພິມ `commit ໃຫ້ແດ່`) ເບິ່ງຂັ້ນ 6 ໃນ "ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ"
 
 > [!tip] ບໍ່ເຫັນຄົບທຸກຂັ້ນກໍປົກກະຕິ
 > ຄຳສັ່ງນ້ອຍໆ (ແກ້ typo, ຖາມຄຳຖາມທົ່ວໄປ) ຈະຂ້າມຂັ້ນ 2-6 ໄປເລີຍ ເຂົ້າຂັ້ນ 7-9 ໂດຍກົງ
 
 > [!info] ທົດສອບຊ້ຳແບບ headless (2026-10-03) — ຜົນແທ້ຕໍ່ຂັ້ນ
-> ຂໍ feature ນ້ອຍ ("add a pause feature …") ໃນສຳເນົາຂອງເກມຕົວຢ່າງ: ຂັ້ນ 2 ✅ · ຂັ້ນ 3 ❌ ໃນຮອບທຳອິດ (agent ເຮັດຕາມຂັ້ນ "check files" ຂອງ brainstorming ແທນການໃຊ້ graft) → ✅ ຫຼັງເພີ່ມກົດໃນ global AGENTS.md · ຂັ້ນ 4 ຂ້າມໄປເພາະວຽກແຄບພໍຈະສະເໜີການອອກແບບດຽວແລ້ວຂໍອະນຸມັດ · ຂັ້ນ 6–8 ✅ · ຂັ້ນ 9 ⚠️ ບໍ່ commit ເອງ — ວິທີທົດສອບ, ຮູບຜົນ ແລະສິ່ງທີ່ຍັງຄ້າງຢູ່ທີ່ [[tuning]] ຂໍ້ 4
+> ຂໍ feature ນ້ອຍ ("add a pause feature …") ໃນສຳເນົາຂອງເກມຕົວຢ່າງ: ຂັ້ນ 2 ✅ · ຂັ້ນ 3 ❌ ໃນຮອບທຳອິດ (agent ເຮັດຕາມຂັ້ນ "check files" ຂອງ brainstorming ແທນການໃຊ້ graft) → ✅ ຫຼັງເພີ່ມກົດໃນ global AGENTS.md · ຂັ້ນ 4 ຂ້າມໄປເພາະວຽກແຄບພໍຈະສະເໜີການອອກແບບດຽວແລ້ວຂໍອະນຸມັດ · ຂັ້ນ 6–7 ✅ · ຂັ້ນ 8 ✅ ເມື່ອມີກົດ "Verifying UI changes" (ຖ້າມີກົດທີ່ເນັ້ນປະຢັດ step ຢ່າງດຽວ agent ຈະຂ້າມການກວດໃນ browser — [[gotchas]] ຂໍ້ 19) · ຂັ້ນ 9 ⚠️ ບໍ່ commit ເອງ — ວິທີທົດສອບ, ຮູບຜົນ ແລະສິ່ງທີ່ຍັງຄ້າງຢູ່ທີ່ [[tuning]] ຂໍ້ 4 ແລະ 8
 
 ### ໃຊ້ grill-me / grilling ກ່ອນເລີ່ມ feature ໃໝ່ (ຖ້າຕິດຕັ້ງໄວ້)
 

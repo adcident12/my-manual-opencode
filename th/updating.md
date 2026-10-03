@@ -142,7 +142,18 @@ rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
 
 ---
 
+## caveman (ติดตั้งเองจากไฟล์ที่ล็อก tag)
+
+ติดตั้งด้วยการดาวน์โหลดไฟล์จาก tag ที่ล็อกไว้ (ดู [[plugins]]) จึงไม่มีอะไรอัปเดตเอง — ดู release ใหม่ที่ [github.com/JuliusBrussee/caveman/releases](https://github.com/JuliusBrussee/caveman/releases) แล้วเปลี่ยน `T=` เป็น tag ใหม่ รันบล็อกดาวน์โหลดใน [[plugins]] ซ้ำ (ทับไฟล์เดิม) แล้วเปิด OpenCode ใหม่
+
+> [!warning] อย่าอัปเดตด้วย installer
+> `bin/install.js` เขียน `opencode.jsonc` ใหม่เป็น JSON ธรรมดาและลบ comment ทิ้ง — [[gotchas]] ข้อ 18 สคริปต์ `update-opencode.mjs` ไม่แตะ caveman (ติดตั้งเวอร์ชันล่าสุดที่ทดสอบ: v3.1.0, 2026-10-03)
+
+---
+
 ## i-have-adhd (ติดตั้งผ่าน local git clone)
+
+> [!note] setup นี้เปลี่ยนไปใช้ caveman แทนแล้ว (2026-10-03) — หัวข้อนี้ใช้เฉพาะถ้ายังติดตั้ง i-have-adhd อยู่ สคริปต์อัปเดตจะข้ามขั้นนี้เองถ้าไม่พบโฟลเดอร์
 
 ต่างจาก superpowers/ponytail ตรงที่ไม่ได้ผ่าน `plugin` array แบบ git URL หรือ npm package เลย — `plugin` array ชี้ไปที่ path ไฟล์ `.mjs` ในซอร์สที่ clone ไว้ตรงๆ (ดู [[setup]] Part 4) ดังนั้นการอัปเดตคือแค่ `git pull` ซอร์สนั้น ไม่มีเรื่อง cache ของ opencode/Bun มาเกี่ยวข้องเลย:
 
@@ -287,7 +298,8 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | graft | ✅ ต้องสั่งเอง | `graft upgrade` |
 | superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
 | ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
-| i-have-adhd | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
+| caveman | ✅ ต้องสั่งเอง (ไฟล์ล็อก tag) | เปลี่ยน tag แล้วดาวน์โหลดซ้ำ — ห้ามใช้ installer |
+| i-have-adhd (ถ้ายังใช้) | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
 | grill-me / grilling | ✅ ต้องเช็ค diff เอง (vendored, ไม่มี manager) | curl raw URL เทียบ แล้ว merge การแก้กลับ |
 | graft-deep.js | ➖ ไม่มีต้นทาง (เขียนเอง) — แต่ต้องเทียบกับ hook ของ graft ทุกครั้งที่อัปเกรด graft | แก้ไฟล์ตรงๆ ดู [[plugins]] |
 | OpenDesign | ❌ อัตโนมัติ (launcher auto-updater) | ผ่าน UI ในแอป — shim `od.mjs` ตามเวอร์ชันใหม่เอง |

@@ -1,7 +1,7 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
 updated: 2026-10-03
-summary: Araw-araw na gabay sa paggamit ng OpenCode — vibe coding, ang graft workflow, grill-me/grilling, at ang OpenDesign workflow
+summary: Gabay sa paggamit ng OpenCode mula simula hanggang tapos (magbukas ng session, mag-request, mag-approve, suriin, commit) at araw-araw — vibe coding, ang graft workflow, grill-me/grilling, at ang OpenDesign workflow
 ---
 
 # 📘 Gabay sa Paggamit ng OpenCode para sa Vibe Coding
@@ -12,6 +12,7 @@ summary: Araw-araw na gabay sa paggamit ng OpenCode — vibe coding, ang graft w
 
 ## 📋 Talaan ng Nilalaman
 
+- **⭐ Mula simula hanggang tapos** — basahin muna ito: ano ang ginagawa nang isang beses, at paano sinisimulan, pinag-uusapan, ina-approve, sinusuri, at tinatapos ang bawat trabaho
 - Pangkalahatang-ideya — architecture ng setup na ito + ang project-level at agent-level na workflow cycles
 - Pagsisimula ng bagong project — 6-hakbang na checklist
 - Pangkalahatang vibe coding gamit ang opencode — kasama ang buong halimbawa (isang tunay na request hanggang sa commit) at paano gamitin ang grill-me/grilling
@@ -21,7 +22,157 @@ summary: Araw-araw na gabay sa paggamit ng OpenCode — vibe coding, ang graft w
 - Karaniwang mga problema
 
 > [!tip] Mga baguhan, magbasa sa pagkakasunod-sunod na ito
-> Seksyon 1 (unawain muna ang pangkalahatang-ideya) → 2 (sundin ang tunay na checklist sa unang project mo) → 3 (subukan ang aktwal na request gamit ang halimbawa) — gawin ang unang 3 seksyon at handa ka na para sa araw-araw na paggamit. Ang seksyon 4–7 ay reference lang — buksan ito kapag talagang kailangan.
+> **⭐ Mula simula hanggang tapos** (nasa ibaba — ano ang gagawin, at kailan) → seksyon 2 (sundin ang tunay na checklist sa unang project mo) → seksyon 3 (subukan ang aktwal na request gamit ang halimbawa). Ang seksyon 1 at 4–7 ay reference lang — buksan ito kapag talagang kailangan.
+
+---
+
+## ⭐ Mula simula hanggang tapos
+
+Tapos na ang setup ayon sa [[setup]] — isang tanong ang sinasagot ng seksyong ito: **umupo ka sa harap ng makina; ano ang gagawin mo, sa anong pagkakasunod, hanggang matapos ang trabaho?** May tatlong antas, na magkakaiba ang dalas:
+
+| Kailan | Ano | Tagal |
+| --- | --- | --- |
+| **A. Isang beses bawat makina** | Tiyaking handa ang setup | ~2 min |
+| **B. Isang beses bawat project** | Buuin ang graft index + ang AGENTS.md ng project | ~5 min (seksyon 2) |
+| **C. Bawat trabaho** | Ang 7-hakbang na loop: buksan → mag-request → mag-approve → gumagawa ang agent → suriin → commit → isara | depende sa trabaho |
+
+```mermaid
+graph TD
+    S["Tapos ang setup (setup)"] --> A["A. Suriin ang makina<br/>isang beses"]
+    A --> B["B. Ihanda ang project<br/>isang beses bawat repo (seksyon 2)"]
+    B --> C1["1. Magbukas ng session<br/>opencode / opencode -c"]
+    C1 --> C2["2. Mag-request sa plain language"]
+    C2 --> K{"Anong uri ng trabaho?"}
+    K -->|tanong / maliit na ayos| C4
+    K -->|bagong feature / bug / malaking trabaho| C3["3. Sagutin ang mga tanong + i-approve ang disenyo<br/>(wala pang code na isinusulat)"]
+    C3 --> C4["4. Gumagawa ang agent<br/>edit → tests → browser check"]
+    C4 --> C5{"5. Suriin mo ang resulta<br/>buod + git diff"}
+    C5 -->|hindi pa tama| C2
+    C5 -->|ayos| C6["6. Commit<br/>(hindi kusang nagko-commit ang agent)"]
+    C6 --> C7["7. Isara ang trabaho<br/>/new para sa susunod"]
+    C7 -->|susunod na trabaho| C2
+```
+
+### A. Isang beses bawat makina — tiyaking handa ang setup
+
+Magbukas ng **bagong** terminal (hindi nakikita sa lumang terminal ang mga env var na kaka-set lang — [[gotchas]] item 2) at patakbuhin:
+
+```bash
+opencode --version       # naka-install ang CLI
+opencode mcp list        # dapat connected ang mga naka-enable na MCP server
+opencode debug skill     # ang mga skill na nag-load
+opencode run "say hi"    # sumasagot ang model
+```
+
+✅ **Dapat makita mo:**
+- `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` bilang `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` bilang `disabled` (normal — ino-on per project)
+- `debug skill`: 27 na skills — 15 mula sa superpowers, 6 mula sa ponytail, 3 mula sa caveman, `grill-me`, `grilling`, `customize-opencode`. Kung higit pa rito nang marami, pumapasok ang skills ng ibang tool ([[gotchas]] item 15)
+- `run "say hi"`: may sagot. Kung lampas 1–2 minuto, tingnan ang [[gotchas]] item 1
+
+### B. Isang beses bawat project — ihanda ang repo
+
+Sundin ang **seksyon 2** (6 na hakbang): `graft build` → `graft init --agents agents --no-global` → i-enable ang project-specific na MCP servers kung kailangan (database, `open-design`, `playwright`) → magtanong ng isang tanong na nangangailangan ng tunay na code reference. Kapag tapos na, hindi na uulitin para sa repo na iyon.
+
+### C. Bawat trabaho — ang 7-hakbang na loop
+
+**Hakbang 1 — Magbukas ng session**
+
+```bash
+cd my-project
+git status          # dapat malinis, o nasa branch ng trabahong ito — para kita agad kung ano ang binago ng agent
+opencode            # bagong session
+opencode -c         # o: ituloy ang huling session
+```
+
+Sa loob ng TUI: `/sessions` para pumili ng lumang session · `/new` para magsimula ng bago · `/models` para magpalit ng model · `/help` para sa lahat ng command
+
+> [!tip] Isang trabaho = isang session
+> ~34k tokens na ng 131k context ang bigat ng base prompt ([[tuning]]) — laging `/new` para sa bagong trabaho. Ang session na sumasaklaw ng ilang task ay madalas mag-compact, at kailangang basahin ulit ng agent ang parehong files.
+
+**Hakbang 2 — Mag-request sa plain language**
+
+Sabihin **kung ano ang gusto mong kalabasan**, hindi kung paano gagawin at hindi kung aling tool ang gagamitin — pinipili ng agent ang daan batay sa uri ng request:
+
+| Ganito ang ita-type mo | Ang gagawin ng agent | Ang kailangan mong gawin |
+| --- | --- | --- |
+| `paano gumagana ang pagkolekta ng ring` (tanong / paliwanag) | hahanapin ang code gamit ang graft at sasagot na may `file:line` | basahin — tapos na sa hakbang na ito |
+| `ayusin ang typo sa menu screen` (maliit na ayos) | i-edit agad → patakbuhin ang tests | lumaktaw sa hakbang 5 |
+| `pakidagdag ng pause feature sa game` (bagong feature) | tatawagin ang `brainstorming` → mag-e-explore gamit ang graft → magtatanong o magmumungkahi ng disenyo → **hihinto at maghihintay** | pumunta sa hakbang 3 |
+| `nagfi-freeze ang game kapag tumalon` (bug) | tatawagin ang `systematic-debugging` — hahanapin muna ang sanhi bago ayusin | kumpirmahin ang sanhi, saka ipaayos |
+| `ilipat ang level system sa zones` (malaki, maraming file) | susulat ng spec sa `docs/superpowers/specs/` + plano (`writing-plans`) | basahin ang spec, saka i-approve |
+| `grill me about <ideya>` (hindi pa gagawin, pag-iisipan lang) | magtatanong nang paikot-ikot na `grilling` — walang spec, walang code | sagutin ang mga tanong |
+
+**Hakbang 3 — Sagutin ang mga tanong at i-approve ang disenyo** (bagong feature / malaking trabaho lang)
+
+**Hindi susulat ng code** ang agent hangga't hindi tapos ang hakbang na ito. Dalawa ang anyo nito:
+
+- **Isang batch ng mga tanong** (`❓ Q1 … ➡️ rekomendasyon`) — sagutin nang maikli gamit ang mga opsyon, hal. `A B A` o `sundin lahat ng rekomendasyon`
+- **Isang disenyo na nagtatapos sa "Approve?"** (kapag sapat na makitid ang trabaho) — sumagot ng `go ahead`, o sabihin ang gustong baguhin, hal. `hindi kailangan ng touch button`
+
+Basahing mabuti ang disenyo rito — ito ang pinakamurang punto para baguhin ang direksyon, bago gumugol ang model ng maraming minuto sa paggawa.
+
+**Hakbang 4 — Gumagawa ang agent** (maghintay ka lang)
+
+Ang nangyayari, ayon sa pagkakasunod: sinusuri ng ponytail kung may magagamit nang umiiral bago sumulat ng bago → nag-e-edit na may todo list → nagpapatakbo ng tests → **para sa anumang makikita sa browser, binubuksan ang Chrome sa pamamagitan ng chrome-devtools at sinusuri nang isang beses** (isang rule sa global AGENTS.md — [[tuning]]) → nagbubuod.
+
+- `Esc` para ihinto sa gitna · `/undo` para ibalik ang huling mensahe kasama ang mga binago nitong file (dapat git repo ang project) · `/redo` para ulitin
+- **Ang browser check ang pinakamabagal na hakbang** — nasukat na ~30–36 minuto para sa maliit na feature sa lokal na model, pero ito ang hakbang na nakakahanap ng mga bug na hindi saklaw ng tests ([[tuning]] seksyon 4 at 8). Nilalaktawan ito ng trabahong walang UI
+- Kung tahimik na huminto ang agent nang walang buod, kadalasang naabot ng model ang output ceiling nito ([[gotchas]] item 8) — i-type ang `continue`
+
+**Hakbang 5 — Suriin ang resulta bago tanggapin**
+
+Basahin ang pangwakas na buod ng agent — dapat sabihin nito kung aling files ang nabago, ang resulta ng tests, ang resulta ng browser check, at kung ano ang **sinadyang hindi ginawa**. Saka tingnan ang tunay:
+
+```bash
+git diff            # tugma ba sa buod? may file bang nagalaw na hindi dapat?
+```
+
+Gusto ng pangalawang opinyon? Hilingin sa parehong session:
+
+| Command | Ang makukuha mo |
+| --- | --- |
+| `/caveman-review` | review ng diff, isang linya bawat finding, may severity |
+| `/ponytail-review` | code sa diff na higit sa kailangan |
+| `i-scan ang project na ito gamit ang sonarqube at trivy` | quality / vulnerability checks — para sa trabahong humahawak sa dependencies, auth, o data (**hindi** ito pinapatakbo ng agent sa bawat task) |
+
+Hindi pa tama → sabihin kung ano ang aayusin sa parehong session (balik sa hakbang 2).
+
+**Hakbang 6 — Commit**
+
+**Hindi** kusang nagko-commit ang agent (nasubukan — natatapos ang trabaho na naiwan ang files sa working tree). Pumili ng isa:
+
+```bash
+git add -A
+```
+
+```
+/caveman-commit          ← nagbibigay ng Conventional Commits message (hindi nito pinapatakbo ang git commit)
+i-commit mo ito            ← o ipa-commit sa agent, saka suriin ang message
+```
+
+Ikaw ang mag-push kapag handa na — walang awtomatikong tumatakbo sa CI sa setup na ito ([[sdlc]]).
+
+**Hakbang 7 — Isara ang trabaho**
+
+- Susunod na trabaho → `/new` (o `/exit` at buksan ulit)
+- May kagustuhan o desisyong gustong matandaan sa mga susunod na session → i-type ang `tandaan na <bagay>` — ise-save ito ng agent sa memory, at hahanapin muna ng susunod na session ang memory bago magtanong ulit
+- Mahabang session na malapit na sa limit ng context pero hindi pa tapos ang trabaho → `/compact`
+- Hindi mo kailangang i-rebuild ang graft — nire-refresh ng CLI ang graph bago ang bawat sagot
+
+### Mga command na pinakamadalas gamitin
+
+| Para | I-type |
+| --- | --- |
+| Magbukas ng bagong session / ituloy ang huli | `opencode` / `opencode -c` |
+| Magsimula ng bagong trabaho sa parehong TUI | `/new` |
+| Bumalik sa lumang session | `/sessions` |
+| Ihinto ang agent / ibalik ang huling mensahe | `Esc` / `/undo` |
+| Paliitin ang context ng mahabang session | `/compact` |
+| Buong sagot, hindi pinaikli / bumalik sa maikli | `/caveman off` (o `normal mode`) / `/caveman` |
+| Commit message / review ng diff | `/caveman-commit` / `/caveman-review` |
+| Hinaan o lakasan ang ponytail | `/ponytail lite\|full\|ultra\|off` |
+| Pag-isipan ang ideya nang hindi pa ginagawa | `grill me about <paksa>` |
+| Patakbuhin nang hindi binubuksan ang TUI | `opencode run "<request>"`, saka `opencode run -c "<sagot>"` |
 
 ---
 
@@ -36,7 +187,7 @@ graph LR
     B -->|plugin| F[superpowers - skills]
     B -->|plugin| G[graft-deep - inject context]
     B -->|plugin| L[ponytail - code minimization]
-    B -->|plugin, opt-in| M["i-have-adhd - terse output<br/>(/i-have-adhd bawat session)"]
+    B -->|plugin| M["caveman - terse output<br/>(kusang naka-on, /caveman off para ihinto)"]
     B -->|provider| H[home-llamacpp<br/>self-hosted model]
     E -.->|kumukuha ng generated files| I[tunay na project frontend+backend]
 ```
@@ -95,8 +246,8 @@ graph LR
 > [!note] Plugin ponytail
 > Ang ponytail plugin (tignan [[plugins]]) ang huling gate bago talagang magsulat ng code (node L) — pinipilit nitong lakarin ng agent ang decision ladder (huwag isulat kung hindi kailangan → gamitin ulit ang meron na → may standard library ba → isang native na feature → isang dependency na naka-install na → isang one-liner → saka lang magsulat ng minimal na bagong code). Gumagana ito kasama ng superpowers/graft-deep nang walang overlap (superpowers pumipili ng workflow, graft-deep naghahanap ng context, ponytail kumokontrol kung gaano karaming code ang isinusulat).
 
-> [!note] Plugin i-have-adhd — sinasadyang wala sa per-turn cycle sa itaas
-> Kaiba sa superpowers/graft-deep/ponytail na awtomatikong tumatakbo sa bawat turn — ang i-have-adhd (tignan [[plugins]]) ay **opt-in bawat session**: kailangan mong i-type mismo ang `/i-have-adhd` bago ito magkaroon ng epekto (binabago lang ang istilo ng sagot para maging diretso-sa-punto, hindi ginagalaw ang tool orchestration). Mabuti kapag gusto ng mabilis na sagot, hindi mahabang paliwanag — patayin anumang oras gamit ang `stop adhd mode`.
+> [!note] Plugin caveman — sinasadyang wala sa per-turn cycle sa itaas
+> Ang caveman (tignan [[plugins]]) ay binabago lang ang **istilo ng sagot** para maging maikli at diretso-sa-punto; hindi nito ginagalaw ang tool orchestration, kaya hindi ito node sa diagram. Kusa itong naka-on sa bawat session (kaiba sa i-have-adhd na pinalitan nito, na kailangang i-type para ma-on). Patayin gamit ang `/caveman off` o `normal mode` kapag gusto ng buong paliwanag. Ang code, commands, at error text ay laging nakasulat nang buo.
 
 > [!note] Skill grill-me / grilling — hindi hiwalay na plugin, naka-wire sa node C
 > Hindi ito hiwalay na node sa diagram, dahil isa itong skill (isang standalone `SKILL.md` file na sumusunod sa Agent Skills open standard — tignan [[setup]]), hindi plugin — pero gumagana ito sa parehong node C gaya ng superpowers: kapag pinili ng agent ang `brainstorming` para sa paggawa ng bagong feature, ginagamit nito ang batch question format ng `grilling` sa halip na magtanong isa-isa (o tinatawag ang `grilling` mismo kung gusto lang ng user na i-interview ang isang ideya, hindi ito agad i-implement). Tunay na paggamit nasa seksyon 3 sa ibaba; buong detalye ng pag-install/reconciliation nasa [[plugins]].
@@ -179,7 +330,7 @@ Subukang magtanong ng isang bagay na kailangan ng tunay na reference sa code, ha
 opencode debug skill
 ```
 
-✅ **Dapat makita mo:** lahat ng 14 skills ng `superpowers` (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), mga skill ng `ponytail` (`ponytail`, `ponytail-review`, ...), `i-have-adhd`, at `grill-me`/`grilling` kung naka-install (tignan [[plugins]] kung ano ang bawat isa).
+✅ **Dapat makita mo:** 15 skills ng `superpowers` (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), 6 na skill ng `ponytail` (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, at `grill-me`/`grilling` kung naka-install — 27 lahat kasama ang sariling `customize-opencode` ng OpenCode (tignan [[plugins]] kung ano ang bawat isa).
 
 > [!tip] Natapos ang lahat ng 6 hakbang? Pumunta na sa seksyon 3
 > Hindi na kailangang ulitin ang checklist na ito para sa parehong project — buksan lang ang `opencode` at gamitin ayon sa seksyon 3. Ulitin lang ang checklist na ito kapag talagang bagong project.
@@ -214,14 +365,14 @@ Ang "per-request workflow" diagram sa seksyon 1 ay isang abstract na buod — an
 5. **sumagot sa mga tanong** — isang maikling sagot, hal. `sundin ang mga rekomendasyon mo`
 6. **sinusuri ng ponytail ang decision ladder** — bago sumulat ng bagong code, tinitignan kung may meron nang pwedeng i-reuse (makikita ito sa resultang code na kadalasang nag-e-edit ng meron nang file/nagdadagdag ng field sa isang meron nang data structure, sa halip na bumuo ng bagong parallel na sistema)
 7. **sumulat/nag-edit ng code**, kasama ang todo list na sumusubaybay sa progreso
-8. **nagpatakbo ng tests + sinuri sa browser** (via playwright/chrome-devtools MCP, para sa web project)
-9. **nag-commit** bilang isang scoped commit, may maikli, diretso-sa-punto na mensahe
+8. **nagpatakbo ng tests + sinuri sa browser** (via chrome-devtools MCP, para sa trabahong makikita sa browser — ang rule na "Verifying UI changes" sa global AGENTS.md)
+9. **nag-commit** bilang isang scoped commit, may maikli, diretso-sa-punto na mensahe — sa muling pagsubok ay **hindi** kusang nag-commit ang agent; kailangan mong hilingin (`/caveman-commit` para sa message, o i-type ang `i-commit mo ito`). Tignan ang hakbang 6 ng "Mula simula hanggang tapos"
 
 > [!tip] Normal lang na hindi makita ang lahat ng hakbang
 > Ang maliliit na request (pag-aayos ng typo, isang pangkalahatang tanong) ay dumidiretso sa hakbang 7–9, nilalaktawan ang 2–6 — nangyayari lang ang buong hakbang na ito para sa trabahong talagang "paggawa ng bagong feature."
 
 > [!info] Muling sinubukan nang headless (2026-10-03) — tunay na resulta bawat hakbang
-> Isang maliit na feature ("add a pause feature …") sa kopya ng sample game: hakbang 2 ✅ · hakbang 3 ❌ sa unang run (sinunod ng agent ang "check files" na hakbang ng brainstorming sa halip na gamitin ang graft) → ✅ pagkatapos magdagdag ng rule sa global AGENTS.md · nilaktawan ang hakbang 4 dahil sapat na makitid ang task para sa isang disenyo + approval · hakbang 6–8 ✅ · hakbang 9 ⚠️ hindi kusang nag-commit — proseso ng test, mga larawan ng resulta, at mga natitirang isyu sa [[tuning]] seksyon 4
+> Isang maliit na feature ("add a pause feature …") sa kopya ng sample game: hakbang 2 ✅ · hakbang 3 ❌ sa unang run (sinunod ng agent ang "check files" na hakbang ng brainstorming sa halip na gamitin ang graft) → ✅ pagkatapos magdagdag ng rule sa global AGENTS.md · nilaktawan ang hakbang 4 dahil sapat na makitid ang task para sa isang disenyo + approval · hakbang 6–7 ✅ · hakbang 8 ✅ kapag nakalagay na ang rule na "Verifying UI changes" (sa rule set na puro pagtitipid ng steps ang layunin, nilalaktawan ng agent ang browser check — [[gotchas]] item 19) · hakbang 9 ⚠️ hindi kusang nag-commit — proseso ng test, mga larawan ng resulta, at mga natitirang isyu sa [[tuning]] seksyon 4 at 8
 
 ### Paggamit ng grill-me / grilling bago magsimula ng bagong feature (kung naka-install)
 

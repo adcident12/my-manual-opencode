@@ -1,0 +1,157 @@
+// Template of the global OpenCode config this manual ends up with.
+// Copy to ~/.config/opencode/opencode.jsonc and replace every <placeholder>:
+//   <user>          your OS user name (Windows paths below; on macOS/Linux use /Users/<user> or /home/<user>)
+//   <your-server>   your model server's URL          <your-model-id>  the model id it reports at /v1/models
+// Secrets never go in this file — only {env:NAME} references. Set the variables in your OS, then reopen the terminal.
+// Details per block: setup.md, mcp-servers.md, plugins.md, tuning.md.
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "home-llamacpp/<your-model-id>",
+  "lsp": true,
+
+  // tuning.md 5.2 — drop old tool outputs in large, infrequent chunks so full compactions happen less often.
+  "compaction": {
+    "auto": true,
+    "prune": true
+  },
+
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    // custom plugin shipped in this repo: config/plugin/graft-deep.js
+    "C:/Users/<user>/.config/opencode/plugin/graft-deep.js",
+    "@dietrichgebert/ponytail",
+    // caveman skill, installed by hand from a pinned tag (plugins.md). Do NOT run its installer: it rewrites this file and drops comments.
+    "C:/Users/<user>/.config/opencode/plugins/caveman/plugin.js"
+  ],
+
+  "provider": {
+    // setup.md Part 2. output 32768: gotchas.md item 8.
+    "home-llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Home llama.cpp",
+      "options": {
+        "baseURL": "https://<your-server>/v1",
+        "apiKey": "{env:HOME_LLAMACPP_API_KEY}"
+      },
+      "models": {
+        "<your-model-id>": {
+          "name": "<any display name>",
+          "limit": { "context": 131072, "output": 32768 }
+        }
+      }
+    }
+  },
+
+  "mcp": {
+    // API key is optional (rate limits); delete "headers" if you have none.
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" },
+      "enabled": true
+    },
+
+    // Off by default: ~6.6k tokens every turn, only needed when pulling work in from OpenDesign.
+    // Enable per project:  <project>/opencode.json  { "mcp": { "open-design": { "enabled": true } } }
+    // Windows: if `od` resolves to Git's od.exe (gotchas.md item 16), use
+    //   "command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]
+    "open-design": {
+      "type": "local",
+      "command": ["od", "mcp"],
+      "timeout": 30000,
+      "enabled": false
+    },
+
+    // Off by default: same job as chrome-devtools, ~4.5k tokens every turn. e2e suites still run via `npx playwright test`.
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"],
+      "timeout": 30000,
+      "enabled": false
+    },
+
+    // --isolated: temp profile per launch, never collides with another tool's chrome-devtools-mcp (gotchas.md item 17).
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
+      "timeout": 30000,
+      "enabled": true
+    },
+
+    // Needs `graft build` + `graft init --agents agents --no-global` once per project.
+    "graft": {
+      "type": "local",
+      "command": ["npx", "-y", "@nanonets/graft", "mcp"],
+      "timeout": 30000,
+      "enabled": true
+    },
+
+    // Only gets used because of the "Memory" rule in the global AGENTS.md (gotchas.md item 14).
+    "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+      "environment": {
+        "MEMORY_FILE_PATH": "C:/Users/<user>/.config/opencode/memory.jsonl"
+      },
+      "timeout": 30000,
+      "enabled": true
+    },
+
+    // Needs Docker + a running SonarQube server + a *User* token in SONARQUBE_TOKEN. Use the host port your container publishes.
+    // On macOS/Linux the command is just "docker".
+    "sonarqube": {
+      "type": "local",
+      "command": [
+        "C:/Program Files/Docker/Docker/resources/bin/docker.exe",
+        "run", "--init", "--rm", "-i",
+        "-e", "SONARQUBE_TOKEN",
+        "-e", "SONARQUBE_URL",
+        "sonarsource/sonarqube-mcp"
+      ],
+      "environment": {
+        "SONARQUBE_TOKEN": "{env:SONARQUBE_TOKEN}",
+        "SONARQUBE_URL": "http://host.docker.internal:9001"
+      },
+      "timeout": 30000,
+      "enabled": true
+    },
+
+    // If `trivy` is not on OpenCode's PATH, put the full path to trivy(.exe) here.
+    "trivy": {
+      "type": "local",
+      "command": ["trivy", "mcp"],
+      "timeout": 30000,
+      "enabled": true
+    },
+
+    // Disabled until a PAT exists in GITHUB_PERSONAL_ACCESS_TOKEN.
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "oauth": false,
+      "headers": { "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}" },
+      "enabled": false
+    },
+
+    // Databases: disabled globally, enabled per project (setup.md Part 5).
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "timeout": 30000,
+      "enabled": false
+    },
+    "mysql": {
+      "type": "local",
+      "command": ["npx", "-y", "@benborla29/mcp-server-mysql"],
+      "environment": {
+        "MYSQL_HOST": "{env:MYSQL_HOST}",
+        "MYSQL_PORT": "{env:MYSQL_PORT}",
+        "MYSQL_USER": "{env:MYSQL_USER}",
+        "MYSQL_PASS": "{env:MYSQL_PASS}",
+        "MYSQL_DB": "{env:MYSQL_DB}"
+      },
+      "timeout": 30000,
+      "enabled": false
+    }
+  }
+}

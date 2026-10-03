@@ -8,7 +8,7 @@ summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows,
 
 Overview at [[index]] · Setup at [[setup]]
 
-16 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
+19 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
 
 ---
 
@@ -329,3 +329,47 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 > }
 > ```
 > Check the order with `Get-Command od -All` (PowerShell) — the first entry is the one that runs.
+
+---
+
+## 17. chrome-devtools can't open a browser: "The browser is already running"
+
+**Impact:** The agent calls `chrome-devtools_list_pages` and gets `The browser is already running for …\chrome-devtools-mcp\chrome-profile. Use --isolated to run multiple browser instances.` No browser check is possible for the whole session — under `opencode run` the agent went looking for another way, hit a rejected permission, and the run ended mid-task with the work unfinished.
+
+**Cause:** Every `chrome-devtools-mcp` instance uses the same Chrome profile by default (`~/.cache/chrome-devtools-mcp/chrome-profile`). If another tool on the machine (e.g. Claude Code with chrome-devtools installed too, or a second OpenCode window) already has Chrome open on it, the later one can't start.
+
+> [!important] Fix
+> Add `--isolated` in OpenCode's config — a temporary profile per launch, so it never collides with anything:
+> ```jsonc
+> "chrome-devtools": {
+>   "type": "local",
+>   "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
+>   "timeout": 30000
+> }
+> ```
+> Trade-off: no logins/cookies survive between launches — if you need to test pages behind a persistent login, use `--user-data-dir=<a folder only OpenCode uses>` instead.
+
+---
+
+## 18. An add-on's installer rewrites `opencode.jsonc` — every comment is gone
+
+**Impact:** After running some plugin's installer (hit with `caveman`: `bin/install.js --only opencode`), `opencode.jsonc` is rewritten as plain JSON, every comment explaining why a setting is the way it is disappears, and you get more skills / subagents / AGENTS.md rules than you wanted.
+
+**Cause:** The installer reads the config, edits it, and serializes it back with `JSON.stringify` (caveman's code says so outright: "rewriting it drops them"). It keeps `opencode.jsonc.bak` the first time, but you won't look for it if you don't know.
+
+> [!important] Fix
+> Before running any installer: (1) see whether it has `--dry-run`, and read which files it will touch (2) if it edits `opencode.jsonc`, install by hand instead — copy the plugin's files and add the line to the `plugin` array yourself (full caveman example in [[plugins]]) (3) always back up `~/.config/opencode/` first
+
+---
+
+## 19. A "use fewer steps" rule set makes the agent skip the browser check
+
+**Impact:** With a token-efficiency rule set added (tested with [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)), the same task finished in 6 minutes instead of 33 — but because the agent **stopped once the tests passed without ever opening the browser**, it missed the broken-menu bug the earlier run found.
+
+**Cause:** Rules like "done = the task's own check passes, then stop" and "never build a check the task didn't ask for" are right for work with good test coverage. For UI work, logic-level tests passing doesn't mean the screen works — so step 8 of [[USER-MANUAL]] was dropped silently.
+
+> [!important] Fix
+> Write a "Verifying UI changes — once, in a real browser" rule in the global AGENTS.md (full text in [[tuning]]): work visible in a browser must load the page, do the task's one interaction, and check the console before reporting done. With that rule the browser check came back — and so did the time (~36 minutes), which shows the cost belongs to the check itself, not to something a rule set can remove.
+
+> [!tip] Lesson
+> "80% faster" must always be read next to "did it still do every step" — measure both time and the tool-call sequence with `session-report.mjs session <title>` before calling something an improvement.

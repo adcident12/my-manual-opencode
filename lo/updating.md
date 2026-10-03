@@ -128,7 +128,18 @@ rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
 
 ---
 
+## caveman (ຕິດຕັ້ງເອງຈາກໄຟລ໌ທີ່ລັອກ tag)
+
+ຕິດຕັ້ງດ້ວຍການດາວໂຫຼດໄຟລ໌ຈາກ tag ທີ່ລັອກໄວ້ (ເບິ່ງ [[plugins]]) ຈຶ່ງບໍ່ມີຫຍັງອັບເດດເອງ — ເບິ່ງ release ໃໝ່ທີ່ [github.com/JuliusBrussee/caveman/releases](https://github.com/JuliusBrussee/caveman/releases) ແລ້ວປ່ຽນ `T=` ເປັນ tag ໃໝ່ ແລ່ນບລັອກດາວໂຫຼດໃນ [[plugins]] ຊ້ຳ (ທັບໄຟລ໌ເດີມ) ແລ້ວເປີດ OpenCode ໃໝ່
+
+> [!warning] ຢ່າອັບເດດດ້ວຍ installer
+> `bin/install.js` ຂຽນ `opencode.jsonc` ໃໝ່ເປັນ JSON ທຳມະດາແລະລຶບ comment ຖິ້ມ — [[gotchas]] ຂໍ້ 18 script `update-opencode.mjs` ບໍ່ແຕະ caveman (ເວີຊັນຫຼ້າສຸດທີ່ທົດສອບ: v3.1.0, 2026-10-03)
+
+---
+
 ## i-have-adhd (ຕິດຕັ້ງຜ່ານ local git clone)
+
+> [!note] setup ນີ້ປ່ຽນໄປໃຊ້ caveman ແທນແລ້ວ (2026-10-03) — ຫົວຂໍ້ນີ້ໃຊ້ສະເພາະຖ້າຍັງຕິດຕັ້ງ i-have-adhd ຢູ່ script ອັບເດດຈະຂ້າມຂັ້ນນີ້ເອງຖ້າບໍ່ພົບ folder
 
 ```bash
 git -C ~/.config/opencode/vendor/i-have-adhd pull
@@ -256,7 +267,8 @@ trivy plugin upgrade
 | graft | ✅ ຕ້ອງສັ່ງເອງ | `graft upgrade` |
 | superpowers | ⚠️ ຕ້ອງສັ່ງເອງ (ບັນຫາ cache) | ລົບ cache ແລ້ວ restart |
 | ponytail | ⚠️ ຕ້ອງສັ່ງເອງ (ຖ້າ lockfile pin ໄວ້) | ລົບ cache ແລ້ວ restart |
-| i-have-adhd | ✅ ຕ້ອງສັ່ງເອງ | `git pull` ແລ້ວ restart |
+| caveman | ✅ ຕ້ອງສັ່ງເອງ (ໄຟລ໌ລັອກ tag) | ປ່ຽນ tag ແລ້ວດາວໂຫຼດຊ້ຳ — ຫ້າມໃຊ້ installer |
+| i-have-adhd (ຖ້າຍັງໃຊ້) | ✅ ຕ້ອງສັ່ງເອງ | `git pull` ແລ້ວ restart |
 | grill-me / grilling | ✅ ຕ້ອງເຊັກ diff ເອງ | curl raw URL ທຽບ ແລ້ວ merge ການແກ້ກັບ |
 | graft-deep.js | ➖ ບໍ່ມີຕົ້ນທາງ (ຂຽນເອງ) — ແຕ່ຕ້ອງທຽບກັບ hook ຂອງ graft ທຸກຄັ້ງທີ່ອັບເກຣດ graft | ແກ້ໄຟລ໌ໂດຍກົງ ເບິ່ງ [[plugins]] |
 | OpenDesign | ❌ ອັດຕະໂນມັດ (launcher auto-updater) | ຜ່ານ UI ໃນແອັບ — shim `od.mjs` ຕາມເວີຊັນໃໝ່ເອງ |

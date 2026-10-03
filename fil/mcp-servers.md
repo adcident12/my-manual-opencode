@@ -96,12 +96,14 @@ Kaiba sa playwright, mas nakatuon ito sa **pag-debug** (console logs, network re
    ```jsonc
    "chrome-devtools": {
      "type": "local",
-     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics"],
+     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
      "timeout": 30000
    }
    ```
 
    Ang `--no-usage-statistics` ay pumapatay sa telemetry na pinapadala sa Google (naka-on ito by default kung wala ang flag na ito).
+
+   Ang `--isolated` ay gumagamit ng pansamantalang Chrome profile bawat launch — kung wala ito, nag-aagawan sa iisang profile ang bawat instance ng `chrome-devtools-mcp` sa makina (kasama ang sa ibang tools, hal. Claude Code) at nakakakuha ang mas huli ng `The browser is already running` ([[gotchas]] item 17). Ang kapalit: walang login/cookie na natitira sa pagitan ng mga launch.
 
 3. Subukan:
 

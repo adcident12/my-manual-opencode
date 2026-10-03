@@ -86,7 +86,8 @@ Trabaho: ang huling gate na nagkukumpirma ng kalidad/seguridad bago mag-commit �
 
 Sinusunod ang parehong pattern na ginagamit na ng [[sdlc]] para sa Security/Documentation (hindi hiwalay na phase — ikinakabit sa bawat phase) — hindi dapat ipilit ang dalawang ito sa alinmang layer:
 
-- **[[plugins#i-have-adhd — pinipilit ang maikli, diretso-sa-punto na sagot\|i-have-adhd]]** — pinapalitan lang ang istilo ng sagot, hindi hinihipo ang logic ng anumang layer
+- **caveman** ([[plugins]] — ginagamit sa halip na i-have-adhd mula 2026-10-03) — pinapalitan lang ang istilo ng sagot, hindi hinihipo ang logic ng anumang layer
+- **Ang rule na "Verifying UI changes" sa global `AGENTS.md`** ([[tuning]]) — tinitiyak na dumaan muna sa tunay na check ng EXECUTION ang trabahong makikita sa browser bago umabot sa GOVERNANCE
 - **Ang reconciliation rule sa global `AGENTS.md`** (tingnan ang [[plugins]], grill-me/grilling) — isang policy na namamahala kung paano magtulungan ang dalawang skill sa REASONING layer, hindi isang layer mismo
 - `using-superpowers`, `writing-skills` — mga skill sa antas ng meta (nagsisimula sa sarili nito, gumagawa ng bagong skill) na hindi tumatakbo sa normal na cycle
 

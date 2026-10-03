@@ -11,6 +11,10 @@ summary: ຄູ່ມືຕິດຕັ້ງ OpenCode ແບບລະອຽດ�
 > [!tip] ລຳດັບການອ່ານ
 > ເຮັດຕາມລຳດັບ Part 0 → 1 → 2 → 3 → 4 → 5 ຕາມທີ່ຂຽນໄວ້ ຢ່າຂ້າມ ເພາະແຕ່ລະ Part ອີງໃສ່ຂອງທີ່ເຮັດແລ້ວໃນ Part ກ່ອນໜ້າ
 
+> [!tip] ທາງລັດ 2 ທາງ
+> - **ໄຟລ໌ພ້ອມ copy** — ທຸກໄຟລ໌ທີ່ setup ນີ້ຂຽນ/ແກ້ເອງຢູ່ໃນ [`config/`](../config/README.md): template ຂອງ `opencode.jsonc` (ຄົບທຸກ block ໃນໜ້ານີ້), global `AGENTS.md`, `plugin/graft-deep.js` — ໜ້ານີ້ອະທິບາຍວ່າແຕ່ລະສ່ວນຄືຫຍັງແລະເປັນຫຍັງ ສ່ວນ `config/` ຄືຜົນສຸດທ້າຍ
+> - **ໃຫ້ AI agent ຕິດຕັ້ງໃຫ້** — ເປີດ agent (OpenCode, Claude Code ແລະອື່ນໆ) ໃນ repo ນີ້ແລ້ວສັ່ງ `ອ່ານ AGENT-SETUP.md ແລ້ວຕິດຕັ້ງຕາມ` — [`AGENT-SETUP.md`](../AGENT-SETUP.md) ເປັນຂັ້ນຕອນດຽວກັບໜ້ານີ້ໃນຮູບແບບທີ່ agent ເຮັດຕາມໄດ້ ມີຈຸດກວດທຸກຂັ້ນ ແລະກົດຫ້າມຂຽນທັບ config ເດີມ/ຫ້າມຂຽນ secret ລົງໄຟລ໌
+
 ---
 
 ## Part 0 — ກຽມເຄື່ອງໃຫ້ພ້ອມ (ສຳລັບເຄື່ອງເປົ່າ)
@@ -272,6 +276,9 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 
 ຣີສະຕາດ OpenCode ແລ້ວພິມ `/i-have-adhd` ໃນ session ເພື່ອເປີດໃຊ້ — ລາຍລະອຽດ toggle/always-on ທັງໝົດເບິ່ງທີ່ [[plugins]]
 
+> [!info] setup ທີ່ໃຊ້ແທ້ຕອນນີ້ໃຊ້ caveman ແທນ i-have-adhd (2026-10-03)
+> i-have-adhd ຍັງເປັນຕົວຢ່າງທີ່ດີຂອງ "plugin ຈາກ local clone" ແຕ່ໂຕທີ່ຕິດຕັ້ງຢູ່ແທ້ຄື **caveman** — ເຮັດໜ້າທີ່ດຽວກັນ (ຕອບສັ້ນ) ແລະຕິດຕັ້ງດ້ວຍວິທີຄ້າຍກັນ ຄືວາງໄຟລ໌ເອງແລ້ວຊີ້ `plugin` ໄປທີ່ path (ຫ້າມໃຊ້ installer ຂອງມັນ) ຂັ້ນຕອນເຕັມທີ່ [[plugins]] ຫົວຂໍ້ caveman — **ຕິດຕັ້ງໂຕໃດໂຕໜຶ່ງເທົ່ານັ້ນ**
+
 ### Plugin ທີ່ຂຽນເອງ (custom .js)
 
 ວາງໄຟລ໌ `.js` ບ່ອນໃດກໍໄດ້ (ແນະນຳ `~/.config/opencode/plugin/<name>.js` ສຳລັບໃຊ້ທຸກ project) ແລ້ວເພີ່ມ path ໃນ `plugin` array:
@@ -334,12 +341,13 @@ description: ອະທິບາຍສັ້ນໆ ວ່າ skill ນີ້ໃ�
 > [!tip] ເມື່ອໃດຄວນຂຽນທີ່ global ແທນ project
 > ຂຽນທີ່ global ເມື່ອກົດນັ້ນຄວນ apply "ທຸກ project ສະເໝີ" (ເຊັ່ນ ວິທີ reconcile skill ສອງໂຕທີ່ອາດຂັດແຍ້ງກັນ) ຂຽນທີ່ project ເມື່ອເປັນບໍລິບົດສະເພາະ repo ນັ້ນ (ເຊັ່ນ context graph ຂອງ graft) — ຕົວຢ່າງຈິງທີ່ຕ້ອງຂຽນທີ່ global ເບິ່ງທີ່ [[plugins]] ຫົວຂໍ້ grill-me/grilling
 
-global AGENTS.md ທີ່ໃຊ້ແທ້ຫຼັງປັບຈູນມີ 4 ຫົວຂໍ້:
+global AGENTS.md ທີ່ໃຊ້ແທ້ຫຼັງປັບຈູນມີ 5 ຫົວຂໍ້ (ໄຟລ໌ເຕັມພ້ອມ copy: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | ຫົວຂໍ້ | ເປັນຫຍັງຕ້ອງມີ | ຂໍ້ຄວາມເຕັມ |
 | --- | --- | --- |
 | Grill me — complements superpowers brainstorming | ກັນ gate ສອງໂຕຂັດກັນ | [[plugins]] |
 | Exploring a codebase — graft first, even inside a skill | ຂັ້ນທຳອິດຂອງ `brainstorming` ເຮັດໃຫ້ agent ຂ້າມ graft ([[gotchas]] ຂໍ້ 12) | [[tuning]] |
+| Verifying UI changes — once, in a real browser | test ຜ່ານບໍ່ໄດ້ໝາຍຄວາມວ່າໜ້າຈໍໃຊ້ໄດ້ — ກັນ agent ຂ້າມການກວດໃນ browser ([[gotchas]] ຂໍ້ 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% ຂອງການອ່ານໄຟລ໌ຊ້ຳເກີດຫຼັງ compaction ([[gotchas]] ຂໍ້ 13) | [[tuning]] |
 | Memory — facts that must outlive this session | memory MCP ບໍ່ເຄີຍຖືກໃຊ້ຖ້າບໍ່ມີກົດ ([[gotchas]] ຂໍ້ 14) | [[tuning]] |
 

@@ -20,7 +20,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 | **Model provider ຫຼັກ** | `home-llamacpp` — self-hosted llama.cpp server (URL ສະເພາະຂອງແຕ່ລະຄົນ), ໂມເດວ `qwen3.8-27b` (Q4_K, context 131k) ຜ່ານ OpenAI-compatible endpoint |
 | **Model ສຳຮອງ (ໄວ)** | `opencode/deepseek-v4-flash-free` — built-in ຂອງ OpenCode ເອງ ບໍ່ຕ້ອງຕັ້ງ API key ເພີ່ມ ຕອບໄວ (~10 ວິນາທີ) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (ຈື່ context ຂ້າມ session — ໃຊ້ງານດ້ວຍກົດໃນ global AGENTS.md), sonarqube (code quality/security — self-hosted ຜ່ານ Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **ເປີດຕໍ່ project:** open-design (ດຶງໄຟລ໌ຈາກ project OpenDesign), playwright (browser automation), postgres/mysql · github (ປິດໄວ້ຈົນກວ່າຈະມີ PAT) |
-| **Plugins** | superpowers (skill library ຈາກ obra/superpowers), graft-deep (custom plugin — auto-inject context ຢ່າງດຽວແລ້ວ; auto-rebuild graph ເປັນຫນ້າທີ່ຂອງ graft CLI ເອງ), ponytail (ruleset ຫຼຸດຄວາມຍາວໂຄ້ດທີ່ບໍ່ຈຳເປັນ — ຈາກ dietrichgebert/ponytail), i-have-adhd (ບັງຄັບຕອບກົງປະເດັນ ບໍ່ອ້ອມແອ້ມ — ຈາກ ayghri/i-have-adhd) |
+| **Plugins** | superpowers (skill library ຈາກ obra/superpowers), graft-deep (custom plugin — auto-inject context ຢ່າງດຽວແລ້ວ; auto-rebuild graph ເປັນຫນ້າທີ່ຂອງ graft CLI ເອງ), ponytail (ruleset ຫຼຸດຄວາມຍາວໂຄ້ດທີ່ບໍ່ຈຳເປັນ — ຈາກ dietrichgebert/ponytail), caveman (ຕອບສັ້ນ ກົງປະເດັນ — ໃຊ້ສະເພາະ skill ຈາກ JuliusBrussee/caveman ແທນ i-have-adhd) |
 | **Skills** (Agent Skills open standard, ບໍ່ແມ່ນ plugin) | grill-me / grilling (ຈາກ mattpocock/skills) — batch-interview ສຳພາດຜູ້ໃຊ້ເປັນຮອບກ່ອນເລີ່ມວຽກ ຜູກເຂົ້າກັບ `brainstorming` ຂອງ superpowers ບໍ່ໃຫ້ຂັດແຍ້ງກັນ |
 | **Config ຫຼັກ** | `~/.config/opencode/opencode.jsonc` (ຕັ້ງເອງ) + `~/.config/opencode/opencode.json` (entry ຂອງ open-design ແກ້ເອງ — **ບໍ່ແມ່ນ**ແບບ port ຕາຍຕົວທີ່ `od mcp install` ຂຽນໃຫ້ ເບິ່ງ [[mcp-servers]]) |
 
@@ -32,10 +32,12 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 - [[architecture]] — ເບິ່ງ stack ທັງໝົດຜ່ານ 4 layer ຕາມໜ້າທີ່ (Knowledge/Reasoning/Execution/Governance) ແທນທີ່ຈະຕາມກົນໄກທາງເທັກນິກ ໄວ້ຕອບວ່າເຄື່ອງມືໃໝ່ແຕ່ລະໂຕ "ຢູ່ layer ໃດ"
 - [[setup]] — ຄູ່ມືຕິດຕັ້ງແບບລະອຽດ ຕັ້ງແຕ່**ເຄື່ອງເປົ່າ**ທີ່ຍັງບໍ່ມີ Node.js/Git ຈົນເຖິງຕໍ່ provider/MCP/plugin ຄົບຖ້ວນ
 - [[mcp-servers]] — ລາຍລະອຽດ MCP server ແຕ່ລະໂຕ ຂັ້ນຕອນຕິດຕັ້ງ config ແລະວິທີທົດສອບ
-- [[plugins]] — superpowers, grill-me/grilling (batch-interview skill ເສີມ superpowers), custom plugin graft-deep (ໂຄ້ດເຕັມ + Plugin Hook API), ponytail (code-minimization ruleset) ແລະ i-have-adhd (ບັງຄັບຕອບກົງປະເດັນ)
-- [[USER-MANUAL]] — ວິທີໃຊ້ງານຈິງປະຈຳວັນ: vibe coding, graft workflow, OpenDesign workflow
-- [[gotchas]] — ບັນຫາທີ່ພົບຈິງ 16 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshot, ໂມເດວຊ້າ, native module ABI mismatch, reasoning-model output cap, prompt ພອງຈາກ MCP, skill ຂັດກັບ AGENTS.md, ຯລຯ)
+- [[plugins]] — superpowers, grill-me/grilling (batch-interview skill ເສີມ superpowers), custom plugin graft-deep (ໂຄ້ດເຕັມ + Plugin Hook API), ponytail (code-minimization ruleset) ແລະ caveman (ຕອບສັ້ນ ກົງປະເດັນ — ໃຊ້ແທນ i-have-adhd ຊຶ່ງຍັງເປັນທາງເລືອກ)
+- [[USER-MANUAL]] — **ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ** (ເປີດ session → ສັ່ງ → ອະນຸມັດ → ກວດ → commit) ແລະວິທີໃຊ້ງານຈິງປະຈຳວັນ: vibe coding, graft workflow, OpenDesign workflow
+- [[gotchas]] — ບັນຫາທີ່ພົບຈິງ 19 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshot, ໂມເດວຊ້າ, native module ABI mismatch, reasoning-model output cap, prompt ພອງຈາກ MCP, skill ຂັດກັບ AGENTS.md, ຯລຯ)
 - [[updating]] — ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins ແລະ OpenDesign ເທື່ອລະໂຕ
+- [config/](../config/README.md) — ໄຟລ໌ທີ່ setup ນີ້ຂຽນ/ແກ້ເອງ ພ້ອມ copy: template `opencode.jsonc`, global `AGENTS.md`, plugin `graft-deep.js`
+- [AGENT-SETUP.md](../AGENT-SETUP.md) — ຂັ້ນຕອນຕິດຕັ້ງສຳລັບໃຫ້ AI agent ອ່ານແລ້ວເຮັດຕາມ (ສັ່ງ agent ວ່າ `ອ່ານ AGENT-SETUP.md ແລ້ວຕິດຕັ້ງຕາມ`)
 - [[tuning]] — ວັດຜົນແທ້ວ່າ workflow ເຮັດວຽກຄົບບໍ (ຂະໜາດ prompt ຕໍ່ turn, tool ທີ່ agent ເອີ້ນແທ້, ທົດສອບຄົບວົງຈອນ) ພ້ອມຮູບຜົນ, script ວັດຊ້ຳ ແລະຄ່າທີ່ແນະນຳຫຼັງປັບຈູນ
 
 ---

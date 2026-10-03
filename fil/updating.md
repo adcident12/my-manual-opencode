@@ -142,7 +142,18 @@ Pagkatapos i-restart ang OpenCode at kumpirmahin gamit ang `/ponytail-help`.
 
 ---
 
+## caveman (in-install nang manu-mano mula sa mga file na naka-pin sa tag)
+
+In-install sa pamamagitan ng pag-download ng files mula sa naka-pin na tag (tignan [[plugins]]), kaya walang kusang nag-a-update. Bantayan ang bagong release sa [github.com/JuliusBrussee/caveman/releases](https://github.com/JuliusBrussee/caveman/releases), palitan ang `T=` ng bagong tag, patakbuhin ulit ang download block sa [[plugins]] (pinapatungan nito ang mga file), saka buksan ulit ang OpenCode.
+
+> [!warning] Huwag mag-update gamit ang installer
+> Isinusulat ulit ng `bin/install.js` ang `opencode.jsonc` bilang plain JSON at tinatanggal ang mga comment — [[gotchas]] item 18. Hindi ginagalaw ng `update-opencode.mjs` ang caveman (huling nasubukang bersyon: v3.1.0, 2026-10-03).
+
+---
+
 ## i-have-adhd (naka-install via lokal na git clone)
+
+> [!note] Lumipat na ang setup na ito sa caveman (2026-10-03) — para lang ang seksyong ito kung naka-install pa ang i-have-adhd. Kusang nilalaktawan ng update script ang hakbang na ito kapag wala ang folder.
 
 Kaiba sa superpowers/ponytail, hindi ito dumaan sa `plugin` array bilang git URL o npm package — direktang tumuturo ang `plugin` array sa isang `.mjs` file path sa loob ng na-clone na source (tignan [[setup]] Part 4). Kaya ang pag-update dito ay isang `git pull` lang sa source na iyon, wala nang caching ng opencode/Bun na kaugnay:
 
@@ -287,7 +298,8 @@ trivy plugin upgrade     # i-upgrade ang mga naka-install na plugin (kasama ang 
 | graft | ✅ Manu-mano | `graft upgrade` |
 | superpowers | ⚠️ Manu-mano (dahil sa problema sa cache) | tanggalin ang cache, pagkatapos i-restart |
 | ponytail | ⚠️ Manu-mano (kung may naka-pin na bersyon ang lockfile) | tanggalin ang cache, pagkatapos i-restart |
-| i-have-adhd | ✅ Manu-mano (lokal na clone) | `git pull`, pagkatapos i-restart |
+| caveman | ✅ Manu-mano (mga file na naka-pin sa tag) | palitan ang tag at i-download ulit — huwag kailanman ang installer |
+| i-have-adhd (kung ginagamit pa) | ✅ Manu-mano (lokal na clone) | `git pull`, pagkatapos i-restart |
 | grill-me / grilling | ✅ Manu-manong pag-diff (vendored, walang manager) | i-curl ang raw URL, ihambing, i-merge pabalik ang ayos |
 | graft-deep.js | ➖ Walang upstream (manu-manong sinulat) — pero ikumpara sa hook ng graft pagkatapos ng bawat graft upgrade | i-edit direkta ang file; tignan [[plugins]] |
 | OpenDesign | ❌ Awtomatiko (launcher auto-updater) | via UI ng app; kusang sinusundan ng `od.mjs` shim ang bagong bersyon |

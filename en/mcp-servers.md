@@ -96,12 +96,14 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
    ```jsonc
    "chrome-devtools": {
      "type": "local",
-     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics"],
+     "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated"],
      "timeout": 30000
    }
    ```
 
    `--no-usage-statistics` turns off telemetry sent to Google (on by default without this flag).
+
+   `--isolated` uses a temporary Chrome profile per launch — without it, every `chrome-devtools-mcp` instance on the machine (including other tools', e.g. Claude Code) fights over one profile and the later one gets `The browser is already running` ([[gotchas]] item 17). The trade-off: no logins/cookies survive between launches.
 
 3. Test:
 

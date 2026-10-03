@@ -17,6 +17,7 @@ config ຄົບ ບໍ່ໄດ້ໝາຍຄວາມວ່າ workflow ເ�
 > | agent ໃຊ້ graft ຕອນສຳຫຼວດ code (E2E turn ທຳອິດ) | 0 ເທື່ອ, read 7 ເທື່ອ | **2 ເທື່ອ, read 2 ເທື່ອ** |
 > | memory MCP | ເອີ້ນ 1 ເທື່ອໃນ 50 session, ໄຟລ໌ບໍ່ເຄີຍຖືກສ້າງ | **ບັນທຶກແລ້ວດຶງກັບມາໄດ້ຂ້າມ session** |
 > | ການອ່ານໄຟລ໌ຊ້ຳ | 76% ເກີດຫຼັງ compaction | ເປີດ `compaction.prune` + ກົດ re-read (**ຍັງບໍ່ໄດ້ຢືນຢັນກັບ session ຍາວ**) |
+> | ໃສ່ Caveman + benjamin-plus (ຂໍ້ 8) | — | **ບໍ່ດີຂຶ້ນແບບວັດໄດ້** — ເກັບ Caveman ໄວ້ເພາະຄຳຕອບອ່ານງ່າຍ (prompt ເປັນ ~34.0k), ຖອດ benjamin-plus |
 
 script ທັງໝົດຢູ່ໃນ [`scripts/`](../scripts/) — ໃຊ້ພຽງ Node.js (≥ 22.5 ສຳລັບ `session-report.mjs` ເພາະໃຊ້ `node:sqlite` ທີ່ມາກັບ Node) ຕົ້ນສະບັບ HTML ຂອງຮູບໃນໜ້ານີ້ຢູ່ທີ່ [`assets/tuning/report.html`](../assets/tuning/report.html)
 
@@ -132,6 +133,9 @@ opencode run -s <session-id> "go ahead"
 
 ## 5. ສິ່ງທີ່ປັບ (config ທີ່ໃຊ້ແທ້ຫຼັງທົດສອບ)
 
+> [!tip] ຜົນສຸດທ້າຍເປັນໄຟລ໌ແທ້ໃນ [`config/`](../config/README.md)
+> [`config/opencode.jsonc`](../config/opencode.jsonc) (template ທີ່ລວມທຸກຂໍ້ຂ້າງລຸ່ມແລ້ວ) ແລະ [`config/AGENTS.md`](../config/AGENTS.md) (ກົດຄົບທຸກຫົວຂໍ້) — ຫົວຂໍ້ຍ່ອຍຂ້າງລຸ່ມອະທິບາຍເຫດຜົນຂອງແຕ່ລະສ່ວນ
+
 ### 5.1 ປິດ MCP ທີ່ໃຊ້ໜ້ອຍເປັນຄ່າເລີ່ມຕົ້ນ ແລ້ວເປີດສະເພາະ project ທີ່ຕ້ອງໃຊ້
 
 ໃນ `~/.config/opencode/opencode.jsonc`:
@@ -165,11 +169,20 @@ opencode run -s <session-id> "go ahead"
 
 `prune` (ຄ່າເລີ່ມຕົ້ນປິດ) ເຮັດວຽກຕອນຈົບແຕ່ລະຄຳສັ່ງ: ລຶບຜົນລັບຂອງ tool ທີ່ເກົ່າກວ່າ 2 turn ຫຼ້າສຸດ ໂດຍເວັ້ນຜົນຫຼ້າສຸດ ~40k tokens ໄວ້ສະເໝີ ແລະຈະລຶບກໍຕໍ່ເມື່ອມີໃຫ້ລຶບເກີນ ~20k tokens (ກວດຈາກ source ຂອງ OpenCode 1.18.34) — ລຶບເປັນກ້ອນໃຫຍ່ດົນໆເທື່ອ prompt cache ຂອງ llama.cpp ຈຶ່ງບໍ່ເສຍທຸກ turn ແຕ່ຊ່ວຍໃຫ້ compaction ເຕັມຮູບແບບເກີດໜ້ອຍລົງ
 
-### 5.3 ກົດໃໝ່ 3 ຂໍ້ໃນ global AGENTS.md
+### 5.3 ກົດໃໝ່ 4 ຂໍ້ໃນ global AGENTS.md
 
-ຕໍ່ທ້າຍກົດ grill-me ເດີມ ([[plugins]]) ໃນ `~/.config/opencode/AGENTS.md` — ຂຽນເປັນພາສາອັງກິດເພາະເປັນຄຳສັ່ງໃຫ້ໂມເດວ (~480 tokens ລວມກັນ):
+ຕໍ່ທ້າຍກົດ grill-me ເດີມ ([[plugins]]) ໃນ `~/.config/opencode/AGENTS.md` — ຂຽນເປັນພາສາອັງກິດເພາະເປັນຄຳສັ່ງໃຫ້ໂມເດວ (~610 tokens ລວມກັນ) ກົດ "Verifying UI changes" ເພີ່ມທີຫຼັງຈາກຜົນໃນຂໍ້ 8:
 
 ```markdown
+## Verifying UI changes — once, in a real browser
+
+Passing tests is not enough for a change someone will see in a browser (a
+web page, a game). Before reporting done, verify it once with
+chrome-devtools: load the page, do the one interaction the task is about,
+and check the console for errors. Keep it to a handful of calls — a single
+short wait for the page to settle, no polling loops. If the page cannot
+load or throws, that is a failure to report or fix, not "done".
+
 ## Exploring a codebase — graft first, even inside a skill
 
 Skills such as `brainstorming` ("Explore project context — check files,
@@ -243,7 +256,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 
 - **ຜົນຂອງ `prune` + ກົດ re-read** — session ທົດສອບສັ້ນຈົນບໍ່ເກີດ compaction ເລີຍ ໃຫ້ແລ່ນ `session-report.mjs rereads` ອີກເທື່ອຫຼັງໃຊ້ງານແທ້ໄປໄລຍະໜຶ່ງ ແລ້ວທຽບສັດສ່ວນ "after a compaction" ກັບ 76% ເດີມ
 - **ຂັ້ນ commit** — ຖ້າຕ້ອງການໃຫ້ຕົງ [[USER-MANUAL]] ຂັ້ນທີ 9 ເພີ່ມກົດໃນ AGENTS.md ໃຫ້ commit ເປັນກ້ອນດຽວຫຼັງກວດຜ່ານ (ບໍ່ push) — ຕັດສິນໃຈເອງວ່າຢາກໃຫ້ agent commit ເອງຫຼືບໍ່
-- **ການກວດໃນ browser** — 37 calls / 32 ນາທີສຳລັບ feature ນ້ອຍໆ ຍັງບໍ່ມີວິທີແກ້ທີ່ທົດສອບແລ້ວ
+- **ການກວດໃນ browser** — 37–40 calls / 33–36 ນາທີສຳລັບ feature ນ້ອຍໆ ລອງ ruleset ດ້ານ token efficiency ແລ້ວບໍ່ຊ່ວຍ (ຂໍ້ 8) — ຕົວເລກນີ້ຄືຕົ້ນທຶນຂອງການກວດເອງເທິງໂມເດວ local ຍັງບໍ່ມີວິທີຫຼຸດທີ່ທົດສອບແລ້ວ
 - **trivy ບໍ່ເຄີຍຖືກເອີ້ນ** — ຍັງເປີດໄວ້ຕາມ [[architecture]] (~1.7k tokens/turn) ຖ້າວັດຊ້ຳແລ້ວຍັງເປັນ 0 ພິຈາລະນາປິດ ແລ້ວໃຫ້ agent ແລ່ນ `trivy fs .` ຜ່ານ bash ຫຼືໃສ່ໃນ CI ຕາມ [[sdlc]]
 
 ---
@@ -255,6 +268,9 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 | [Langfuse](https://github.com/langfuse/langfuse) self-host + [opencode-observability-plugin](https://github.com/langfuse/opencode-observability-plugin) | trace ເຕັມທຸກ turn: prompt, generation, tool call, reasoning, token | ✅ ໃຊ້ໄດ້ — trace ເຂົ້າ Langfuse ເທິງເຄື່ອງ | ເກັບເນື້ອຫາເຕັມລວມຜົນຂອງ tool (ໄຟລ໌ທີ່ agent ອ່ານ); Docker 6 containers ໃຊ້ RAM ~2.6 GB — ຖອດອອກຕາມຄວາມມັກ |
 | [opencode-observability](https://github.com/abekdwight/opencode-observability) | dashboard/monitor ເທິງ `127.0.0.1` ອ່ານ `opencode.db` | ✅ ໃຊ້ໄດ້ | UI ບາງສ່ວນເປັນພາສາຍີ່ປຸ່ນ |
 | [token-optimizer](https://github.com/alexgreensh/token-optimizer) | quality score, compaction guidance, session continuity | ປະເມີນຈາກ code ບໍ່ໄດ້ຕິດຕັ້ງ | plugin ຝັ່ງ OpenCode **ບໍ່ມີ**ການບີບອັດ output ຂອງ tool (ຕົວເລກປະຢັດໃນ README ມາຈາກ Claude Code); ມີ nudge ອັດຕະໂນມັດເມື່ອ context ≥ 25% ຊຶ່ງ setup ນີ້ເກີນຕັ້ງແຕ່ turn ທຳອິດ; license PolyForm Noncommercial |
+| [benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill) (JetBrains) | ກົດ ~880 tokens: ສຳຫຼວດເທື່ອດຽວ, ອ່ານສະເພາະຊ່ວງ, poll ໃຫ້ໜ້ອຍ, "ແລ້ວ = ເກນກວດຜ່ານ" | ຕິດຕັ້ງຜ່ານ `instructions` ແລ້ວວັດ (ຂໍ້ 8) | ບໍ່ຫຼຸດເວລາ/tool call ເມື່ອເຮັດຄົບທຸກຂັ້ນ ແລະເຮັດໃຫ້ agent ຂ້າມການກວດໃນ browser ([[gotchas]] ຂໍ້ 19) — ຖອດອອກ |
+| proxy ຂອງ [caveman](https://github.com/JuliusBrussee/caveman) | ບີບຜົນຂອງ tool ກ່ອນສົ່ງໃຫ້ໂມເດວ | ປະເມີນຈາກ code ບໍ່ໄດ້ຕິດຕັ້ງ | wrap OpenCode ສະເພາະ provider `openai`/`anthropic` — provider ທີ່ host ເອງບໍ່ຜ່ານ proxy; telemetry ເປີດເປັນຄ່າເລີ່ມຕົ້ນ (ສ່ວນ **skill** ຂອງ caveman ໃຊ້ຢູ່ — [[plugins]]) |
+| [token-diet](https://github.com/Kulaxyz/token-diet) | ruleset ລວມ: ຕອບສັ້ນ + YAGNI + ອ່ານສະເພາະຊ່ວງ + ຈຳກັດ test | ປະເມີນຈາກ README ບໍ່ໄດ້ຕິດຕັ້ງ | ຊ້ຳກັບ caveman, ponytail ແລະກົດໃນ AGENTS.md ພ້ອມກັນ; ກົດ "test ≤ 10 ຕໍ່ session" ຂັດກັບ TDD ຂອງ superpowers; ບໍ່ມີ installer ສຳລັບ OpenCode |
 
 > [!warning] ຂໍ້ຄວນຮູ້ຖ້າຈະ self-host Langfuse ເອງ
 > - compose ທາງການ map ClickHouse ໄວ້ທີ່ host port `9000` — ຂັດກັບ SonarQube ຖ້າແລ່ນທີ່ `9000` ໃຊ້ໄຟລ໌ `docker-compose.override.yml` ເອົາ port ທີ່ບໍ່ຈຳເປັນອອກ (`ports: !reset []`) ແທນການແກ້ໄຟລ໌ທາງການ
@@ -264,3 +280,37 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 
 > [!tip] ເກນເລືອກເຄື່ອງມືເພີ່ມ
 > ກ່ອນຕິດຕັ້ງຫຍັງໃໝ່ ຖາມ 2 ຂໍ້: (1) ຢູ່ layer ໃດໃນ [[architecture]] ແລະຊ້ຳກັບຂອງທີ່ມີຫຼືບໍ່ (2) ໃສ່ຫຍັງເຂົ້າ prompt ທຸກ turn ແດ່ — ວັດດ້ວຍຂໍ້ 1 ກ່ອນແລະຫຼັງຕິດຕັ້ງໄດ້ເລີຍ
+
+---
+
+## 8. ທົດລອງ Caveman + benjamin-plus (2026-10-03) — ຕົວຢ່າງການວັດກ່ອນຕັດສິນໃຈ
+
+ລອງເພີ່ມເຄື່ອງມືດ້ານ "token efficiency" ສອງໂຕພ້ອມກັນ ແລ້ວວັດດ້ວຍວິທີໃນໜ້ານີ້: **[caveman](https://github.com/JuliusBrussee/caveman)** skill (ຕອບສັ້ນ — ໃຊ້ແທນ i-have-adhd) ແລະ **[benjamin-plus](https://github.com/JetBrains/benjamin-plus-skill)** (ກົດ 5 ຂໍ້ເລື່ອງການສຳຫຼວດ/ອ່ານ/poll ໃສ່ຜ່ານ `"instructions"`) ວຽກທົດສອບຄືວຽກເດີມໃນຂໍ້ 4 (ເພີ່ມລະບົບ pause) ໃນສຳເນົາຂອງເກມຕົວຢ່າງ ແລ່ນແບບລະໜຶ່ງຮອບ
+
+| | ກ່ອນໃສ່ | ໃສ່ທັງຄູ່ | ໃສ່ທັງຄູ່ + ກົດ "Verifying UI changes" |
+| --- | --- | --- | --- |
+| prompt ຕໍ່ turn | ~32.6k | ~34.8k (+2.1k) | ~34.9k |
+| turn 1 (ສຳຫຼວດ + ອອກແບບ): ເວລາ / output tokens | 6.0 ນາທີ / 3,541 | 7.5 ນາທີ / 5,379 | 8.3 ນາທີ / 6,133 |
+| turn 1: graft / read | 2 / 2 | 4 / 1 | 3 / 5 |
+| turn 2 (ລົງມື + ກວດ): ເວລາ | 32.6 ນາທີ | **6.0 ນາທີ** | 36.1 ນາທີ |
+| turn 2: output tokens | 25,308 | **4,051** | 28,031 |
+| turn 2: tool call / chrome-devtools | 60 / 37 | **10 / 0** | 66 / 40 |
+| ກວດໃນ browser + ພົບ bug menu ພັງ | ✅ | ❌ ຂ້າມ | ✅ |
+| test 5 ຊຸດ | ຜ່ານ | ຜ່ານ | ຜ່ານ |
+
+ສິ່ງທີ່ຕົວເລກບອກ:
+
+- **ຖັນກາງເບິ່ງດີທີ່ສຸດ ແຕ່ໄວເພາະຂ້າມວຽກ** — agent ຢຸດຫຼັງ test ຜ່ານໂດຍບໍ່ເປີດ browser ຕາມກົດ "ແລ້ວ = ເກນກວດຂອງວຽກຜ່ານ" ຂອງ benjamin-plus ຈຶ່ງບໍ່ພົບ bug ທີ່ຮອບທຳອິດພົບ ([[gotchas]] ຂໍ້ 19)
+- **ເມື່ອບັງຄັບໃຫ້ເຮັດຄົບ (ຖັນຂວາ) ຕົ້ນທຶນກັບໄປເທົ່າເດີມ** — ເວລາ, output ແລະຈຳນວນ chrome-devtools call ໃກ້ຄຽງຮອບທຳອິດ ໝາຍຄວາມວ່າທັງສອງໂຕບໍ່ໄດ້ເຮັດໃຫ້ວຽກດຽວກັນຖືກລົງ
+- **turn 1 ບໍ່ດີຂຶ້ນ** — ໃຊ້ເວລາແລະ output ຫຼາຍຂຶ້ນ ແລະ prompt ໜັກຂຶ້ນທຸກ turn (caveman ~1.2k, benjamin-plus ~0.9k)
+- **ຄຳຕອບສຸດທ້າຍສັ້ນແລະອ່ານງ່າຍຂຶ້ນ** (~9%) — ຜົນດຽວທີ່ເຫັນຈາກ caveman ຊຶ່ງຕົງກັບທີ່ JetBrains ວັດໄວ້ (output −8.5% ໃນວຽກຂຽນ code)
+
+**ທີ່ຕັດສິນໃຈ:** ເກັບ caveman (style ການຕອບ + `/caveman-commit` / `/caveman-review`, ຮັບຕົ້ນທຶນ ~1.2k tokens/turn) · ຖອດ benjamin-plus · ເກັບກົດ "Verifying UI changes" ແລະ `--isolated` ຂອງ chrome-devtools ໄວ້
+
+> [!warning] ຂໍ້ຈຳກັດຂອງການວັດນີ້
+> ແຕ່ລະແບບແລ່ນຮອບດຽວ ແລະໂມເດວແກວ່ງລະຫວ່າງຮອບໄດ້ຫຼາຍ (turn 1 ຂອງ config ດຽວກັນວັດສອງຮອບໄດ້ 5.7 ແລະ 7.5 ນາທີ) — ສະຫຼຸບໄດ້ພຽງວ່າ "ບໍ່ເຫັນວ່າດີຂຶ້ນ" ບໍ່ແມ່ນ "ແຍ່ລົງ" ຖ້າຈະຕັດສິນໃຫ້ຂາດຕ້ອງແລ່ນຊ້ຳຫຼາຍຮອບຕໍ່ແບບ
+
+> [!tip] ບົດຮຽນເລື່ອງວິທີວັດ
+> 1. ວັດ**ລຳດັບ tool call** ຄູ່ກັບເວລາສະເໝີ (`session-report.mjs session <title>`) — ຮອບທີ່ໄວຜິດປົກກະຕິມັກໝາຍຄວາມວ່າມີຂັ້ນທີ່ຫາຍໄປ
+> 2. ເບິ່ງຄ່າ `finish` ຂອງ step ສຸດທ້າຍ — ຮອບໜຶ່ງຈົບດ້ວຍ `tool-calls` (ບໍ່ແມ່ນ `stop`) ເພາະ Chrome profile ຂັດກັບເຄື່ອງມືອື່ນ ([[gotchas]] ຂໍ້ 17) ເຮັດໃຫ້ run ຈົບກາງທາງແລະຕົວເລກໃຊ້ບໍ່ໄດ້
+> 3. ຢ່າໃຊ້ chrome-devtools ຈາກເຄື່ອງມືອື່ນເທິງເຄື່ອງດຽວກັນລະຫວ່າງແລ່ນທົດສອບ ຖ້າຍັງບໍ່ໄດ້ໃສ່ `--isolated`

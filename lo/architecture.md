@@ -86,7 +86,8 @@ graph TD
 
 ຕາມ pattern ດຽວກັບທີ່ [[sdlc]] ຈັດການ Security/Documentation (ບໍ່ແມ່ນ phase ແຍກ ແຕ່ແຊກທຸກບ່ອນ) — ສອງຢ່າງນີ້ກໍ່ບໍ່ຄວນຖືກຍັດເຂົ້າ layer ໃດໂດຍສະເພາະ:
 
-- **[[plugins#i-have-adhd — ບັງຄັບຕອບກົງປະເດັນ ບໍ່ອ້ອມແອ້ມ\|i-have-adhd]]** — ປ່ຽນແຄ່ style ການຕອບ ບໍ່ແຕະ layer ໃດເລີຍ
+- **caveman** ([[plugins]] — ໃຊ້ແທນ i-have-adhd ຕັ້ງແຕ່ 2026-10-03) — ປ່ຽນແຄ່ style ການຕອບ ບໍ່ແຕະ layer ໃດເລີຍ
+- **ກົດ "Verifying UI changes" ໃນ global `AGENTS.md`** ([[tuning]]) — ບັງຄັບວ່າວຽກທີ່ເຫັນໃນ browser ຕ້ອງຜ່ານຂັ້ນກວດແທ້ຂອງ EXECUTION ກ່ອນຈະເຂົ້າ GOVERNANCE
 - **ກົດ reconcile ໃນ global `AGENTS.md`** (ເບິ່ງ [[plugins]] ຫົວຂໍ້ grill-me/grilling) — ເປັນ policy ທີ່ຄວບຄຸມວ່າ REASONING layer ສອງ skill ເຮັດວຽກຮ່ວມກັນແນວໃດ ບໍ່ແມ່ນຕົວ layer ເອງ
 - `using-superpowers`, `writing-skills` — skill ລະດັບ meta (bootstrap ຕົນເອງ, ສ້າງ skill ໃໝ່) ບໍ່ໄດ້ເຮັດວຽກໃນວົງຈອນປົກກະຕິ
 

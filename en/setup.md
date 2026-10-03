@@ -11,6 +11,10 @@ summary: A detailed OpenCode install guide from a blank machine — Node.js, Git
 > [!tip] Reading order
 > Follow Part 0 → 1 → 2 → 3 → 4 → 5 in order, don't skip — each Part depends on what the previous one finished.
 
+> [!tip] Two shortcuts
+> - **Ready-to-copy files** — every file this setup writes or edits by hand is in [`config/`](../config/README.md): an `opencode.jsonc` template (with every block from this page), the global `AGENTS.md`, `plugin/graft-deep.js`. This page explains what each part is and why; `config/` is the end result.
+> - **Let an AI agent do it** — open an agent (OpenCode, Claude Code, …) in this repo and say `read AGENT-SETUP.md and set this up`. [`AGENT-SETUP.md`](../AGENT-SETUP.md) is this page's procedure in a form an agent can follow, with a check after every step and rules against overwriting an existing config or writing secrets into files.
+
 ---
 
 ## Part 0 — Get the machine ready (for a blank machine)
@@ -272,6 +276,9 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 
 Restart OpenCode and type `/i-have-adhd` in a session to turn it on — full toggle/always-on details in [[plugins]].
 
+> [!info] The setup actually in use now runs caveman instead of i-have-adhd (2026-10-03)
+> i-have-adhd is still a good example of "a plugin from a local clone", but what's installed is **caveman** — the same job (terse replies), installed in a similar way: you place the files yourself and point `plugin` at the path (never its installer). Full steps in [[plugins]], caveman — **install one or the other, not both**.
+
 ### A plugin you write yourself (custom .js)
 
 Put the `.js` file anywhere (`~/.config/opencode/plugin/<name>.js` is recommended for something used by every project), then add its path to the `plugin` array:
@@ -334,12 +341,13 @@ A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, 
 > [!tip] When to write at global instead of project level
 > Write at global when a rule should apply "to every project, always" (e.g. how to reconcile two skills that might collide). Write at project level when it's context specific to that one repo (e.g. graft's context graph). A real example that had to be written at global level is in [[plugins]], the grill-me/grilling section.
 
-The global AGENTS.md in use after tuning has 4 sections:
+The global AGENTS.md in use after tuning has 5 sections (the whole file, ready to copy: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | Section | Why it's there | Full text |
 | --- | --- | --- |
 | Grill me — complements superpowers brainstorming | keeps two gates from colliding | [[plugins]] |
 | Exploring a codebase — graft first, even inside a skill | `brainstorming`'s first step made the agent skip graft ([[gotchas]] item 12) | [[tuning]] |
+| Verifying UI changes — once, in a real browser | passing tests doesn't mean the screen works — stops the agent skipping the browser check ([[gotchas]] item 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% of repeated reads came right after a compaction ([[gotchas]] item 13) | [[tuning]] |
 | Memory — facts that must outlive this session | the memory MCP was never used without a rule ([[gotchas]] item 14) | [[tuning]] |
 
