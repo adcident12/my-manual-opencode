@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows, with confirmed fixes (item 6 resolved by removing its cause, after discovering graft CLI's own built-in auto-refresh made the old hook redundant)
 ---
 
@@ -8,7 +8,7 @@ summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows,
 
 Overview at [[index]] · Setup at [[setup]]
 
-10 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
+16 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
 
 ---
 
@@ -243,3 +243,89 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 
 > [!tip] Lesson
 > A fallback that hides an error makes a bug invisible. Always preview with `--dry-run` first — it now prints the exact `docker run -p <port>:9000 -v …` it would use.
+
+---
+
+## 11. Most of the prompt is MCP tool definitions — servers you barely use cost tokens every turn
+
+**Impact:** Before doing any work, each turn's prompt weighed ~43k tokens (131 tools) — a third of a local model's 131k context gone on turn 1, so compactions come sooner and every step is slower.
+
+**Cause:** Every MCP server with `enabled: true` sends all of its tool definitions (plus the server's instructions) in **every** request, whether the task uses it or not — measured: open-design ~6.6k, chrome-devtools ~6.4k, playwright ~4.5k tokens, while the real history shows open-design called once and playwright 33 times vs 541 for chrome-devtools (the same job).
+
+> [!important] Fix
+> Measure first with `capture-server.mjs` + `analyze-prompt.mjs`, check real usage with `session-report.mjs usage` (full procedure in [[tuning]]), then turn rarely used servers off by default (`"enabled": false`) and on per project in `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }` — with open-design + playwright off, the prompt dropped to ~32.6k tokens (−25%).
+
+> [!tip] Lesson
+> `connected` in `opencode mcp list` only says it can connect, not that it's worth it — every MCP has a fixed per-turn cost. Measure before adding a new one.
+
+---
+
+## 12. A skill's instructions win over AGENTS.md — the agent skipped graft because brainstorming said to read files
+
+**Impact:** In real sessions the agent called graft 25 times but did 486 whole-file `read`s, even though every project had a `graft/` index and the project AGENTS.md clearly says to use graft first — in an end-to-end test, turn 1 didn't call graft at all.
+
+**Cause:** The first step of `brainstorming` (superpowers) reads *"Explore project context — check files, docs, recent commits"* — the model followed the freshly loaded skill (`git log`, `read` on directories one by one) over AGENTS.md, even though graft-deep had already injected a "use graft first" hint into the prompt.
+
+> [!important] Fix
+> Write a reconciliation rule in the **global** `~/.config/opencode/AGENTS.md`, the same way as the grilling rule ([[plugins]]): when a skill says to explore the project and the project has `graft/`, do that step with `graft_graft_repo_map` / `graft_graft_find_code` / `graft_graft_file_api`, then `read` only the files about to be edited (full rule text in [[tuning]]) — re-running the same request: graft 0 → 2 calls, `read` 7 → 2.
+
+> [!tip] Lesson
+> Any skill with a "do X first" instruction can collide with an AGENTS.md rule. What works is a rule that names that skill and says what to do at that step — not a broad rule and a hope that the model picks right.
+
+---
+
+## 13. Whole files re-read after every compaction
+
+**Impact:** In long sessions, repeated reads of the same files were 42–86% of all read output (one session: 204 reads of only 34 distinct files).
+
+**Cause:** Classifying each repeated read by what happened before it (`session-report.mjs rereads`): **76% came right after a compaction** — a typical session compacted 4–10 times, and the compaction summary doesn't keep file contents, so the agent reads the whole file again. Re-reads after the agent's own edit were only 17%.
+
+> [!important] Fix (not yet verified on a long session)
+> 1. Shrink the per-turn prompt (item 11) so compactions come later
+> 2. Turn on `"compaction": { "auto": true, "prune": true }` — drops tool output older than 2 turns in chunks of ≥ 20k tokens, so llama.cpp's prompt cache isn't invalidated every turn
+> 3. A global AGENTS.md rule: after a compaction use `graft skeleton` / `graft ask --source`, then `read` with `offset`/`limit` for just the needed lines
+>
+> Re-measure with `session-report.mjs rereads` after some real use — details in [[tuning]]
+
+---
+
+## 14. The memory MCP was installed but never used
+
+**Impact:** memory sits in the KNOWLEDGE layer of [[architecture]] and costs ~1.1k tokens every turn, but over 50 sessions it was called once and `memory.jsonl` was never even created.
+
+**Cause:** Nothing tells the model **when** to save or search — the tool descriptions only say what the tools can do.
+
+> [!important] Fix
+> Add a rule to the global AGENTS.md: search with `memory_search_nodes` before asking the user something they may have answered before · save with `memory_create_entities` / `memory_add_observations` (date-prefixed) when the user states a durable preference or a decision is reached that later sessions need · never store secrets or what the repo already records — tested with the real model: session 1 saved, a new session recalled it correctly (full rule text in [[tuning]])
+
+---
+
+## 15. Claude Code's and `~/.agents` skills leak into OpenCode
+
+**Impact:** On a machine with several AI tools installed, `opencode debug skill` showed 86 skills instead of this manual's 25 — the whole list is sent every turn, and a small model picks the wrong skill more easily (e.g. a generic skill like `truth-first` competing with superpowers' workflow).
+
+**Cause:** OpenCode automatically scans "external skills" in `~/.claude/skills/` and `~/.agents/skills/` — and some tools install the same skill set into both (symlinked).
+
+> [!important] Fix
+> Set the user-level env var `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, then fully restart terminals and the editor (item 2) — confirm with `opencode debug skill` that only this manual's skills remain.
+>
+> **Don't** rely on `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` alone — it only drops `~/.claude/skills` (86 → 74 on the test machine); skills symlinked into `~/.agents/skills` still get in. If you really want a particular skill in OpenCode, copy it to `~/.config/opencode/skills/<name>/`.
+
+---
+
+## 16. (Windows) `od` resolves to Git's `od.exe` instead of the OpenDesign shim
+
+**Impact:** The shim from item 4 is in place, but `od --help` still prints octal-dump's help and the `open-design` MCP won't connect.
+
+**Cause:** If `...\Git\usr\bin` comes **before** the folder holding `od.cmd` on PATH (e.g. Node installed via nvm-windows, which uses a different folder than `%APPDATA%\npm`), Windows always finds Git's `od.exe` first — and so does OpenCode when it spawns `od`.
+
+> [!important] Fix
+> No need to reorder PATH — have the MCP config call the shim through node directly:
+> ```jsonc
+> "open-design": {
+>   "type": "local",
+>   "command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"],
+>   "timeout": 30000
+> }
+> ```
+> Check the order with `Get-Command od -All` (PowerShell) — the first entry is the one that runs.

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Detalye ng bawat MCP server na naka-setup sa OpenCode — hakbang sa pag-install, config, paano subukan, at mga gotchas
 ---
 
@@ -29,6 +29,16 @@ Isang remote MCP (walang patatakbuhin sa lokal, walang kailangang i-pre-install)
    "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp" }
    ```
 
+   > [!tip] Kung may context7 API key ka (opsyonal — tumutulong sa rate limits)
+   > Ipadala ito bilang header mula sa isang env var; huwag isulat ang key sa config:
+   > ```jsonc
+   > "context7": {
+   >   "type": "remote",
+   >   "url": "https://mcp.context7.com/mcp",
+   >   "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
+   > }
+   > ```
+
 3. I-restart ang OpenCode (o magbukas ng bagong session) pagkatapos tignan ang status:
 
    ```bash
@@ -42,6 +52,9 @@ Isang remote MCP (walang patatakbuhin sa lokal, walang kailangang i-pre-install)
 ## playwright — kontrolin ang browser / e2e testing
 
 Isang MCP server na nagpapatakbo ng tunay na browser sa pamamagitan ng Playwright — para sa automation, pagsagot ng forms, pag-click ng buttons, pagkuha ng screenshots, at end-to-end testing ng daloy ng isang website.
+
+> [!info] Naka-off by default pagkatapos ng tuning (2026-10-03)
+> Nasukat: ~4.5k tokens bawat turn ang gastos ng 25 tool definitions ng playwright, habang sa tunay na paggamit ay 33 beses lang tinawag ng agent ang playwright laban sa 541 para sa chrome-devtools para sa parehong uri ng trabaho. Kaya `"enabled": false` sa global config, at i-on per project sa `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — tumatakbo pa rin gaya ng dati ang e2e test suites na gawa sa Playwright via bash (`npx playwright test`). Tingnan ang [[tuning]] at [[gotchas]] item 11.
 
 ### Hakbang sa pag-install
 
@@ -202,9 +215,15 @@ Ang [nexu-io/open-design](https://github.com/nexu-io/open-design) ay isang AI to
      "type": "local",
      "command": ["od", "mcp"],
      "timeout": 30000,
-     "enabled": true
+     "enabled": false
    }
    ```
+
+   > [!info] `"enabled": false` by default, saka i-on per project (2026-10-03)
+   > ~6.6k tokens bawat turn ang gastos ng 22 tools + instructions ng server na ito — pinakamalaki sa lahat ng MCP dito — pero ginagamit lang kapag kumukuha ng trabaho mula sa OpenDesign ([[USER-MANUAL]] seksyon 5). I-on ito sa project na gumagawa ng Phase 2 gamit ang `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }`. Tingnan ang [[tuning]].
+
+   > [!warning] Windows: kung napupunta ang `od` sa `od.exe` ng Git
+   > Kapag nauuna ang `...\Git\usr\bin` sa folder na may `od.cmd` sa PATH, gamitin ang `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` — [[gotchas]] item 16
 
    > [!warning] Huwag i-pin ang `--daemon-url http://127.0.0.1:7456` (na siyang isinusulat ng `od mcp install opencode`)
    > Mula 0.22, nakikinig sa random na port ang daemon ng desktop app, kaya nagfa-fail ang naka-pin na URL na may `MCP error -32000: Connection closed` kahit nakabukas ang app. Kapag walang flag, tinatanong ng `od mcp` ang tumatakbong app kung nasaang URL ang daemon nito ngayon sa pamamagitan ng isang lokal na pipe; awtomatikong sine-set ng `od.mjs` ang mga env var na kailangan nito, kaya walang nakapirming port at walang machine-specific na value ang config sa itaas (detalye: [[gotchas]] item 4, hakbang 4). Windows lang ang `od.mjs` shim — sa macOS/Linux, kopyahin ang `command`/`env` na ibinabalik mismo ng app sa `GET <daemon>/api/mcp/install-info` sa halip na mag-pin ng port.
@@ -255,6 +274,9 @@ Ang [`@modelcontextprotocol/server-memory`](https://github.com/modelcontextproto
 
 > [!note] Anong uri ng data ang itinatago nito
 > Naka-imbak bilang entities + observations sa plain na `.jsonl` file (nababasa/nae-edit nang manu-mano kung kailangan) — hindi vector database o anumang cloud service.
+
+> [!important] Kailangan ng rule sa AGENTS.md, kung hindi ay halos hindi ito nagagamit
+> Sa 50 tunay na session, isang beses lang tinawag ang memory at hindi kailanman nagawa ang `memory.jsonl` — sinasabi ng tools kung ano ang kaya nila, hindi kung kailan gagamitin. Idagdag ang "Memory" rule sa global AGENTS.md (buong teksto sa [[tuning]]); sinubukan sa tunay na model: nagse-save, at naaalala nang tama ng bagong session — [[gotchas]] item 14
 
 ---
 
@@ -585,14 +607,14 @@ Parehong local MCP na kailangan ng tumatakbo nang database server (local o remot
 opencode mcp list
 ```
 
-Halimbawang output kapag kumpleto ang setup (8 naka-enable + 3 naka-disable):
+Halimbawang output kapag kumpleto ang setup, pagkatapos ng tuning (6 naka-enable + 5 naka-disable — ino-on per project ang open-design at playwright kapag kailangan, tingnan ang [[tuning]]):
 
 ```
-✓ context7        connected
-✓ playwright       connected
+○ open-design      disabled
+✓ context7         connected
+○ playwright       disabled
 ✓ chrome-devtools  connected
 ✓ graft            connected
-✓ open-design      connected
 ✓ memory           connected
 ✓ sonarqube        connected
 ✓ trivy            connected
@@ -600,3 +622,6 @@ Halimbawang output kapag kumpleto ang setup (8 naka-enable + 3 naka-disable):
 ○ postgres         disabled
 ○ mysql            disabled
 ```
+
+> [!tip] Ang `connected` ay hindi nangangahulugang sulit
+> Ipinapadala ng bawat naka-enable na server ang tool definitions nito bawat turn — sukatin ang tunay na gastos bawat server gamit ang `capture-server.mjs` + `analyze-prompt.mjs` ayon sa [[tuning]] seksyon 1

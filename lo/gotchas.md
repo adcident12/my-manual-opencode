@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ້ງຄ່າ OpenCode + MCP + Plugins ເທິງ Windows ພ້ອມວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ (ຂໍ້ 6 ໄດ້ຮັບການແກ້ໄຂແລ້ວໂດຍການຕັດສາເຫດຖິ້ມ ຫຼັງພົບວ່າ auto-refresh ໃນຕົວຂອງ graft CLI ເຮັດໃຫ້ hook ເດີມຊ້ຳຊ້ອນ)
 ---
 
@@ -8,7 +8,7 @@ summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ�
 
 ພາບລວມທີ [[index]] · ການຕັ້ງຄ່າທີ [[setup]]
 
-ລວມບັນຫາທີ່ພົບຈິງ 10 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
+ລວມບັນຫາທີ່ພົບຈິງ 16 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
 
 ---
 
@@ -243,3 +243,89 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 
 > [!tip] ບົດຮຽນ
 > fallback ທີ່ປົກປິດ error ເຮັດໃຫ້ bug ເບິ່ງບໍ່ເຫັນ ຄວນ preview ດ້ວຍ `--dry-run` ກ່ອນສະເໝີ — ຕອນນີ້ມັນພິມຄຳສັ່ງ `docker run -p <port>:9000 -v …` ທີ່ຈະໃຊ້ແທ້ອອກມາໃຫ້ເບິ່ງ
+
+---
+
+## 11. prompt ສ່ວນໃຫຍ່ຄືນິຍາມ tool ຂອງ MCP — server ທີ່ແທບບໍ່ໄດ້ໃຊ້ກໍກິນ token ທຸກ turn
+
+**Impact:** ກ່ອນເລີ່ມເຮັດວຽກຫຍັງເລີຍ prompt ແຕ່ລະ turn ໜັກ ~43k tokens (131 tools) — ໜຶ່ງໃນສາມຂອງ context 131k ຂອງໂມເດວ local ຫາຍໄປຕັ້ງແຕ່ turn ທຳອິດ ເຮັດໃຫ້ compaction ເກີດໄວ ແລະທຸກ step ຊ້າລົງ
+
+**ສາເຫດ:** MCP server ທຸກໂຕທີ່ `enabled: true` ສົ່ງນິຍາມ tool ທັງໝົດຂອງມັນ (ແລະ instructions ຂອງ server) ໄປໃນ**ທຸກ** request ບໍ່ວ່າວຽກນັ້ນຈະໃຊ້ຫຼືບໍ່ — ວັດໄດ້ວ່າ open-design ~6.6k, chrome-devtools ~6.4k, playwright ~4.5k tokens ທັງທີ່ປະຫວັດແທ້ມີ open-design ຖືກເອີ້ນ 1 ເທື່ອ ແລະ playwright 33 ເທື່ອທຽບກັບ chrome-devtools 541 ເທື່ອ (ວຽກດຽວກັນ)
+
+> [!important] ວິທີແກ້
+> ວັດກ່ອນດ້ວຍ `capture-server.mjs` + `analyze-prompt.mjs` ແລະເບິ່ງການໃຊ້ງານແທ້ດ້ວຍ `session-report.mjs usage` (ຂັ້ນຕອນເຕັມໃນ [[tuning]]) ແລ້ວປິດ server ທີ່ໃຊ້ໜ້ອຍເປັນຄ່າເລີ່ມຕົ້ນ (`"enabled": false`) ເປີດສະເພາະ project ທີ່ຕ້ອງໃຊ້ໃນ `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }` — ປິດ open-design + playwright ແລ້ວ prompt ເຫຼືອ ~32.6k tokens (−25%)
+
+> [!tip] ບົດຮຽນ
+> `connected` ໃນ `opencode mcp list` ບອກພຽງວ່າເຊື່ອມຕໍ່ໄດ້ ບໍ່ໄດ້ບອກວ່າຄຸ້ມ — ທຸກ MCP ມີຄ່າໃຊ້ຈ່າຍຄົງທີ່ຕໍ່ turn ໃຫ້ວັດກ່ອນເພີ່ມໂຕໃໝ່ທຸກເທື່ອ
+
+---
+
+## 12. ຄຳສັ່ງຂອງ skill ຊະນະ AGENTS.md — agent ຂ້າມ graft ເພາະ brainstorming ສັ່ງໃຫ້ອ່ານໄຟລ໌
+
+**Impact:** ໃນ session ແທ້ agent ເອີ້ນ graft 25 ເທື່ອ ແຕ່ `read` ທັງໄຟລ໌ 486 ເທື່ອ ທັງທີ່ທຸກ project ມີ `graft/` index ແລະ AGENTS.md ລະດັບ project ຂຽນຊັດວ່າໃຫ້ໃຊ້ graft ກ່ອນ — ທົດສອບຄົບວົງຈອນແລ້ວ turn ທຳອິດບໍ່ເອີ້ນ graft ເລີຍຈັກເທື່ອ
+
+**ສາເຫດ:** ຂັ້ນທຳອິດຂອງ `brainstorming` (superpowers) ຂຽນວ່າ *"Explore project context — check files, docs, recent commits"* — ໂມເດວເຮັດຕາມຄຳສັ່ງຂອງ skill ທີ່ຫາກໍໂຫຼດ (`git log`, `read` folder ເທື່ອລະອັນ) ແທນຄຳສັ່ງໃນ AGENTS.md ເຖິງວ່າ graft-deep ຈະ inject hint "use graft first" ໄວ້ໃນ prompt ແລ້ວກໍຕາມ
+
+> [!important] ວິທີແກ້
+> ຂຽນກົດປະສານງານໃນ **global** `~/.config/opencode/AGENTS.md` ແບບດຽວກັບກົດຂອງ grilling ([[plugins]]): ເມື່ອ skill ສັ່ງໃຫ້ສຳຫຼວດ project ແລະ project ມີ `graft/` ໃຫ້ເຮັດຂັ້ນນັ້ນດ້ວຍ `graft_graft_repo_map` / `graft_graft_find_code` / `graft_graft_file_api` ແລ້ວ `read` ສະເພາະໄຟລ໌ທີ່ຈະແກ້ (ຂໍ້ຄວາມກົດເຕັມໃນ [[tuning]]) — ແລ່ນຄຳຂໍເດີມຊ້ຳ: graft 0 → 2 ເທື່ອ, `read` 7 → 2 ເທື່ອ
+
+> [!tip] ບົດຮຽນ
+> ທຸກ skill ທີ່ມີຄຳສັ່ງແບບ "ເຮັດ X ກ່ອນ" ອາດຂັດກັບກົດໃນ AGENTS.md ໄດ້ — ວິທີທີ່ໄດ້ຜົນຄືຂຽນກົດທີ່ອ້າງເຖິງ skill ນັ້ນໂດຍກົງວ່າໃນຂັ້ນນັ້ນໃຫ້ເຮັດແນວໃດ ບໍ່ແມ່ນຂຽນກົດກວ້າງໆແລ້ວຫວັງວ່າໂມເດວຈະເລືອກຖືກ
+
+---
+
+## 13. ອ່ານໄຟລ໌ເດີມຊ້ຳທັງໄຟລ໌ຫຼັງ compaction
+
+**Impact:** ໃນ session ຍາວ ການອ່ານຊ້ຳໄຟລ໌ເດີມຄິດເປັນ 42–86% ຂອງຜົນການອ່ານທັງໝົດ (session ໜຶ່ງ 204 reads ແຕ່ມີໄຟລ໌ບໍ່ຊ້ຳພຽງ 34 ໄຟລ໌)
+
+**ສາເຫດ:** ແຍກການອ່ານຊ້ຳແຕ່ລະເທື່ອຕາມສິ່ງທີ່ເກີດກ່ອນໜ້າ (`session-report.mjs rereads`): **76% ເກີດທັນທີຫຼັງ compaction** — session ທົ່ວໄປ compact 4–10 ເທື່ອ ແລະບົດສະຫຼຸບຂອງ compaction ບໍ່ເກັບເນື້ອຫາໄຟລ໌ agent ຈຶ່ງຕ້ອງອ່ານທັງໄຟລ໌ໃໝ່ ສ່ວນການອ່ານຊ້ຳຫຼັງແກ້ໄຟລ໌ເອງມີພຽງ 17%
+
+> [!important] ວິທີແກ້ (ຍັງບໍ່ໄດ້ຢືນຢັນກັບ session ຍາວ)
+> 1. ຫຼຸດ prompt ຕໍ່ turn (ຂໍ້ 11) ໃຫ້ compaction ເກີດຊ້າລົງ
+> 2. ເປີດ `"compaction": { "auto": true, "prune": true }` — ລຶບຜົນຂອງ tool ທີ່ເກົ່າກວ່າ 2 turn ເທື່ອລະກ້ອນ ≥ 20k tokens ຈຶ່ງບໍ່ເຮັດໃຫ້ prompt cache ຂອງ llama.cpp ເສຍທຸກ turn
+> 3. ກົດໃນ global AGENTS.md: ຫຼັງ compaction ໃຫ້ໃຊ້ `graft skeleton` / `graft ask --source` ແລ້ວ `read` ດ້ວຍ `offset`/`limit` ສະເພາະຊ່ວງທີ່ຕ້ອງການ
+>
+> ວັດຊ້ຳດ້ວຍ `session-report.mjs rereads` ຫຼັງໃຊ້ງານແທ້ໄປໄລຍະໜຶ່ງ — ລາຍລະອຽດໃນ [[tuning]]
+
+---
+
+## 14. memory MCP ຕິດຕັ້ງແລ້ວແຕ່ບໍ່ເຄີຍຖືກໃຊ້
+
+**Impact:** memory ຢູ່ໃນ KNOWLEDGE layer ຂອງ [[architecture]] ແລະກິນ ~1.1k tokens ທຸກ turn ແຕ່ໃນ 50 session ຖືກເອີ້ນ 1 ເທື່ອ ແລະໄຟລ໌ `memory.jsonl` ບໍ່ເຄີຍຖືກສ້າງເລີຍ
+
+**ສາເຫດ:** ບໍ່ມີຫຍັງບອກໂມເດວວ່າ**ເມື່ອໃດ**ຄວນບັນທຶກຫຼືຄົ້ນ — ຄຳອະທິບາຍຂອງ tool ບອກພຽງວ່າມັນເຮັດຫຍັງໄດ້
+
+> [!important] ວິທີແກ້
+> ເພີ່ມກົດໃນ global AGENTS.md: ຄົ້ນດ້ວຍ `memory_search_nodes` ກ່ອນຖາມຜູ້ໃຊ້ເລື່ອງທີ່ອາດເຄີຍຕອບແລ້ວ · ບັນທຶກດ້ວຍ `memory_create_entities` / `memory_add_observations` (ຂຶ້ນຕົ້ນດ້ວຍວັນທີ) ເມື່ອຜູ້ໃຊ້ບອກຄວາມມັກທີ່ຖາວອນ ຫຼືໄດ້ຂໍ້ສະຫຼຸບທີ່ session ຕໍ່ໄປຕ້ອງໃຊ້ · ຫ້າມເກັບ secret ຫຼືສິ່ງທີ່ repo ບັນທຶກໄວ້ແລ້ວ — ທົດສອບກັບໂມເດວແທ້: session ທຳອິດບັນທຶກ, session ໃໝ່ດຶງກັບມາຕອບຖືກ (ຂໍ້ຄວາມກົດເຕັມໃນ [[tuning]])
+
+---
+
+## 15. skill ຂອງ Claude Code ແລະ `~/.agents` ປົນເຂົ້າມາໃນ OpenCode
+
+**Impact:** ເທິງເຄື່ອງທີ່ຕິດຕັ້ງເຄື່ອງມື AI ຫຼາຍໂຕ `opencode debug skill` ສະແດງ 86 skill ແທນ 25 ໂຕຕາມຄູ່ມື — ລາຍຊື່ທັງໝົດຖືກສົ່ງທຸກ turn ແລະໂມເດວນ້ອຍເລືອກ skill ຜິດໂຕໄດ້ງ່າຍຂຶ້ນ (ເຊັ່ນ skill ທົ່ວໄປຢ່າງ `truth-first` ແຍ່ງກັບ workflow ຂອງ superpowers)
+
+**ສາເຫດ:** OpenCode ສະແກນ "external skills" ຈາກ `~/.claude/skills/` ແລະ `~/.agents/skills/` ໃຫ້ອັດຕະໂນມັດ — ແລະເຄື່ອງມືບາງໂຕຕິດຕັ້ງ skill ຊຸດດຽວກັນລົງທັງສອງບ່ອນ (symlink)
+
+> [!important] ວິທີແກ້
+> ຕັ້ງ env var ລະດັບ user `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` ແລ້ວປິດ/ເປີດ terminal ແລະ editor ໃໝ່ (ຂໍ້ 2) — ກວດດ້ວຍ `opencode debug skill` ວ່າເຫຼືອສະເພາະ skill ຕາມຄູ່ມື
+>
+> **ຢ່າໃຊ້** `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` ຢ່າງດຽວ — ມັນຕັດພຽງ `~/.claude/skills` (86 → 74 ເທິງເຄື່ອງທີ່ທົດສອບ) skill ທີ່ຖືກ symlink ໄວ້ໃນ `~/.agents/skills` ນຳຈະຍັງເຂົ້າມາໄດ້ ຖ້າຕ້ອງການ skill ໂຕໃດໃນ OpenCode ແທ້ໆ ໃຫ້ copy ໄປໄວ້ທີ່ `~/.config/opencode/skills/<name>/`
+
+---
+
+## 16. (Windows) `od` ໄປພົບ `od.exe` ຂອງ Git ແທນ shim ຂອງ OpenDesign
+
+**Impact:** ເຮັດ shim ຕາມຂໍ້ 4 ແລ້ວ ແຕ່ `od --help` ຍັງພິມ help ຂອງ octal-dump ແລະ MCP `open-design` ເຊື່ອມຕໍ່ບໍ່ໄດ້
+
+**ສາເຫດ:** ຖ້າ folder `...\Git\usr\bin` ຢູ່**ກ່ອນ** folder ທີ່ວາງ `od.cmd` ໃນ PATH (ເຊັ່ນຕິດຕັ້ງ Node ຜ່ານ nvm-windows ຊຶ່ງໃຊ້ folder ອື່ນແທນ `%APPDATA%\npm`) Windows ຈະພົບ `od.exe` ຂອງ Git ກ່ອນສະເໝີ — OpenCode ທີ່ spawn `od` ກໍພົບໂຕດຽວກັນ
+
+> [!important] ວິທີແກ້
+> ບໍ່ຕ້ອງແກ້ລຳດັບ PATH — ໃຫ້ MCP config ເອີ້ນ shim ຜ່ານ node ໂດຍກົງ:
+> ```jsonc
+> "open-design": {
+>   "type": "local",
+>   "command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"],
+>   "timeout": 30000
+> }
+> ```
+> ກວດລຳດັບດ້ວຍ `Get-Command od -All` (PowerShell) — ໂຕທຳອິດໃນລາຍການຄືໂຕທີ່ຖືກເອີ້ນ

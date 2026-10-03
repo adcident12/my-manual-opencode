@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: superpowers (skill library), grill-me/grilling (batch-interview skill na dagdag sa superpowers), graft-deep (manu-manong sinulat na custom plugin), ponytail (code-minimization ruleset), at i-have-adhd (pinipilit ang maikli, diretso-sa-punto na sagot) — paano i-install ang bawat isa, at ang Plugin Hook API ng OpenCode
 ---
 
@@ -203,6 +203,9 @@ if one is available and the lookup is heavy enough to warrant it.
 >
 > Wala sa dalawang kaso ang nag-dispatch ng subagent sa kahit anong bahagi ng session, eksaktong ayon sa layunin.
 
+> [!warning] Muling sinubukan 2026-10-03 — hindi laging gumagamit ng graft ang kaso 2
+> Sa ikalawang headless end-to-end run (isang maliit na feature sa kopya ng parehong game), tama ang pagtawag sa `brainstorming`, pero sa paggalugad ay sinunod ng agent ang *"Explore project context — check files, docs, recent commits"* ng skill at nag-`read` ng files isa-isa sa halip na gumamit ng graft — ang grill-me rule sa itaas ay sumasaklaw lang sa paghahanap ng facts habang nagga-grilling, hindi sa exploration step ng brainstorming. Kaya nagdagdag ng rule na "Exploring a codebase — graft first, even inside a skill" sa global AGENTS.md (buong teksto at bago/pagkatapos sa [[tuning]] seksyon 4–5, [[gotchas]] item 12).
+
 ---
 
 ## graft-deep — custom plugin (auto-inject context)
@@ -216,6 +219,11 @@ Walang "deep integration" ang graft (tignan [[mcp-servers]]) para sa OpenCode �
 > Dalawang magkahiwalay na dahilan, parehong sinuri mula sa source code, hindi hinulaan:
 > 1. **Binago ng graft 0.19.0 ang sarili nitong injection rule** (ang Claude Code hook na ini-port ng plugin na ito) — detalye sa "Injection gate" sa ibaba.
 > 2. **Isinulat ang nakaraang bersyon na parang kapareho ng Claude Code ang OpenCode — hindi pala.** Ipinakita ng source ng OpenCode 1.18.32 na hindi kailanman nase-save ang mga pagbabago sa `experimental.chat.messages.transform`, kaya nawawala ang in-inject na context mula sa ikalawang agent step pataas. Detalye sa "Paano pinapatakbo ng OpenCode ang hook na ito" sa ibaba.
+
+> [!info] Muling sinuri 2026-10-03 — graft 0.20.0 / 0.21.1 + OpenCode 1.18.34: walang kailangang baguhin sa code
+> Hindi nagbago mula 0.19 ang `STRONG_FLOOR = 0.1`, `HIGH_FLOOR = 0.5`, `relevantRetrieval`, at ang mga argument na `ask … --json -n 3` sa hook ng graft, at ibinabalik pa rin ng `graft ask --json` ang `hits[].title`, `hits[].pointer`, `coverage`, `coverageStrong` — sa isang multi-step na simulation ng hook, nananatiling nakakabit ang context sa bawat step.
+>
+> Dapat malaman: hindi sapat ang hint na "use graft first" na ini-inject ng plugin na ito para pigilan ang model sa pagbasa ng files isa-isa kapag iyon ang sinasabi ng isang naka-load na skill — kailangan din ng rule sa global AGENTS.md ([[gotchas]] item 12)
 
 ### Pag-install
 

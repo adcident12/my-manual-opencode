@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, architecture, opencode, reference]
-updated: 2026-09-14
+updated: 2026-10-03
 summary: มองทั้ง stack (MCP servers + plugins + skills) ผ่าน 4 layer ตามหน้าที่ (Knowledge/Reasoning/Execution/Governance) แทนตามกลไกทางเทคนิค — เพื่อให้ตอบได้ง่ายว่าเครื่องมือใหม่แต่ละตัว "อยู่ layer ไหน ทำหน้าที่อะไร"
 ---
 
@@ -90,6 +90,27 @@ graph TD
 - **กฎ reconcile ใน global `AGENTS.md`** (ดู [[plugins]] หัวข้อ grill-me/grilling) — เป็น policy ที่ควบคุมว่า REASONING layer สอง skill ทำงานร่วมกันยังไง ไม่ใช่ตัว layer เอง
 - `using-superpowers`, `writing-skills` — skill ระดับ meta (bootstrap ตัวเอง, สร้าง skill ใหม่) ไม่ได้ทำงานในวงจรปกติ
 
+## ต้นทุนจริงของแต่ละ layer (วัดเมื่อ 2026-10-03)
+
+diagram ด้านบนบอกว่าแต่ละ layer **ควร**ทำอะไร — ส่วนนี้บอกว่าแต่ละ layer **จ่าย**อะไรทุก turn และ**ถูกใช้**จริงแค่ไหน (วิธีวัดอยู่ที่ [[tuning]])
+
+| Layer | tokens ต่อ turn (หลังปรับจูน) | ถูกใช้จริง (session ตั้งแต่ 2026-09-01) |
+| --- | --- | --- |
+| KNOWLEDGE | ~4.4k (graft + context7 + memory + project AGENTS.md) · +6.6k เมื่อเปิด open-design | graft 25 · context7 8 · memory 1 → แก้ด้วยกฎใน AGENTS.md · open-design 1 |
+| REASONING | ~5.4k (รายชื่อ skill ทั้งหมด + superpowers bootstrap + global AGENTS.md) | brainstorming / writing-plans ถูกเรียกสม่ำเสมอ |
+| EXECUTION | ~7.8k (chrome-devtools + ponytail) · +4.5k เมื่อเปิด playwright | chrome-devtools 541 · playwright 33 |
+| GOVERNANCE | ~6.7k (sonarqube + trivy) | sonarqube 16 · trivy 0 |
+| OpenCode เอง | ~8.4k (tool พื้นฐาน + base prompt) | — |
+
+![Prompt budget per turn](../assets/tuning/1-prompt-budget.png)
+
+![What the agent actually called](../assets/tuning/2-tool-usage.png)
+
+> [!important] สิ่งที่ตัวเลขบอก
+> - **ขนาดของ layer ไม่ได้สัมพันธ์กับการใช้งาน** — GOVERNANCE จ่าย ~6.7k ทุก turn แต่ทำงานแค่ตอนท้ายงาน ส่วน KNOWLEDGE ที่ควรถูกใช้บ่อยที่สุดกลับถูกข้าม (agent ไป `read` ทั้งไฟล์แทน graft — ต้นเหตุและวิธีแก้ที่ [[gotchas]] ข้อ 12)
+> - **เครื่องมือที่ใช้เฉพาะ phase** (open-design ใน Phase 2, playwright ถ้าใช้ chrome-devtools อยู่แล้ว) ควรเปิดต่อโปรเจกต์ ไม่ใช่ global
+> - **กฎใน AGENTS.md เป็นส่วนหนึ่งของ architecture** — memory อยู่ใน layer ตั้งแต่แรก แต่ไม่เคยถูกใช้จนกว่าจะมีกฎบอกว่าใช้เมื่อไร
+
 ## วิธีใช้หน้านี้เวลาจะเพิ่มเครื่องมือใหม่
 
 ถามตามลำดับนี้ก่อนติดตั้งอะไรใหม่:
@@ -99,3 +120,4 @@ graph TD
 3. มันคือการลงมือทำจริง (เขียนโค้ด/test/git) ไหม → EXECUTION
 4. มันตรวจสอบคุณภาพ/ความปลอดภัยก่อนถือว่าเสร็จไหม → GOVERNANCE
 5. ไม่เข้าข้อไหนเลย แต่ compose กับทุกอย่าง → Cross-cutting (เขียนเหตุผลไว้ตรงๆ เหมือนหัวข้อบน อย่าฝืนยัดเข้า layer ใดเพื่อความสวยงาม)
+6. ทุกข้อด้านบน: มันใส่อะไรเข้า prompt ทุก turn เท่าไร และ agent จะรู้ได้อย่างไรว่าต้องใช้เมื่อไร → วัดด้วย [[tuning]] ข้อ 1 ก่อนและหลังติดตั้ง ถ้าใช้แค่บาง phase ให้เปิดต่อโปรเจกต์

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Detalyadong gabay sa pag-install ng OpenCode mula sa walang laman na makina — Node.js, Git, ang CLI, provider, MCP servers, plugins, Agent Skills open-standard skills, at AGENTS.md (global vs project), bawat hakbang
 ---
 
@@ -299,6 +299,9 @@ Naghahanap ang OpenCode ng skills sa 3 lugar:
 | `~/.config/opencode/skills/<name>/SKILL.md` | Bawat project (global) |
 | `<project>/.claude/skills/<name>/SKILL.md` | Compatible sa Claude Code (parehong file gumagana sa dalawang tool) |
 
+> [!warning] Kusa ring naglo-load ang OpenCode ng skills mula sa `~/.claude/skills` at `~/.agents/skills`
+> Sa makinang may Claude Code o ibang AI tools, pumapasok ang skills nila (sa test machine: 86 na skills sa halip na 25) — ipinapadala bawat turn ang bawat isa, at mas madaling magkamali ng pili ang maliit na model. I-set ang user-level env var na `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, saka buksan ulit ang terminals/editors. Detalye, at kung bakit hindi `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`, sa [[gotchas]] item 15.
+
 Pinakasimpleng structure ng file:
 
 ```markdown
@@ -330,6 +333,15 @@ Ang `AGENTS.md` ay isang instruction file na binabasa ng OpenCode sa bawat sessi
 
 > [!tip] Kailan dapat sumulat sa global sa halip na project
 > Sumulat sa global kapag dapat "laging" mag-apply ang rule sa bawat project (hal. paraan ng pag-reconcile ng dalawang skill na maaaring magbanggaan). Sumulat sa project kapag specific ito sa context ng repo na iyon (hal. context graph ng graft) — tunay na halimbawa na kailangang isulat sa global ay nasa [[plugins]], seksyong grill-me/grilling.
+
+May 4 na seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning:
+
+| Seksyon | Bakit naroon | Buong teksto |
+| --- | --- | --- |
+| Grill me — complements superpowers brainstorming | pinipigilang magbanggaan ang dalawang gate | [[plugins]] |
+| Exploring a codebase — graft first, even inside a skill | dahil sa unang hakbang ng `brainstorming`, nilalaktawan ng agent ang graft ([[gotchas]] item 12) | [[tuning]] |
+| Re-reading files after compaction or pruning | 76% ng paulit-ulit na reads ay agad pagkatapos ng compaction ([[gotchas]] item 13) | [[tuning]] |
+| Memory — facts that must outlive this session | hindi kailanman nagamit ang memory MCP nang walang rule ([[gotchas]] item 14) | [[tuning]] |
 
 ---
 
@@ -369,3 +381,6 @@ opencode debug config    # tignan ang buong na-resolve na config
 ## Susunod na hakbang
 
 Tapos na ang setup — basahin ang [[USER-MANUAL]] para sa aktwal na araw-araw na paggamit, o [[gotchas]] kung may problemang naranasan sa daan.
+
+> [!tip] Pagkatapos ng ilang tunay na paggamit — sukatin, saka i-tune
+> Ang kumpletong config ay hindi nangangahulugang ginagamit ng agent ang lahat ayon sa layunin. May scripts ang [[tuning]] para sukatin ang laki ng prompt bawat turn, makita kung aling tools talaga ang tinawag ng agent mula sa session history, at i-test ang workflow nang end-to-end — kasama ang inirerekomendang settings (naka-off by default ang bihirang gamiting MCPs, `compaction.prune`, dagdag na global AGENTS.md rules).

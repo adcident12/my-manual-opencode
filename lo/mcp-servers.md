@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: ລາຍລະອຽດ MCP server ແຕ່ລະໂຕທີ່ຕັ້ງໄວ້ໃນ OpenCode — ຂັ້ນຕອນຕິດຕັ້ງ, config, ວິທີທົດສອບ, ຂໍ້ຄວນລະວັງ
 ---
 
@@ -29,6 +29,16 @@ Remote MCP (ບໍ່ຕ້ອງແລ່ນຫຍັງເທິງເຄື�
    "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp" }
    ```
 
+   > [!tip] ຖ້າມີ API key ຂອງ context7 (ບໍ່ບັງຄັບ — ຊ່ວຍເລື່ອງ rate limit)
+   > ສົ່ງຜ່ານ header ຈາກ env var ຢ່າຂຽນ key ລົງ config ໂດຍກົງ:
+   > ```jsonc
+   > "context7": {
+   >   "type": "remote",
+   >   "url": "https://mcp.context7.com/mcp",
+   >   "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
+   > }
+   > ```
+
 3. ຣີສະຕາດ OpenCode (ຫຼືເປີດ session ໃໝ່) ແລ້ວກວດສະຖານະ:
 
    ```bash
@@ -42,6 +52,9 @@ Remote MCP (ບໍ່ຕ້ອງແລ່ນຫຍັງເທິງເຄື�
 ## playwright — ຄວບຄຸມ browser / e2e testing
 
 MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright — ໃຊ້ສຳລັບ automation, ປ້ອນ form, ຄລິກປຸ່ມ, ຖ່າຍ screenshot ແລະທົດສອບ flow ຂອງເວັບໄຊທ໌ແບບ end-to-end
+
+> [!info] ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນຫຼັງປັບຈູນ (2026-10-03)
+> ວັດແລ້ວວ່ານິຍາມ tool 25 ໂຕຂອງ playwright ກິນ ~4.5k tokens ທຸກ turn ແຕ່ໃນການໃຊ້ງານແທ້ agent ເອີ້ນ playwright 33 ເທື່ອ ທຽບກັບ chrome-devtools 541 ເທື່ອສຳລັບວຽກແບບດຽວກັນ ຈຶ່ງຕັ້ງ `"enabled": false` ໃນ global config ແລ້ວເປີດສະເພາະ project ທີ່ຕ້ອງການໃນ `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — ສ່ວນ e2e test suite ທີ່ຂຽນດ້ວຍ Playwright ຍັງແລ່ນຜ່ານ bash (`npx playwright test`) ໄດ້ຕາມປົກກະຕິ ເບິ່ງ [[tuning]] ແລະ [[gotchas]] ຂໍ້ 11
 
 ### ຂັ້ນຕອນຕິດຕັ້ງ
 
@@ -202,9 +215,15 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
      "type": "local",
      "command": ["od", "mcp"],
      "timeout": 30000,
-     "enabled": true
+     "enabled": false
    }
    ```
+
+   > [!info] `"enabled": false` ເປັນຄ່າເລີ່ມຕົ້ນ ແລ້ວເປີດສະເພາະ project (2026-10-03)
+   > tool 22 ໂຕ + instructions ຂອງ server ນີ້ກິນ ~6.6k tokens ທຸກ turn — ຫຼາຍທີ່ສຸດໃນບັນດາ MCP ທັງໝົດ ແຕ່ໃຊ້ພຽງຕອນດຶງວຽກຈາກ OpenDesign ([[USER-MANUAL]] ຂໍ້ 5) ເປີດໃນ project ທີ່ກຳລັງເຮັດ Phase 2 ດ້ວຍ `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }` ເບິ່ງ [[tuning]]
+
+   > [!warning] Windows: ຖ້າ `od` ໄປພົບ `od.exe` ຂອງ Git
+   > ເມື່ອ `...\Git\usr\bin` ຢູ່ກ່ອນ folder ຂອງ `od.cmd` ໃນ PATH ໃຫ້ໃຊ້ `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` ແທນ — [[gotchas]] ຂໍ້ 16
 
    > [!warning] ຢ່າລັອກ `--daemon-url http://127.0.0.1:7456` (ຊຶ່ງເປັນສິ່ງທີ່ `od mcp install opencode` ຂຽນໃຫ້)
    > ຕັ້ງແຕ່ 0.22 daemon ຂອງ desktop app ຟັງຢູ່ທີ່ port ສຸ່ມ URL ທີ່ລັອກໄວ້ຈຶ່ງໄດ້ `MCP error -32000: Connection closed` ເຖິງແມ່ນຈະເປີດແອັບຢູ່ກໍຕາມ ຖ້າບໍ່ໃສ່ flag ນີ້ `od mcp` ຈະຖາມແອັບທີ່ແລ່ນຢູ່ວ່າຕອນນີ້ daemon ຢູ່ URL ໃດຜ່ານ pipe ໃນເຄື່ອງ `od.mjs` ຕັ້ງ env var ທີ່ຕ້ອງໃຊ້ໃຫ້ອັດຕະໂນມັດ config ຂ້າງເທິງຈຶ່ງບໍ່ມີ port ຕາຍຕົວແລະບໍ່ມີຄ່າສະເພາະເຄື່ອງເລີຍ (ລາຍລະອຽດ: [[gotchas]] ຂໍ້ 4 ຂັ້ນທີ 4) shim `od.mjs` ໃຊ້ໄດ້ສະເພາະ Windows — ເທິງ macOS/Linux ໃຫ້ສຳເນົາ `command`/`env` ທີ່ແອັບຄືນມາເອງຈາກ `GET <daemon>/api/mcp/install-info` ແທນການລັອກ port
@@ -255,6 +274,9 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
 
 > [!note] ເກັບຂໍ້ມູນແບບໃດ
 > ເກັບເປັນ entities + observations ໃນໄຟລ໌ `.jsonl` ທຳມະດາ (ອ່ານ/ແກ້ດ້ວຍມືໄດ້ຖ້າຈຳເປັນ) ບໍ່ແມ່ນ vector database ຫຼື cloud service ໃດໆ
+
+> [!important] ຕ້ອງມີກົດໃນ AGENTS.md ບໍ່ດັ່ງນັ້ນແທບບໍ່ຖືກໃຊ້
+> ໃນ 50 session ແທ້ memory ຖືກເອີ້ນພຽງ 1 ເທື່ອ ແລະໄຟລ໌ `memory.jsonl` ບໍ່ເຄີຍຖືກສ້າງ — tool ບອກພຽງວ່າເຮັດຫຍັງໄດ້ ບໍ່ໄດ້ບອກວ່າຄວນໃຊ້ເມື່ອໃດ ເພີ່ມກົດ "Memory" ໃນ global AGENTS.md (ຂໍ້ຄວາມເຕັມໃນ [[tuning]]) ແລ້ວທົດສອບກັບໂມເດວແທ້: ບັນທຶກໄດ້ ແລະ session ໃໝ່ດຶງກັບມາຕອບຖືກ — [[gotchas]] ຂໍ້ 14
 
 ---
 
@@ -576,14 +598,14 @@ MCP server ນີ້ expose tool ສຳລັບ: analyze code, list issues, che
 opencode mcp list
 ```
 
-ຜົນລັບຕົວຢ່າງຕອນຕັ້ງຄ່າຄົບ (8 ເປີດ + 3 ປິດ):
+ຜົນລັບຕົວຢ່າງຕອນຕັ້ງຄ່າຄົບ ຫຼັງປັບຈູນ (6 ເປີດ + 5 ປິດ — open-design ແລະ playwright ເປີດສະເພາະ project ທີ່ຕ້ອງໃຊ້ ເບິ່ງ [[tuning]]):
 
 ```
-✓ context7        connected
-✓ playwright       connected
+○ open-design      disabled
+✓ context7         connected
+○ playwright       disabled
 ✓ chrome-devtools  connected
 ✓ graft            connected
-✓ open-design      connected
 ✓ memory           connected
 ✓ sonarqube        connected
 ✓ trivy            connected
@@ -591,3 +613,6 @@ opencode mcp list
 ○ postgres         disabled
 ○ mysql            disabled
 ```
+
+> [!tip] `connected` ບໍ່ໄດ້ໝາຍຄວາມວ່າຄຸ້ມ
+> ທຸກ server ທີ່ເປີດຢູ່ສົ່ງນິຍາມ tool ໄປໃນທຸກ turn — ວັດຄ່າໃຊ້ຈ່າຍແທ້ຕໍ່ server ດ້ວຍ `capture-server.mjs` + `analyze-prompt.mjs` ຕາມ [[tuning]] ຂໍ້ 1

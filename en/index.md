@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Home page for the OpenCode CLI setup and usage manual, covering MCP servers, Plugins, and Skills (Agent Skills open standard) for vibe coding
 ---
 
@@ -8,7 +8,7 @@ summary: Home page for the OpenCode CLI setup and usage manual, covering MCP ser
 
 **OpenCode** is a CLI-based AI coding agent (in the same vein as Claude Code) that lets you freely bring your own model provider — including a self-hosted model on your own server — and ships with a fully extensible **MCP (Model Context Protocol)** and **Plugin** system.
 
-This set of docs records a real, working setup — from installing the CLI on a blank machine to wiring up a home model (self-hosted llama.cpp) + 11 MCP servers (8 enabled, 3 waiting to be turned on per-project or for a token) + 4 plugins, along with real problems hit along the way and confirmed fixes.
+This set of docs records a real, working setup — from installing the CLI on a blank machine to wiring up a home model (self-hosted llama.cpp) + 11 MCP servers (6 enabled, 5 turned on per project or waiting for a token) + 4 plugins, along with real problems hit along the way, confirmed fixes, and measurements of whether the workflow actually happens ([[tuning]]).
 
 ---
 
@@ -19,7 +19,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 | **OpenCode CLI** | v1.18.18+, installed via `npm install -g opencode-ai` (global) |
 | **Primary model provider** | `home-llamacpp` — a self-hosted llama.cpp server (URL specific to each machine), model `qwen3.8-27b` (Q4_K, 131k context) via an OpenAI-compatible endpoint |
 | **Fallback model (fast)** | `opencode/deepseek-v4-flash-free` — built into OpenCode itself, no extra API key needed, fast replies (~10s) |
-| **MCP servers** | context7 (docs), playwright + chrome-devtools (browser automation/debug), graft (code-graph/context — per-project), open-design (pulls files from an OpenDesign project), memory (context that persists across sessions), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI), github (issues/PR — disabled until a PAT exists), postgres/mysql (disabled by default, enabled per project) |
+| **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (context that persists across sessions — driven by a global AGENTS.md rule), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **enabled per project:** open-design (pulls files from an OpenDesign project), playwright (browser automation), postgres/mysql · github (disabled until a PAT exists) |
 | **Plugins** | superpowers (skill library from obra/superpowers), graft-deep (custom plugin — auto-inject context only now; auto-rebuilding the graph is graft CLI's own job), ponytail (a ruleset that trims unnecessary code — from dietrichgebert/ponytail), i-have-adhd (forces terse, to-the-point replies — from ayghri/i-have-adhd) |
 | **Skills** (Agent Skills open standard, not a plugin) | grill-me / grilling (from mattpocock/skills) — a batch interview that questions the user in rounds before starting work, wired to superpowers' `brainstorming` so the two don't collide |
 | **Main config** | `~/.config/opencode/opencode.jsonc` (hand-written) + `~/.config/opencode/opencode.json` (open-design entry, hand-edited — **not** the fixed-port version `od mcp install` writes; see [[mcp-servers]]) |
@@ -34,8 +34,9 @@ This set of docs records a real, working setup — from installing the CLI on a 
 - [[mcp-servers]] — details on every MCP server: install steps, config, and how to test each one
 - [[plugins]] — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and i-have-adhd (terse, to-the-point replies)
 - [[USER-MANUAL]] — real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
-- [[gotchas]] — 8 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, etc.)
+- [[gotchas]] — 16 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.)
 - [[updating]] — how to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time
+- [[tuning]] — measuring whether the workflow really happens (prompt size per turn, which tools the agent really calls, an end-to-end test), with result images, scripts to repeat it, and the recommended settings after tuning
 
 ---
 

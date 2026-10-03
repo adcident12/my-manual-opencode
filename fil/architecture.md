@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, architecture, opencode, reference]
-updated: 2026-09-14
+updated: 2026-10-03
 summary: Tinitingnan ang buong stack (MCP servers + plugins + skills) sa pamamagitan ng 4 functional layer (Knowledge/Reasoning/Execution/Governance) sa halip na ayon sa technical mechanism — para masagot kaagad kung aling layer at ano ang trabaho ng bagong tool.
 ---
 
@@ -90,6 +90,27 @@ Sinusunod ang parehong pattern na ginagamit na ng [[sdlc]] para sa Security/Docu
 - **Ang reconciliation rule sa global `AGENTS.md`** (tingnan ang [[plugins]], grill-me/grilling) — isang policy na namamahala kung paano magtulungan ang dalawang skill sa REASONING layer, hindi isang layer mismo
 - `using-superpowers`, `writing-skills` — mga skill sa antas ng meta (nagsisimula sa sarili nito, gumagawa ng bagong skill) na hindi tumatakbo sa normal na cycle
 
+## Ang tunay na gastos ng bawat layer (sinukat noong 2026-10-03)
+
+Sinasabi ng diagram sa itaas kung ano ang **dapat** gawin ng bawat layer — sinasabi ng seksyong ito kung ano ang **binabayaran** ng bawat layer bawat turn at gaano ito **talagang ginagamit** (paraan sa [[tuning]]).
+
+| Layer | Tokens bawat turn (pagkatapos ng tuning) | Talagang ginamit (sessions mula 2026-09-01) |
+| --- | --- | --- |
+| KNOWLEDGE | ~4.4k (graft + context7 + memory + project AGENTS.md) · +6.6k kapag naka-on ang open-design | graft 25 · context7 8 · memory 1 → inayos gamit ang AGENTS.md rule · open-design 1 |
+| REASONING | ~5.4k (buong listahan ng skills + superpowers bootstrap + global AGENTS.md) | regular na tinatawag ang brainstorming / writing-plans |
+| EXECUTION | ~7.8k (chrome-devtools + ponytail) · +4.5k kapag naka-on ang playwright | chrome-devtools 541 · playwright 33 |
+| GOVERNANCE | ~6.7k (sonarqube + trivy) | sonarqube 16 · trivy 0 |
+| Ang OpenCode mismo | ~8.4k (built-in tools + base prompt) | — |
+
+![Prompt budget per turn](../assets/tuning/1-prompt-budget.png)
+
+![What the agent actually called](../assets/tuning/2-tool-usage.png)
+
+> [!important] Ang sinasabi ng mga numero
+> - **Walang kinalaman ang laki ng layer sa paggamit nito** — ~6.7k bawat turn ang binabayaran ng GOVERNANCE pero sa dulo lang ng task ito gumagana, habang nilaktawan ang KNOWLEDGE, na dapat pinakamadalas gamitin (whole-file `read` ang ginawa ng agent sa halip na graft — sanhi at ayos sa [[gotchas]] item 12)
+> - **Ang mga tool na para sa partikular na phase** (open-design sa Phase 2, playwright kapag may chrome-devtools na) ay dapat per project, hindi global
+> - **Bahagi ng architecture ang AGENTS.md rules** — nasa layer nito ang memory mula pa sa simula, pero hindi kailanman nagamit hanggang may rule na nagsabi kung kailan ito gagamitin
+
 ## Paggamit ng page na ito kapag magdaragdag ng bagong tool
 
 Itanong sa pagkakasunod-sunod na ito bago mag-install ng anumang bago:
@@ -99,3 +120,4 @@ Itanong sa pagkakasunod-sunod na ito bago mag-install ng anumang bago:
 3. Ito ba ang aktwal na paggawa (pagsulat ng code / testing / git)? → EXECUTION
 4. Bine-beripika ba nito ang kalidad/seguridad bago ituring na tapos? → GOVERNANCE
 5. Wala sa mga ito, pero sumasama sa lahat? → Cross-cutting (isulat nang malinaw kung bakit, katulad sa itaas — huwag ipilit sa isang layer para lang maging maayos ang table)
+6. Para sa lahat ng nasa itaas: ano ang inilalagay nito sa prompt bawat turn, at paano malalaman ng agent kung kailan ito gagamitin? → sukatin gamit ang [[tuning]] seksyon 1 bago at pagkatapos mag-install; kung sa ilang phase lang ito kailangan, i-enable per project

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, architecture, opencode, reference]
-updated: 2026-09-14
+updated: 2026-10-03
 summary: ເບິ່ງ stack ທັງໝົດ (MCP servers + plugins + skills) ຜ່ານ 4 layer ຕາມໜ້າທີ່ (Knowledge/Reasoning/Execution/Governance) ແທນທີ່ຈະຕາມກົນໄກທາງເທັກນິກ — ເພື່ອໃຫ້ຕອບໄດ້ງ່າຍວ່າເຄື່ອງມືໃໝ່ແຕ່ລະໂຕ "ຢູ່ layer ໃດ ເຮັດໜ້າທີ່ຫຍັງ"
 ---
 
@@ -90,6 +90,27 @@ graph TD
 - **ກົດ reconcile ໃນ global `AGENTS.md`** (ເບິ່ງ [[plugins]] ຫົວຂໍ້ grill-me/grilling) — ເປັນ policy ທີ່ຄວບຄຸມວ່າ REASONING layer ສອງ skill ເຮັດວຽກຮ່ວມກັນແນວໃດ ບໍ່ແມ່ນຕົວ layer ເອງ
 - `using-superpowers`, `writing-skills` — skill ລະດັບ meta (bootstrap ຕົນເອງ, ສ້າງ skill ໃໝ່) ບໍ່ໄດ້ເຮັດວຽກໃນວົງຈອນປົກກະຕິ
 
+## ຕົ້ນທຶນແທ້ຂອງແຕ່ລະ layer (ວັດເມື່ອ 2026-10-03)
+
+diagram ຂ້າງເທິງບອກວ່າແຕ່ລະ layer **ຄວນ**ເຮັດຫຍັງ — ສ່ວນນີ້ບອກວ່າແຕ່ລະ layer **ຈ່າຍ**ຫຍັງທຸກ turn ແລະ**ຖືກໃຊ້**ແທ້ແຄ່ໃດ (ວິທີວັດຢູ່ທີ່ [[tuning]])
+
+| Layer | tokens ຕໍ່ turn (ຫຼັງປັບຈູນ) | ຖືກໃຊ້ແທ້ (session ຕັ້ງແຕ່ 2026-09-01) |
+| --- | --- | --- |
+| KNOWLEDGE | ~4.4k (graft + context7 + memory + project AGENTS.md) · +6.6k ເມື່ອເປີດ open-design | graft 25 · context7 8 · memory 1 → ແກ້ດ້ວຍກົດໃນ AGENTS.md · open-design 1 |
+| REASONING | ~5.4k (ລາຍຊື່ skill ທັງໝົດ + superpowers bootstrap + global AGENTS.md) | brainstorming / writing-plans ຖືກເອີ້ນສະໝ່ຳສະເໝີ |
+| EXECUTION | ~7.8k (chrome-devtools + ponytail) · +4.5k ເມື່ອເປີດ playwright | chrome-devtools 541 · playwright 33 |
+| GOVERNANCE | ~6.7k (sonarqube + trivy) | sonarqube 16 · trivy 0 |
+| OpenCode ເອງ | ~8.4k (tool ພື້ນຖານ + base prompt) | — |
+
+![Prompt budget per turn](../assets/tuning/1-prompt-budget.png)
+
+![What the agent actually called](../assets/tuning/2-tool-usage.png)
+
+> [!important] ສິ່ງທີ່ຕົວເລກບອກ
+> - **ຂະໜາດຂອງ layer ບໍ່ໄດ້ສຳພັນກັບການໃຊ້ງານ** — GOVERNANCE ຈ່າຍ ~6.7k ທຸກ turn ແຕ່ເຮັດວຽກພຽງຕອນທ້າຍວຽກ ສ່ວນ KNOWLEDGE ທີ່ຄວນຖືກໃຊ້ເລື້ອຍທີ່ສຸດກັບຖືກຂ້າມ (agent ໄປ `read` ທັງໄຟລ໌ແທນ graft — ຕົ້ນເຫດແລະວິທີແກ້ທີ່ [[gotchas]] ຂໍ້ 12)
+> - **ເຄື່ອງມືທີ່ໃຊ້ສະເພາະ phase** (open-design ໃນ Phase 2, playwright ຖ້າໃຊ້ chrome-devtools ຢູ່ແລ້ວ) ຄວນເປີດຕໍ່ project ບໍ່ແມ່ນ global
+> - **ກົດໃນ AGENTS.md ເປັນສ່ວນໜຶ່ງຂອງ architecture** — memory ຢູ່ໃນ layer ຕັ້ງແຕ່ທຳອິດ ແຕ່ບໍ່ເຄີຍຖືກໃຊ້ຈົນກວ່າຈະມີກົດບອກວ່າໃຊ້ເມື່ອໃດ
+
 ## ວິທີໃຊ້ໜ້ານີ້ຕອນຈະເພີ່ມເຄື່ອງມືໃໝ່
 
 ຖາມຕາມລຳດັບນີ້ກ່ອນຕິດຕັ້ງຫຍັງໃໝ່:
@@ -99,3 +120,4 @@ graph TD
 3. ມັນຄືການລົງມືເຮັດຈິງ (ຂຽນໂຄ້ດ/test/git) ບໍ → EXECUTION
 4. ມັນກວດສອບຄຸນນະພາບ/ຄວາມປອດໄພກ່ອນຖືວ່າສຳເລັດບໍ → GOVERNANCE
 5. ບໍ່ເຂົ້າຂໍ້ໃດເລີຍ ແຕ່ compose ກັບທຸກຢ່າງ → Cross-cutting (ຂຽນເຫດຜົນໄວ້ໃຫ້ຊັດ ຄືຫົວຂໍ້ເທິງນີ້ ຢ່າຝືນຍັດເຂົ້າ layer ໃດເພື່ອຄວາມສວຍງາມ)
+6. ທຸກຂໍ້ຂ້າງເທິງ: ມັນໃສ່ຫຍັງເຂົ້າ prompt ທຸກ turn ເທົ່າໃດ ແລະ agent ຈະຮູ້ໄດ້ແນວໃດວ່າຕ້ອງໃຊ້ເມື່ອໃດ → ວັດດ້ວຍ [[tuning]] ຂໍ້ 1 ກ່ອນແລະຫຼັງຕິດຕັ້ງ ຖ້າໃຊ້ພຽງບາງ phase ໃຫ້ເປີດຕໍ່ project

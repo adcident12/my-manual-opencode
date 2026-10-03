@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: superpowers (skill library), grill-me/grilling (a batch-interview skill complementing superpowers), graft-deep (a hand-written custom plugin), ponytail (a code-minimization ruleset), and i-have-adhd (forces terse, to-the-point replies) — how to install each, and OpenCode's Plugin Hook API
 ---
 
@@ -203,6 +203,9 @@ if one is available and the lookup is heavy enough to warrant it.
 >
 > Neither case dispatched a subagent at any point during the session, exactly as intended.
 
+> [!warning] Re-tested 2026-10-03 — case 2 doesn't always use graft
+> A second headless end-to-end run (a small feature in a copy of the same game) found `brainstorming` called correctly, but during exploration the agent followed the skill's *"Explore project context — check files, docs, recent commits"* and `read` files one by one instead of using graft — the grill-me rule above only covers fact-finding during grilling, not brainstorming's exploration step. So a "Exploring a codebase — graft first, even inside a skill" rule was added to the global AGENTS.md (full text and before/after in [[tuning]] sections 4–5, [[gotchas]] item 12).
+
 ---
 
 ## graft-deep — custom plugin (auto-inject context)
@@ -216,6 +219,11 @@ graft (see [[mcp-servers]]) has no "deep integration" for OpenCode — auto-inje
 > Two separate reasons, both verified against source code rather than guessed:
 > 1. **graft 0.19.0 changed its own injection rule** (the Claude Code hook this plugin ports) — details under "Injection gate" below.
 > 2. **The previous version was written as if OpenCode behaved like Claude Code — it doesn't.** Reading the OpenCode 1.18.32 source showed that edits made in `experimental.chat.messages.transform` are never saved, so the injected context disappeared from the second agent step onward. Details under "How OpenCode runs this hook" below.
+
+> [!info] Re-checked 2026-10-03 — graft 0.20.0 / 0.21.1 + OpenCode 1.18.34: no code change needed
+> `STRONG_FLOOR = 0.1`, `HIGH_FLOOR = 0.5`, `relevantRetrieval`, and the `ask … --json -n 3` arguments in graft's hook are all unchanged from 0.19, and `graft ask --json` still returns `hits[].title`, `hits[].pointer`, `coverage`, `coverageStrong` — a multi-step hook simulation still keeps the context attached on every step.
+>
+> Worth knowing: the "use graft first" hint this plugin injects isn't enough to stop the model reading files one by one when a loaded skill tells it to — that needs a rule in the global AGENTS.md too ([[gotchas]] item 12)
 
 ### Install
 

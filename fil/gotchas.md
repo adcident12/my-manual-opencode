@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP + Plugins sa Windows, may kumpirmadong ayos (naresolba na ang item 6 sa pamamagitan ng pagtanggal ng dahilan nito, matapos matuklasan na ang built-in na auto-refresh ng graft CLI ang gumawang redundant sa lumang hook)
 ---
 
@@ -8,7 +8,7 @@ summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP
 
 Buod sa [[index]] · Setup sa [[setup]]
 
-10 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup. Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
+16 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup. Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
 
 ---
 
@@ -243,3 +243,89 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 
 > [!tip] Aral
 > Ginagawang hindi nakikita ng isang fallback na nagtatago ng error ang isang bug. Laging mag-preview muna gamit ang `--dry-run` — ipinapakita na nito ngayon ang eksaktong `docker run -p <port>:9000 -v …` na gagamitin nito.
+
+---
+
+## 11. Karamihan ng prompt ay MCP tool definitions — kahit halos hindi ginagamit na servers ay may gastos na tokens bawat turn
+
+**Impact:** Bago magsimula ng anumang trabaho, ~43k tokens (131 tools) ang bigat ng prompt bawat turn — isang-katlo ng 131k context ng lokal na model ang ubos na sa turn 1, kaya mas maagang dumarating ang compaction at mas mabagal ang bawat step.
+
+**Sanhi:** Bawat MCP server na `enabled: true` ay nagpapadala ng lahat ng tool definitions nito (kasama ang instructions ng server) sa **bawat** request, gamitin man ito ng task o hindi — nasukat: open-design ~6.6k, chrome-devtools ~6.4k, playwright ~4.5k tokens, habang ipinapakita ng tunay na history na isang beses lang tinawag ang open-design at 33 beses ang playwright laban sa 541 para sa chrome-devtools (parehong trabaho).
+
+> [!important] Ayos
+> Sukatin muna gamit ang `capture-server.mjs` + `analyze-prompt.mjs`, tingnan ang tunay na paggamit gamit ang `session-report.mjs usage` (buong proseso sa [[tuning]]), saka i-off by default ang bihirang gamiting servers (`"enabled": false`) at i-on per project sa `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }` — nang naka-off ang open-design + playwright, bumaba ang prompt sa ~32.6k tokens (−25%).
+
+> [!tip] Aral
+> Ang `connected` sa `opencode mcp list` ay nagsasabi lang na nakakakonekta ito, hindi na sulit ito — may nakapirming gastos bawat turn ang bawat MCP. Sukatin bago magdagdag ng bago.
+
+---
+
+## 12. Mas nananaig ang instructions ng isang skill kaysa sa AGENTS.md — nilaktawan ng agent ang graft dahil sinabi ng brainstorming na magbasa ng files
+
+**Impact:** Sa tunay na sessions, 25 beses tinawag ng agent ang graft pero 486 na whole-file `read` ang ginawa nito, kahit may `graft/` index ang bawat project at malinaw na sinasabi ng project AGENTS.md na gamitin muna ang graft — sa isang end-to-end test, hindi tinawag ang graft sa buong turn 1.
+
+**Sanhi:** Ang unang hakbang ng `brainstorming` (superpowers) ay *"Explore project context — check files, docs, recent commits"* — sinunod ng model ang kaka-load na skill (`git log`, `read` sa mga folder isa-isa) sa halip na ang AGENTS.md, kahit nag-inject na ang graft-deep ng hint na "use graft first" sa prompt.
+
+> [!important] Ayos
+> Sumulat ng reconciliation rule sa **global** na `~/.config/opencode/AGENTS.md`, kapareho ng paraan ng grilling rule ([[plugins]]): kapag sinabi ng isang skill na i-explore ang project at may `graft/` ang project, gawin ang hakbang na iyon gamit ang `graft_graft_repo_map` / `graft_graft_find_code` / `graft_graft_file_api`, saka `read` lang ang files na ie-edit (buong teksto ng rule sa [[tuning]]) — inulit ang parehong request: graft 0 → 2 tawag, `read` 7 → 2.
+
+> [!tip] Aral
+> Anumang skill na may instruction na "gawin muna ang X" ay maaaring bumangga sa isang AGENTS.md rule. Ang gumagana ay isang rule na binabanggit ang skill na iyon at sinasabi kung ano ang gagawin sa hakbang na iyon — hindi isang malawak na rule at pag-asang tama ang pipiliin ng model.
+
+---
+
+## 13. Binabasa ulit ang buong files pagkatapos ng bawat compaction
+
+**Impact:** Sa mahahabang session, 42–86% ng lahat ng read output ay paulit-ulit na pagbasa ng parehong files (isang session: 204 reads ng 34 na magkakaibang file lang).
+
+**Sanhi:** Kapag inuri ang bawat paulit-ulit na read ayon sa nangyari bago nito (`session-report.mjs rereads`): **76% ay agad pagkatapos ng compaction** — nagko-compact ang karaniwang session nang 4–10 beses, at hindi itinatago ng compaction summary ang laman ng files, kaya binabasa ulit ng agent ang buong file. 17% lang ang re-read pagkatapos ng sariling edit ng agent.
+
+> [!important] Ayos (hindi pa nakumpirma sa mahabang session)
+> 1. Paliitin ang prompt bawat turn (item 11) para mas huling dumating ang compaction
+> 2. I-on ang `"compaction": { "auto": true, "prune": true }` — tinatanggal ang tool output na mas luma sa 2 turn nang tig-≥ 20k tokens, kaya hindi na-i-invalidate ang prompt cache ng llama.cpp bawat turn
+> 3. Isang global AGENTS.md rule: pagkatapos ng compaction gamitin ang `graft skeleton` / `graft ask --source`, saka `read` gamit ang `offset`/`limit` para sa mga linyang kailangan lang
+>
+> Sukatin ulit gamit ang `session-report.mjs rereads` pagkatapos ng ilang tunay na paggamit — detalye sa [[tuning]]
+
+---
+
+## 14. Naka-install ang memory MCP pero hindi kailanman nagamit
+
+**Impact:** Nasa KNOWLEDGE layer ng [[architecture]] ang memory at ~1.1k tokens ang gastos nito bawat turn, pero sa 50 session ay isang beses lang ito tinawag at hindi man lang nagawa ang `memory.jsonl`.
+
+**Sanhi:** Walang nagsasabi sa model **kung kailan** magse-save o maghahanap — ang tool descriptions ay nagsasabi lang kung ano ang kaya ng tools.
+
+> [!important] Ayos
+> Magdagdag ng rule sa global AGENTS.md: maghanap gamit ang `memory_search_nodes` bago tanungin ang user ng bagay na maaaring nasagot na nila · mag-save gamit ang `memory_create_entities` / `memory_add_observations` (may petsa sa unahan) kapag nagsabi ang user ng pangmatagalang kagustuhan o may naabot na desisyong kailangan ng susunod na sessions · huwag kailanman mag-imbak ng secrets o ng naitala na ng repo — sinubukan sa tunay na model: nag-save ang session 1, naalala ito nang tama ng bagong session (buong teksto ng rule sa [[tuning]])
+
+---
+
+## 15. Pumapasok sa OpenCode ang skills ng Claude Code at ng `~/.agents`
+
+**Impact:** Sa makinang may ilang AI tools, nagpakita ang `opencode debug skill` ng 86 na skills sa halip na 25 ng manual na ito — ipinapadala bawat turn ang buong listahan, at mas madaling magkamali ng pili ng skill ang maliit na model (hal. isang pangkalahatang skill gaya ng `truth-first` na nakikipagkumpitensya sa workflow ng superpowers).
+
+**Sanhi:** Kusang ini-scan ng OpenCode ang "external skills" sa `~/.claude/skills/` at `~/.agents/skills/` — at may ilang tools na nag-i-install ng parehong set ng skills sa dalawang lugar (naka-symlink).
+
+> [!important] Ayos
+> I-set ang user-level env var na `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, saka buong i-restart ang terminals at ang editor (item 2) — tiyakin gamit ang `opencode debug skill` na ang skills lang ng manual na ito ang natira.
+>
+> **Huwag** umasa sa `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` lang — `~/.claude/skills` lang ang tinatanggal nito (86 → 74 sa test machine); nakakapasok pa rin ang skills na naka-symlink sa `~/.agents/skills`. Kung talagang gusto mo ang isang partikular na skill sa OpenCode, kopyahin ito sa `~/.config/opencode/skills/<name>/`.
+
+---
+
+## 16. (Windows) Napupunta ang `od` sa `od.exe` ng Git sa halip na sa OpenDesign shim
+
+**Impact:** Nakalagay na ang shim mula sa item 4, pero ipinapakita pa rin ng `od --help` ang help ng octal-dump at hindi makakonekta ang `open-design` MCP.
+
+**Sanhi:** Kung nauuna ang `...\Git\usr\bin` sa folder na may `od.cmd` sa PATH (hal. Node na in-install via nvm-windows, na gumagamit ng ibang folder sa halip na `%APPDATA%\npm`), laging nahahanap muna ng Windows ang `od.exe` ng Git — at ganoon din ang OpenCode kapag nag-spawn ito ng `od`.
+
+> [!important] Ayos
+> Hindi kailangang ayusin ang pagkakasunod ng PATH — patawagin ang shim sa MCP config nang direkta gamit ang node:
+> ```jsonc
+> "open-design": {
+>   "type": "local",
+>   "command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"],
+>   "timeout": 30000
+> }
+> ```
+> Tingnan ang pagkakasunod gamit ang `Get-Command od -All` (PowerShell) — ang unang entry ang tatakbo.

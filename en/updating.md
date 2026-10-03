@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: How to update/upgrade the OpenCode CLI, MCP servers, plugins, the grill-me/grilling skill, and OpenDesign, one at a time
 ---
 
@@ -184,7 +184,7 @@ It still has two things to keep in step with, though:
 1. **graft** — the plugin mirrors graft's own Claude Code prompt hook (the gate that decides when to inject). Compare after every graft upgrade — see the box under graft above.
 2. **OpenCode** — the plugin depends on how OpenCode calls `experimental.chat.messages.transform` (reloaded messages every step, also called during compaction, synthetic parts). If a new OpenCode version changes that, the plugin's assumptions break — see [[plugins]], graft-deep → "How OpenCode runs this hook", and [[gotchas]] item 9.
 
-Last checked: graft 0.19.0 + OpenCode 1.18.32 (2026-09-25).
+Last checked: graft 0.21.1 + OpenCode 1.18.34 (2026-10-03) — graft 0.20/0.21 kept the 0.19 injection gate, no plugin change needed.
 
 ---
 

@@ -17,8 +17,9 @@
 | [mcp-servers.md](mcp-servers.md) | ລາຍລະອຽດ MCP server ແຕ່ລະໂຕ (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) ພ້ອມຂັ້ນຕອນຕິດຕັ້ງສະເພາະໂຕ |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (batch-interview skill ເສີມ superpowers), custom plugin `graft-deep`, `ponytail` (ໂຄ້ດເຕັມ + OpenCode Plugin Hook API) ແລະ `i-have-adhd` (ຮູບແບບຄຳຕອບແບບສັ້ນ ກົງປະເດັນ) |
 | [USER-MANUAL.md](USER-MANUAL.md) | ວິທີໃຊ້ງານຈິງປະຈຳວັນ — vibe coding, graft workflow, OpenDesign → OpenCode workflow |
-| [gotchas.md](gotchas.md) | ບັນຫາທີ່ພົບຈິງ 8 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshotting, native module ABI mismatch, reasoning-model output cap, ຯລຯ) |
+| [gotchas.md](gotchas.md) | ບັນຫາທີ່ພົບຈິງ 16 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshotting, native module ABI mismatch, reasoning-model output cap, prompt ພອງຈາກ MCP, skill ຂັດກັບ AGENTS.md, ຯລຯ) |
 | [updating.md](updating.md) | ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins ແລະ OpenDesign ເທື່ອລະໂຕ |
+| [tuning.md](tuning.md) | **ວັດຜົນແທ້ແລ້ວປັບຈູນ** — ຂະໜາດ prompt ຕໍ່ turn, tool ທີ່ agent ເອີ້ນແທ້, ທົດສອບ workflow ຄົບວົງຈອນ (ພ້ອມຮູບຜົນແລະ script ໃນ `scripts/`) |
 
 ## Stack ທີ່ຄອບຄຸມ
 

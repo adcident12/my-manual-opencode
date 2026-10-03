@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Details on each MCP server set up in OpenCode — install steps, config, how to test, and gotchas
 ---
 
@@ -29,6 +29,16 @@ A remote MCP (nothing to run locally, nothing to pre-install). Searches library/
    "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp" }
    ```
 
+   > [!tip] If you have a context7 API key (optional — helps with rate limits)
+   > Send it as a header from an env var; never write the key into the config:
+   > ```jsonc
+   > "context7": {
+   >   "type": "remote",
+   >   "url": "https://mcp.context7.com/mcp",
+   >   "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
+   > }
+   > ```
+
 3. Restart OpenCode (or open a new session) and check status:
 
    ```bash
@@ -42,6 +52,9 @@ A remote MCP (nothing to run locally, nothing to pre-install). Searches library/
 ## playwright — control a browser / e2e testing
 
 An MCP server that drives a real browser through Playwright — for automation, filling forms, clicking buttons, taking screenshots, and end-to-end testing a website's flow.
+
+> [!info] Off by default after tuning (2026-10-03)
+> Measured: playwright's 25 tool definitions cost ~4.5k tokens every turn, while in real use the agent called playwright 33 times vs 541 for chrome-devtools for the same kind of job. So the global config sets `"enabled": false`, and you turn it on per project in `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — e2e test suites written with Playwright still run through bash (`npx playwright test`) as usual. See [[tuning]] and [[gotchas]] item 11.
 
 ### Install steps
 
@@ -202,9 +215,15 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
      "type": "local",
      "command": ["od", "mcp"],
      "timeout": 30000,
-     "enabled": true
+     "enabled": false
    }
    ```
+
+   > [!info] `"enabled": false` by default, then on per project (2026-10-03)
+   > This server's 22 tools + instructions cost ~6.6k tokens every turn — the most of any MCP here — but it is only used when pulling work in from OpenDesign ([[USER-MANUAL]] section 5). Turn it on in the project doing Phase 2 with `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }`. See [[tuning]].
+
+   > [!warning] Windows: if `od` resolves to Git's `od.exe`
+   > When `...\Git\usr\bin` comes before the folder holding `od.cmd` on PATH, use `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` instead — [[gotchas]] item 16
 
    > [!warning] Don't pin `--daemon-url http://127.0.0.1:7456` (which is what `od mcp install opencode` writes)
    > Since 0.22 the desktop app's daemon listens on a random port, so a pinned URL fails with `MCP error -32000: Connection closed` even while the app is open. Without the flag, `od mcp` asks the running app for its daemon's current URL over a local pipe; `od.mjs` sets the env vars that needs automatically, so the config above has no fixed port and nothing machine-specific (details: [[gotchas]] item 4, step 4). The `od.mjs` shim is Windows-only — on macOS/Linux, copy the `command`/`env` the app itself returns at `GET <daemon>/api/mcp/install-info` instead of pinning a port.
@@ -255,6 +274,9 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
 
 > [!note] What kind of data it stores
 > Stored as entities + observations in a plain `.jsonl` file (readable/editable by hand if needed) — not a vector database or any cloud service.
+
+> [!important] Needs a rule in AGENTS.md, or it barely gets used
+> Over 50 real sessions memory was called once and `memory.jsonl` was never created — the tools say what they can do, not when to use them. Add the "Memory" rule to the global AGENTS.md (full text in [[tuning]]); tested with the real model: it saves, and a new session recalls the fact correctly — [[gotchas]] item 14
 
 ---
 
@@ -585,14 +607,14 @@ Both are local MCPs that need an already-running database server (local or remot
 opencode mcp list
 ```
 
-Example output with everything set up (8 enabled + 3 disabled):
+Example output with everything set up, after tuning (6 enabled + 5 disabled — open-design and playwright are turned on per project when needed, see [[tuning]]):
 
 ```
-✓ context7        connected
-✓ playwright       connected
+○ open-design      disabled
+✓ context7         connected
+○ playwright       disabled
 ✓ chrome-devtools  connected
 ✓ graft            connected
-✓ open-design      connected
 ✓ memory           connected
 ✓ sonarqube        connected
 ✓ trivy            connected
@@ -600,3 +622,6 @@ Example output with everything set up (8 enabled + 3 disabled):
 ○ postgres         disabled
 ○ mysql            disabled
 ```
+
+> [!tip] `connected` doesn't mean worth it
+> Every enabled server sends its tool definitions every turn — measure the real per-server cost with `capture-server.mjs` + `analyze-prompt.mjs` per [[tuning]] section 1

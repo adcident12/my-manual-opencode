@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: A detailed OpenCode install guide from a blank machine — Node.js, Git, the CLI, provider, MCP servers, plugins, Agent Skills open-standard skills, and AGENTS.md (global vs project), every step
 ---
 
@@ -299,6 +299,9 @@ OpenCode looks for skills in 3 places:
 | `~/.config/opencode/skills/<name>/SKILL.md` | Every project (global) |
 | `<project>/.claude/skills/<name>/SKILL.md` | Claude Code compat (the same file works for both tools) |
 
+> [!warning] OpenCode also loads skills from `~/.claude/skills` and `~/.agents/skills` on its own
+> On a machine with Claude Code or other AI tools installed, their skills leak in (on the test machine: 86 skills instead of 25) — every one is sent every turn, and a small model picks the wrong one more easily. Set the user-level env var `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, then reopen terminals/editors. Details, and why not `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`, in [[gotchas]] item 15.
+
 Minimum file structure:
 
 ```markdown
@@ -330,6 +333,15 @@ A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, 
 
 > [!tip] When to write at global instead of project level
 > Write at global when a rule should apply "to every project, always" (e.g. how to reconcile two skills that might collide). Write at project level when it's context specific to that one repo (e.g. graft's context graph). A real example that had to be written at global level is in [[plugins]], the grill-me/grilling section.
+
+The global AGENTS.md in use after tuning has 4 sections:
+
+| Section | Why it's there | Full text |
+| --- | --- | --- |
+| Grill me — complements superpowers brainstorming | keeps two gates from colliding | [[plugins]] |
+| Exploring a codebase — graft first, even inside a skill | `brainstorming`'s first step made the agent skip graft ([[gotchas]] item 12) | [[tuning]] |
+| Re-reading files after compaction or pruning | 76% of repeated reads came right after a compaction ([[gotchas]] item 13) | [[tuning]] |
+| Memory — facts that must outlive this session | the memory MCP was never used without a rule ([[gotchas]] item 14) | [[tuning]] |
 
 ---
 
@@ -369,3 +381,6 @@ opencode debug config    # view the fully resolved config
 ## Next steps
 
 Setup done — read [[USER-MANUAL]] for real day-to-day usage, or [[gotchas]] if you hit a problem along the way.
+
+> [!tip] After some real use — measure, then tune
+> A complete config doesn't mean the agent uses everything as intended. [[tuning]] has scripts to measure the prompt size per turn, see which tools the agent really called from session history, and test the workflow end to end — plus the recommended settings (rarely used MCPs off by default, `compaction.prune`, extra global AGENTS.md rules).

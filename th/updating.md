@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins, grill-me/grilling skill และ OpenDesign แต่ละตัว
 ---
 
@@ -184,7 +184,7 @@ curl -s https://raw.githubusercontent.com/mattpocock/skills/main/skills/producti
 1. **graft** — plugin ลอกแบบ prompt hook ของ Claude Code ใน graft เอง (เกณฑ์ที่ตัดสินว่าจะ inject เมื่อไหร่) ต้องเทียบทุกครั้งที่อัปเกรด graft — ดูกล่องใต้หัวข้อ graft ด้านบน
 2. **OpenCode** — plugin พึ่งวิธีที่ OpenCode เรียก `experimental.chat.messages.transform` (โหลด message ใหม่ทุก step, ถูกเรียกตอน compaction ด้วย, synthetic part) ถ้า OpenCode เวอร์ชันใหม่เปลี่ยนเรื่องนี้ สมมติฐานของ plugin จะพัง — ดู [[plugins]] หัวข้อ graft-deep → "OpenCode เรียก hook นี้อย่างไร" และ [[gotchas]] ข้อ 9
 
-ตรวจล่าสุด: graft 0.19.0 + OpenCode 1.18.32 (2026-09-25)
+ตรวจล่าสุด: graft 0.21.1 + OpenCode 1.18.34 (2026-10-03) — เกณฑ์ inject ของ graft 0.20/0.21 ยังเหมือน 0.19 ไม่ต้องแก้ plugin
 
 ---
 

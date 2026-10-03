@@ -17,8 +17,9 @@ A detailed setup and usage manual for [OpenCode](https://opencode.ai/) CLI — f
 | [mcp-servers.md](mcp-servers.md) | Details on each MCP server (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) with its own install steps |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin, `ponytail` (full source + the OpenCode Plugin Hook API), and `i-have-adhd` (terse, to-the-point reply style) |
 | [USER-MANUAL.md](USER-MANUAL.md) | Real day-to-day usage — vibe coding, the graft workflow, the OpenDesign → OpenCode workflow |
-| [gotchas.md](gotchas.md) | 8 real problems hit in practice, with fixes (Windows PATH/env snapshotting, native module ABI mismatches, reasoning-model output caps, etc.) |
+| [gotchas.md](gotchas.md) | 16 real problems hit in practice, with fixes (Windows PATH/env snapshotting, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.) |
 | [updating.md](updating.md) | How to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time |
+| [tuning.md](tuning.md) | **Measure, then tune** — prompt size per turn, which tools the agent really calls, an end-to-end workflow test (with result images and scripts in `scripts/`) |
 
 ## Stack covered
 

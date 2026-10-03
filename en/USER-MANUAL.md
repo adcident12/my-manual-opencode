@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Day-to-day OpenCode usage manual — vibe coding, the graft workflow, grill-me/grilling, and the OpenDesign workflow
 ---
 
@@ -134,7 +134,7 @@ graft init --agents agents --no-global
 opencode mcp list
 ```
 
-✅ **You should see:** the `graft` row with status `connected`. If not, check [[gotchas]] first.
+✅ **You should see:** the `graft` row with status `connected`. If not, check [[gotchas]] first. `open-design` and `playwright` showing `disabled` is normal (off by default to keep the prompt small — turn them on per project in step 4, see [[tuning]]).
 
 ```bash
 graft map
@@ -149,6 +149,12 @@ If this project needs a database, create a config specific to this repo (won't a
 ```jsonc
 // my-new-project/opencode.jsonc
 { "mcp": { "postgres": { "enabled": true } } }
+```
+
+The same goes for the other servers that are off by default — `open-design` (when pulling work in from OpenDesign, section 5) and `playwright` (if you want it instead of / alongside chrome-devtools):
+
+```jsonc
+{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
 ```
 
 Set the env var **before** opening opencode every time (set it once in a shell profile and you won't have to type it each time):
@@ -213,6 +219,9 @@ The "agent's per-request workflow" diagram in section 1 is an abstract overview 
 
 > [!tip] It's normal not to see every step
 > Small requests (fixing a typo, a general question) skip straight past steps 2–6 and go directly to steps 7–9 — going through every step like this only happens for work that's genuinely "building a new feature."
+
+> [!info] Re-tested headless (2026-10-03) — real result per step
+> A small feature ("add a pause feature …") in a copy of the sample game: step 2 ✅ · step 3 ❌ on the first run (the agent followed brainstorming's "check files" step instead of using graft) → ✅ after adding a rule to the global AGENTS.md · step 4 skipped because the task was narrow enough for one design + approval · steps 6–8 ✅ · step 9 ⚠️ didn't commit on its own — test procedure, result images, and open items in [[tuning]] section 4
 
 ### Using grill-me / grilling before starting a new feature (if installed)
 
@@ -328,6 +337,9 @@ cd my-real-project    # a real full-stack project with opencode's MCPs fully set
 opencode
 ```
 
+> [!important] Turn `open-design` on for this project first
+> The `open-design` MCP is off by default (it costs ~6.6k tokens every turn) — put `{ "mcp": { "open-design": { "enabled": true } } }` in `my-real-project/opencode.json`, reopen opencode, and check `opencode mcp list` shows `open-design` as `connected`.
+
 ```
 Use the open-design tool list_projects to see what projects exist,
 then pull files from project <name> into this folder, and add a backend API next.
@@ -368,3 +380,6 @@ Full list with fixes at [[gotchas]] — the short version:
 - **The same command gives different results between terminals** → try PowerShell instead of Git Bash on Windows (item 5)
 - **The `sonarqube` MCP shows connected but calling a tool gives 401/403** → check whether the token used is a "User Token," not a "Global/Project Analysis Token" (see [[mcp-servers]], the sonarqube section) — the connection check only confirms it can reach the server, it doesn't check the token's permissions at that point
 - **`trivy` shows `command not found` even though winget said it installed successfully** → restart the terminal (VS Code needs the whole app closed) — the same PATH staleness as item 2 (see [[mcp-servers]], the trivy section)
+- **Every turn is slow / compactions are frequent / the agent keeps re-reading the same files** → measure the prompt size and the tool-call history with the scripts in [[tuning]] (items 11 and 13)
+- **The agent doesn't use graft even though there's a `graft/` index** → the global AGENTS.md needs the "graft first, even inside a skill" rule (item 12)
+- **`opencode debug skill` lists Claude Code's skills too** → set `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (item 15)

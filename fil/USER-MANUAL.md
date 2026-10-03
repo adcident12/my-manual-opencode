@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: Araw-araw na gabay sa paggamit ng OpenCode — vibe coding, ang graft workflow, grill-me/grilling, at ang OpenDesign workflow
 ---
 
@@ -134,7 +134,7 @@ graft init --agents agents --no-global
 opencode mcp list
 ```
 
-✅ **Dapat makita mo:** ang row na `graft` na may status na `connected`. Kung hindi, tignan muna [[gotchas]].
+✅ **Dapat makita mo:** ang row na `graft` na may status na `connected`. Kung hindi, tignan muna [[gotchas]]. Normal na `disabled` ang `open-design` at `playwright` (naka-off by default para manatiling maliit ang prompt — i-on per project sa hakbang 4, tingnan ang [[tuning]]).
 
 ```bash
 graft map
@@ -149,6 +149,12 @@ Kung kailangan ng project na ito ng database, gumawa ng config na specific sa re
 ```jsonc
 // my-new-project/opencode.jsonc
 { "mcp": { "postgres": { "enabled": true } } }
+```
+
+Ganito rin para sa ibang servers na naka-off by default — `open-design` (kapag kumukuha ng trabaho mula sa OpenDesign, seksyon 5) at `playwright` (kung gusto mo ito sa halip na / kasabay ng chrome-devtools):
+
+```jsonc
+{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
 ```
 
 I-set ang env var **bago** buksan ang opencode sa tuwing gagamitin (i-set ito isang beses lang sa shell profile at hindi mo na kailangang i-type ito paulit-ulit):
@@ -213,6 +219,9 @@ Ang "per-request workflow" diagram sa seksyon 1 ay isang abstract na buod — an
 
 > [!tip] Normal lang na hindi makita ang lahat ng hakbang
 > Ang maliliit na request (pag-aayos ng typo, isang pangkalahatang tanong) ay dumidiretso sa hakbang 7–9, nilalaktawan ang 2–6 — nangyayari lang ang buong hakbang na ito para sa trabahong talagang "paggawa ng bagong feature."
+
+> [!info] Muling sinubukan nang headless (2026-10-03) — tunay na resulta bawat hakbang
+> Isang maliit na feature ("add a pause feature …") sa kopya ng sample game: hakbang 2 ✅ · hakbang 3 ❌ sa unang run (sinunod ng agent ang "check files" na hakbang ng brainstorming sa halip na gamitin ang graft) → ✅ pagkatapos magdagdag ng rule sa global AGENTS.md · nilaktawan ang hakbang 4 dahil sapat na makitid ang task para sa isang disenyo + approval · hakbang 6–8 ✅ · hakbang 9 ⚠️ hindi kusang nag-commit — proseso ng test, mga larawan ng resulta, at mga natitirang isyu sa [[tuning]] seksyon 4
 
 ### Paggamit ng grill-me / grilling bago magsimula ng bagong feature (kung naka-install)
 
@@ -328,6 +337,9 @@ cd my-real-project    # isang tunay na full-stack project na may kumpletong naka
 opencode
 ```
 
+> [!important] I-on muna ang `open-design` para sa project na ito
+> Naka-off by default ang `open-design` MCP (~6.6k tokens ang gastos nito bawat turn) — ilagay ang `{ "mcp": { "open-design": { "enabled": true } } }` sa `my-real-project/opencode.json`, buksan ulit ang opencode, at tiyaking ipinapakita ng `opencode mcp list` na `connected` ang `open-design`.
+
 ```
 Gamitin ang open-design tool na list_projects para makita kung anong mga project ang meron,
 pagkatapos ay kumuha ng files mula sa project na <pangalan> at ilagay sa folder na ito, at magdagdag ng backend API.
@@ -368,3 +380,6 @@ Buong listahan may kasamang ayos nasa [[gotchas]] — maikling bersyon:
 - **Ibang resulta ang parehong command sa magkaibang terminal** → subukan ang PowerShell sa halip ng Git Bash sa Windows (item 5)
 - **Naka-show na connected ang `sonarqube` MCP pero 401/403 ang resulta sa pagtawag ng tool** → tignan kung "User Token" ang ginagamit na token, hindi "Global/Project Analysis Token" (tignan [[mcp-servers]], seksyong sonarqube) — kinukumpirma lang ng connection check na naaabot ang server, hindi nito tinitignan ang permissions ng token sa oras na iyon
 - **Lumalabas ang `command not found` sa `trivy` kahit sinabi ng winget na matagumpay ang pag-install** → i-restart ang terminal (kailangang buong isara ang VS Code) — parehong PATH staleness gaya ng item 2 (tignan [[mcp-servers]], seksyong trivy)
+- **Mabagal ang bawat turn / madalas ang compaction / paulit-ulit na binabasa ng agent ang parehong files** → sukatin ang laki ng prompt at ang tool-call history gamit ang scripts sa [[tuning]] (item 11 at 13)
+- **Hindi gumagamit ng graft ang agent kahit may `graft/` index** → kailangan ng global AGENTS.md ang rule na "graft first, even inside a skill" (item 12)
+- **Nakalista rin ang skills ng Claude Code sa `opencode debug skill`** → i-set ang `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (item 15)

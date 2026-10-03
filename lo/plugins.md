@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: superpowers (skill library), grill-me/grilling (batch-interview skill ເສີມ superpowers), graft-deep (custom plugin ຂຽນເອງ), ponytail (code-minimization ruleset) ແລະ i-have-adhd (ບັງຄັບຕອບກົງປະເດັນ) — ວິທີຕິດຕັ້ງແຕ່ລະໂຕ ແລະ Plugin Hook API ຂອງ OpenCode
 ---
 
@@ -203,6 +203,9 @@ if one is available and the lookup is heavy enough to warrant it.
 >
 > ທັງສອງກໍລະນີບໍ່ມີການ dispatch subagent ເລີຍຕະຫຼອດທັງ session ຕົງກັບທີ່ຕັ້ງໃຈໄວ້
 
+> [!warning] ທົດສອບຊ້ຳ 2026-10-03 — ກໍລະນີ 2 ບໍ່ໄດ້ໃຊ້ graft ທຸກເທື່ອ
+> ທົດສອບຄົບວົງຈອນແບບ headless ອີກຮອບ (ຂໍ feature ນ້ອຍໃນສຳເນົາຂອງເກມດຽວກັນ) ພົບວ່າ `brainstorming` ຖືກເອີ້ນຖືກຕ້ອງ ແຕ່ໃນຂັ້ນສຳຫຼວດ code agent ເຮັດຕາມປະໂຫຍກ *"Explore project context — check files, docs, recent commits"* ຂອງ skill ແລ້ວ `read` ໄຟລ໌ເທື່ອລະອັນແທນການໃຊ້ graft — ກົດ grill-me ຂ້າງເທິງຄອບຄຸມພຽງຕອນຫາ fact ລະຫວ່າງ grilling ບໍ່ໄດ້ຄອບຄຸມຂັ້ນສຳຫຼວດຂອງ brainstorming ຈຶ່ງເພີ່ມກົດ "Exploring a codebase — graft first, even inside a skill" ໃນ global AGENTS.md (ຂໍ້ຄວາມເຕັມແລະຜົນກ່ອນ/ຫຼັງທີ່ [[tuning]] ຂໍ້ 4–5, [[gotchas]] ຂໍ້ 12)
+
 ---
 
 ## graft-deep — custom plugin (auto-inject context)
@@ -216,6 +219,11 @@ graft (ເບິ່ງ [[mcp-servers]]) ບໍ່ມີ "deep integration" ໃ�
 > ມີສອງເຫດຜົນແຍກກັນ ທັງສອງກວດຈາກ source code ແທ້ ບໍ່ໄດ້ເດົາ:
 > 1. **graft 0.19.0 ປ່ຽນກົດການ inject ຂອງຕົນເອງ** (hook ຂອງ Claude Code ທີ່ plugin ນີ້ port ມາ) — ລາຍລະອຽດຢູ່ຫົວຂໍ້ "ເກນການ inject" ລຸ່ມນີ້
 > 2. **ເວີຊັນກ່ອນຂຽນໂດຍຄິດວ່າ OpenCode ເຮັດວຽກຄື Claude Code — ຊຶ່ງບໍ່ແມ່ນ** ອ່ານ source ຂອງ OpenCode 1.18.32 ແລ້ວພົບວ່າສິ່ງທີ່ແກ້ໃນ `experimental.chat.messages.transform` ບໍ່ຖືກບັນທຶກເລີຍ context ທີ່ inject ຈຶ່ງຫາຍໄປຕັ້ງແຕ່ agent step ທີ 2 — ລາຍລະອຽດຢູ່ຫົວຂໍ້ "OpenCode ເອີ້ນ hook ນີ້ແນວໃດ" ລຸ່ມນີ້
+
+> [!info] ກວດຊ້ຳ 2026-10-03 — graft 0.20.0 / 0.21.1 + OpenCode 1.18.34: ບໍ່ຕ້ອງແກ້ code
+> `STRONG_FLOOR = 0.1`, `HIGH_FLOOR = 0.5`, `relevantRetrieval` ແລະ argument `ask … --json -n 3` ໃນ hook ຂອງ graft ຍັງຄືກັບ 0.19 ທຸກຈຸດ ແລະ `graft ask --json` ຍັງສົ່ງຄືນ `hits[].title`, `hits[].pointer`, `coverage`, `coverageStrong` ຄົບ — ຈຳລອງການເອີ້ນ hook ຫຼາຍ step ແລ້ວ context ຍັງຕິດຢູ່ທຸກ step ຕາມເດີມ
+>
+> ຂໍ້ຄວນຮູ້: hint "use graft first" ທີ່ plugin inject ໃຫ້ ບໍ່ພໍຈະເຮັດໃຫ້ໂມເດວເຊົາອ່ານໄຟລ໌ເທື່ອລະອັນຖ້າ skill ທີ່ໂຫຼດຢູ່ສັ່ງໃຫ້ເຮັດແບບນັ້ນ — ຕ້ອງມີກົດໃນ global AGENTS.md ນຳ ([[gotchas]] ຂໍ້ 12)
 
 ### ຕິດຕັ້ງ
 

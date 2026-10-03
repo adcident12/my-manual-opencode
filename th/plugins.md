@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: superpowers (skill library), grill-me/grilling (batch-interview skill เสริม superpowers), graft-deep (custom plugin ที่เขียนเอง), ponytail (code minimization ruleset) และ i-have-adhd (บังคับตอบตรงประเด็น ไม่อ้อมค้อม) — วิธีติดตั้งและโครงสร้าง Plugin Hook API ของ OpenCode
 ---
 
@@ -203,6 +203,9 @@ if one is available and the lookup is heavy enough to warrant it.
 >
 > ทั้งสองเคสไม่มีการ dispatch subagent เลยตลอดทั้ง session ตรงกับที่ตั้งใจไว้
 
+> [!warning] ทดสอบซ้ำ 2026-10-03 — เคส 2 ไม่ได้ใช้ graft ทุกครั้ง
+> ทดสอบครบวงจรแบบ headless อีกรอบ (ขอ feature เล็กในสำเนาของเกมเดียวกัน) พบว่า `brainstorming` ถูกเรียกถูกต้อง แต่ในขั้นสำรวจโค้ด agent ทำตามประโยค *"Explore project context — check files, docs, recent commits"* ของ skill แล้ว `read` ไฟล์ทีละอันแทนการใช้ graft — กฎ grill-me ด้านบนครอบคลุมแค่ตอนหา fact ระหว่าง grilling ไม่ได้ครอบคลุมขั้นสำรวจของ brainstorming จึงเพิ่มกฎ "Exploring a codebase — graft first, even inside a skill" ใน global AGENTS.md (ข้อความเต็มและผลก่อน/หลังที่ [[tuning]] ข้อ 4–5, [[gotchas]] ข้อ 12)
+
 ---
 
 ## graft-deep — custom plugin (auto-inject context)
@@ -216,6 +219,11 @@ graft (ดู [[mcp-servers]]) ไม่มี "deep integration" ให้ Open
 > มีสองเหตุผลแยกกัน ทั้งคู่ตรวจจาก source code จริง ไม่ได้เดา:
 > 1. **graft 0.19.0 เปลี่ยนกฎการ inject ของตัวเอง** (hook ของ Claude Code ที่ plugin นี้ port มา) — รายละเอียดที่หัวข้อ "เกณฑ์การ inject" ด้านล่าง
 > 2. **เวอร์ชันก่อนเขียนโดยคิดว่า OpenCode ทำงานเหมือน Claude Code — ซึ่งไม่ใช่** อ่าน source ของ OpenCode 1.18.32 แล้วพบว่าสิ่งที่แก้ใน `experimental.chat.messages.transform` ไม่ถูกบันทึกเลย context ที่ inject จึงหายไปตั้งแต่ agent step ที่ 2 — รายละเอียดที่หัวข้อ "OpenCode เรียก hook นี้อย่างไร" ด้านล่าง
+
+> [!info] ตรวจซ้ำ 2026-10-03 — graft 0.20.0 / 0.21.1 + OpenCode 1.18.34: ไม่ต้องแก้โค้ด
+> `STRONG_FLOOR = 0.1`, `HIGH_FLOOR = 0.5`, `relevantRetrieval` และ argument `ask … --json -n 3` ใน hook ของ graft ยังเหมือน 0.19 ทุกจุด และ `graft ask --json` ยังคืน `hits[].title`, `hits[].pointer`, `coverage`, `coverageStrong` ครบ — จำลองการเรียก hook หลาย step แล้ว context ยังติดอยู่ทุก step ตามเดิม
+>
+> ข้อควรรู้: hint "use graft first" ที่ plugin inject ให้ ไม่พอจะทำให้โมเดลเลิกอ่านไฟล์ทีละอันถ้า skill ที่โหลดอยู่สั่งให้ทำแบบนั้น — ต้องมีกฎใน global AGENTS.md ด้วย ([[gotchas]] ข้อ 12)
 
 ### ติดตั้ง
 

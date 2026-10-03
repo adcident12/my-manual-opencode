@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: คู่มือใช้งาน OpenCode วันต่อวัน — vibe coding เว็บไซต์ workflow กับ graft, grill-me/grilling และ OpenDesign
 ---
 
@@ -134,7 +134,7 @@ graft init --agents agents --no-global
 opencode mcp list
 ```
 
-✅ **ต้องเห็น:** แถว `graft` สถานะ `connected` ถ้าไม่ขึ้น ให้เช็ค [[gotchas]] ก่อน
+✅ **ต้องเห็น:** แถว `graft` สถานะ `connected` ถ้าไม่ขึ้น ให้เช็ค [[gotchas]] ก่อน — แถว `open-design` และ `playwright` ขึ้น `disabled` เป็นเรื่องปกติ (ปิดไว้เป็นค่าเริ่มต้นเพื่อลดขนาด prompt เปิดเฉพาะโปรเจกต์ที่ต้องใช้ในขั้น 4 — ดู [[tuning]])
 
 ```bash
 graft map
@@ -149,6 +149,12 @@ graft map
 ```jsonc
 // my-new-project/opencode.jsonc
 { "mcp": { "postgres": { "enabled": true } } }
+```
+
+ใช้วิธีเดียวกันกับ MCP ที่ปิดไว้เป็นค่าเริ่มต้นตัวอื่น — `open-design` (เมื่อจะดึงงานจาก OpenDesign, ข้อ 5) และ `playwright` (ถ้าอยากใช้แทน/คู่กับ chrome-devtools):
+
+```jsonc
+{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
 ```
 
 ตั้ง env var **ก่อน** เปิด opencode ทุกครั้ง (ตั้งครั้งเดียวใน shell profile ก็ได้ ไม่ต้องพิมพ์ทุกครั้ง):
@@ -213,6 +219,9 @@ opencode run -m home-llamacpp/qwen3.8-27b "..."   # ระบุโมเดล�
 
 > [!tip] ไม่เห็นครบทุกขั้นก็ปกติ
 > คำสั่งเล็กๆ (แก้ typo, ถามคำถามทั่วไป) จะข้ามขั้น 2-6 ไปเลย เข้าขั้น 7-9 ตรงๆ — ครบทุกขั้นแบบนี้เกิดกับงานที่เป็น "สร้างฟีเจอร์ใหม่" เท่านั้น
+
+> [!info] ทดสอบซ้ำแบบ headless (2026-10-03) — ผลจริงต่อขั้น
+> ขอ feature เล็ก ("add a pause feature …") ในสำเนาของเกมตัวอย่าง: ขั้น 2 ✅ · ขั้น 3 ❌ ในรอบแรก (agent ทำตามขั้น "check files" ของ brainstorming แทนการใช้ graft) → ✅ หลังเพิ่มกฎใน global AGENTS.md · ขั้น 4 ข้ามไปเพราะงานแคบพอจะเสนอดีไซน์เดียวแล้วขออนุมัติ · ขั้น 6–8 ✅ · ขั้น 9 ⚠️ ไม่ commit เอง — วิธีทดสอบ, ภาพผล และสิ่งที่ยังค้างอยู่ที่ [[tuning]] ข้อ 4
 
 ### ใช้ grill-me / grilling ก่อนเริ่มฟีเจอร์ใหม่ (ถ้าติดตั้งไว้)
 
@@ -328,6 +337,9 @@ cd my-real-project    # โปรเจกต์ full-stack จริงที�
 opencode
 ```
 
+> [!important] เปิด `open-design` ให้โปรเจกต์นี้ก่อน
+> MCP `open-design` ปิดไว้เป็นค่าเริ่มต้น (กิน ~6.6k tokens ทุก turn) — ใส่ `{ "mcp": { "open-design": { "enabled": true } } }` ใน `my-real-project/opencode.json` แล้วเปิด opencode ใหม่ เช็คด้วย `opencode mcp list` ว่า `open-design` ขึ้น `connected`
+
 ```
 ใช้ open-design tool list_projects ดูว่ามีโปรเจกต์อะไรบ้าง
 แล้วดึงไฟล์จากโปรเจกต์ <ชื่อ> มาใส่ในโฟลเดอร์นี้ ต่อด้วยเพิ่ม backend API
@@ -368,3 +380,6 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 - **คำสั่งเดียวกันได้ผลไม่ตรงกันระหว่าง terminal** → ทดสอบผ่าน PowerShell แทน Git Bash บน Windows (ข้อ 5)
 - **MCP `sonarqube` ขึ้น connected แต่เรียก tool แล้ว 401/403** → เช็คว่า token ที่ใช้เป็น "User Token" ไม่ใช่ "Global/Project Analysis Token" (ดู [[mcp-servers]] หัวข้อ sonarqube) — connection ตรวจแค่ว่าต่อ server ได้ ไม่ได้ตรวจสิทธิ์ token ตอนนั้น
 - **`trivy` ขึ้น `command not found` ทั้งที่ winget บอกติดตั้งสำเร็จ** → restart terminal (VS Code ต้องปิดทั้งแอป) — เจอ PATH staleness เดียวกับข้อ 2 (ดู [[mcp-servers]] หัวข้อ trivy)
+- **แต่ละ turn ช้า / compaction บ่อย / agent อ่านไฟล์เดิมซ้ำๆ** → วัดขนาด prompt และดูประวัติการใช้ tool ด้วยสคริปต์ใน [[tuning]] (ข้อ 11 และ 13)
+- **agent ไม่ใช้ graft ทั้งที่มี `graft/` index** → ต้องมีกฎ "graft first, even inside a skill" ใน global AGENTS.md (ข้อ 12)
+- **`opencode debug skill` แสดง skill ของ Claude Code ปนมา** → ตั้ง `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (ข้อ 15)

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, architecture, opencode, reference]
-updated: 2026-09-14
+updated: 2026-10-03
 summary: Views the whole stack (MCP servers + plugins + skills) through 4 functional layers (Knowledge/Reasoning/Execution/Governance) instead of by technical mechanism — so a new addition can be placed by asking "which layer, what job."
 ---
 
@@ -90,6 +90,27 @@ Following the same pattern [[sdlc]] already uses for Security/Documentation (not
 - **The reconciliation rule in the global `AGENTS.md`** (see [[plugins]], grill-me/grilling) — a policy governing how two REASONING-layer skills cooperate, not a layer itself
 - `using-superpowers`, `writing-skills` — meta-level skills (bootstrapping itself, authoring new skills) that don't run in the normal cycle
 
+## What each layer really costs (measured 2026-10-03)
+
+The diagram above says what each layer **should** do — this section says what each layer **pays** every turn and how much it is **actually used** (method in [[tuning]]).
+
+| Layer | Tokens per turn (after tuning) | Actually used (sessions since 2026-09-01) |
+| --- | --- | --- |
+| KNOWLEDGE | ~4.4k (graft + context7 + memory + project AGENTS.md) · +6.6k when open-design is on | graft 25 · context7 8 · memory 1 → fixed with an AGENTS.md rule · open-design 1 |
+| REASONING | ~5.4k (the whole skill list + superpowers bootstrap + global AGENTS.md) | brainstorming / writing-plans called consistently |
+| EXECUTION | ~7.8k (chrome-devtools + ponytail) · +4.5k when playwright is on | chrome-devtools 541 · playwright 33 |
+| GOVERNANCE | ~6.7k (sonarqube + trivy) | sonarqube 16 · trivy 0 |
+| OpenCode itself | ~8.4k (built-in tools + base prompt) | — |
+
+![Prompt budget per turn](../assets/tuning/1-prompt-budget.png)
+
+![What the agent actually called](../assets/tuning/2-tool-usage.png)
+
+> [!important] What the numbers say
+> - **A layer's size has nothing to do with its use** — GOVERNANCE pays ~6.7k every turn but only works at the end of a task, while KNOWLEDGE, which should be used the most, got skipped (the agent did whole-file `read`s instead of graft — cause and fix in [[gotchas]] item 12)
+> - **Phase-specific tools** (open-design in Phase 2, playwright when chrome-devtools is already there) belong per project, not global
+> - **AGENTS.md rules are part of the architecture** — memory was in its layer from day one, but never got used until a rule said when to use it
+
 ## Using this page when adding a new tool
 
 Ask, in this order, before installing anything new:
@@ -99,3 +120,4 @@ Ask, in this order, before installing anything new:
 3. Is it the actual doing (writing code / testing / git)? → EXECUTION
 4. Does it verify quality/security before calling something done? → GOVERNANCE
 5. None of the above, but it composes with everything? → Cross-cutting (write down why explicitly, as done above — don't force it into a layer just to keep the table tidy)
+6. For all of the above: what does it put into the prompt every turn, and how will the agent know when to use it? → measure with [[tuning]] section 1 before and after installing; if it's only needed in some phases, enable it per project

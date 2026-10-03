@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: ຄູ່ມືຕິດຕັ້ງ OpenCode ແບບລະອຽດຕັ້ງແຕ່ເຄື່ອງເປົ່າ — Node.js, Git, CLI, provider, MCP servers, plugins, skill ແບບ Agent Skills open standard ແລະ AGENTS.md (global vs project) ຄົບທຸກຂັ້ນຕອນ
 ---
 
@@ -299,6 +299,9 @@ OpenCode ຫາ skill ຈາກ 3 ບ່ອນ:
 | `~/.config/opencode/skills/<name>/SKILL.md` | ທຸກ project (global) |
 | `<project>/.claude/skills/<name>/SKILL.md` | compat ກັບ Claude Code (ໃຊ້ໄຟລ໌ດຽວກັນໄດ້ທັງສອງເຄື່ອງມື) |
 
+> [!warning] OpenCode ຍັງໂຫຼດ skill ຈາກ `~/.claude/skills` ແລະ `~/.agents/skills` ໃຫ້ເອງນຳ
+> ເທິງເຄື່ອງທີ່ຕິດຕັ້ງ Claude Code ຫຼືເຄື່ອງມື AI ໂຕອື່ນໄວ້ skill ຂອງເຄື່ອງມືເຫຼົ່ານັ້ນຈະປົນເຂົ້າມາ (ເທິງເຄື່ອງທີ່ທົດສອບ: 86 skill ແທນ 25) ທຸກໂຕຖືກສົ່ງໃນທຸກ turn ແລະໂມເດວນ້ອຍເລືອກຜິດງ່າຍ — ຕັ້ງ env var ລະດັບ user `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` ແລ້ວເປີດ terminal/editor ໃໝ່ ລາຍລະອຽດແລະເຫດຜົນທີ່ບໍ່ໃຊ້ `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS` ຢູ່ທີ່ [[gotchas]] ຂໍ້ 15
+
 ໂຄງສ້າງໄຟລ໌ຂັ້ນຕ່ຳ:
 
 ```markdown
@@ -330,6 +333,15 @@ description: ອະທິບາຍສັ້ນໆ ວ່າ skill ນີ້ໃ�
 
 > [!tip] ເມື່ອໃດຄວນຂຽນທີ່ global ແທນ project
 > ຂຽນທີ່ global ເມື່ອກົດນັ້ນຄວນ apply "ທຸກ project ສະເໝີ" (ເຊັ່ນ ວິທີ reconcile skill ສອງໂຕທີ່ອາດຂັດແຍ້ງກັນ) ຂຽນທີ່ project ເມື່ອເປັນບໍລິບົດສະເພາະ repo ນັ້ນ (ເຊັ່ນ context graph ຂອງ graft) — ຕົວຢ່າງຈິງທີ່ຕ້ອງຂຽນທີ່ global ເບິ່ງທີ່ [[plugins]] ຫົວຂໍ້ grill-me/grilling
+
+global AGENTS.md ທີ່ໃຊ້ແທ້ຫຼັງປັບຈູນມີ 4 ຫົວຂໍ້:
+
+| ຫົວຂໍ້ | ເປັນຫຍັງຕ້ອງມີ | ຂໍ້ຄວາມເຕັມ |
+| --- | --- | --- |
+| Grill me — complements superpowers brainstorming | ກັນ gate ສອງໂຕຂັດກັນ | [[plugins]] |
+| Exploring a codebase — graft first, even inside a skill | ຂັ້ນທຳອິດຂອງ `brainstorming` ເຮັດໃຫ້ agent ຂ້າມ graft ([[gotchas]] ຂໍ້ 12) | [[tuning]] |
+| Re-reading files after compaction or pruning | 76% ຂອງການອ່ານໄຟລ໌ຊ້ຳເກີດຫຼັງ compaction ([[gotchas]] ຂໍ້ 13) | [[tuning]] |
+| Memory — facts that must outlive this session | memory MCP ບໍ່ເຄີຍຖືກໃຊ້ຖ້າບໍ່ມີກົດ ([[gotchas]] ຂໍ້ 14) | [[tuning]] |
 
 ---
 
@@ -369,3 +381,6 @@ opencode debug config    # ເບິ່ງ config ທີ່ resolve ແລ້ວ
 ## ຂັ້ນຕອນຕໍ່ໄປ
 
 ຕັ້ງຄ່າແລ້ວ ໄປອ່ານ [[USER-MANUAL]] ສຳລັບວິທີໃຊ້ງານຈິງປະຈຳວັນ ຫຼື [[gotchas]] ຖ້າພົບບັນຫາລະຫວ່າງທາງ
+
+> [!tip] ຫຼັງໃຊ້ງານໄປໄລຍະໜຶ່ງ — ວັດຜົນແລ້ວປັບຈູນ
+> config ຄົບບໍ່ໄດ້ໝາຍຄວາມວ່າ agent ໃຊ້ທຸກຢ່າງຕາມທີ່ຕັ້ງໃຈ [[tuning]] ມີ script ວັດຂະໜາດ prompt ຕໍ່ turn, ເບິ່ງ tool ທີ່ agent ເອີ້ນແທ້ຈາກປະຫວັດ session ແລະທົດສອບ workflow ຄົບວົງຈອນ ພ້ອມຄ່າທີ່ແນະນຳ (ປິດ MCP ທີ່ໃຊ້ໜ້ອຍເປັນຄ່າເລີ່ມຕົ້ນ, `compaction.prune`, ກົດເພີ່ມໃນ global AGENTS.md)

@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-09-25
+updated: 2026-10-03
 summary: ຄູ່ມືການໃຊ້ງານ OpenCode ປະຈຳວັນ — vibe coding, graft workflow, grill-me/grilling ແລະ OpenDesign workflow
 ---
 
@@ -134,7 +134,7 @@ graft init --agents agents --no-global
 opencode mcp list
 ```
 
-✅ **ຕ້ອງເຫັນ:** ແຖວ `graft` ສະຖານະ `connected` ຖ້າບໍ່ຂຶ້ນ ໃຫ້ກວດ [[gotchas]] ກ່ອນ
+✅ **ຕ້ອງເຫັນ:** ແຖວ `graft` ສະຖານະ `connected` ຖ້າບໍ່ຂຶ້ນ ໃຫ້ກວດ [[gotchas]] ກ່ອນ — ແຖວ `open-design` ແລະ `playwright` ຂຶ້ນ `disabled` ເປັນເລື່ອງປົກກະຕິ (ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນເພື່ອຫຼຸດຂະໜາດ prompt ເປີດສະເພາະ project ທີ່ຕ້ອງໃຊ້ໃນຂັ້ນ 4 — ເບິ່ງ [[tuning]])
 
 ```bash
 graft map
@@ -147,6 +147,12 @@ graft map
 ```jsonc
 // my-new-project/opencode.jsonc
 { "mcp": { "postgres": { "enabled": true } } }
+```
+
+ໃຊ້ວິທີດຽວກັນກັບ MCP ທີ່ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນໂຕອື່ນ — `open-design` (ເມື່ອຈະດຶງວຽກຈາກ OpenDesign, ຂໍ້ 5) ແລະ `playwright` (ຖ້າຢາກໃຊ້ແທນ/ຄູ່ກັບ chrome-devtools):
+
+```jsonc
+{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
 ```
 
 ```bash
@@ -207,6 +213,9 @@ opencode run -m home-llamacpp/qwen3.8-27b "..."   # ລະບຸໂມເດວ�
 
 > [!tip] ບໍ່ເຫັນຄົບທຸກຂັ້ນກໍປົກກະຕິ
 > ຄຳສັ່ງນ້ອຍໆ (ແກ້ typo, ຖາມຄຳຖາມທົ່ວໄປ) ຈະຂ້າມຂັ້ນ 2-6 ໄປເລີຍ ເຂົ້າຂັ້ນ 7-9 ໂດຍກົງ
+
+> [!info] ທົດສອບຊ້ຳແບບ headless (2026-10-03) — ຜົນແທ້ຕໍ່ຂັ້ນ
+> ຂໍ feature ນ້ອຍ ("add a pause feature …") ໃນສຳເນົາຂອງເກມຕົວຢ່າງ: ຂັ້ນ 2 ✅ · ຂັ້ນ 3 ❌ ໃນຮອບທຳອິດ (agent ເຮັດຕາມຂັ້ນ "check files" ຂອງ brainstorming ແທນການໃຊ້ graft) → ✅ ຫຼັງເພີ່ມກົດໃນ global AGENTS.md · ຂັ້ນ 4 ຂ້າມໄປເພາະວຽກແຄບພໍຈະສະເໜີການອອກແບບດຽວແລ້ວຂໍອະນຸມັດ · ຂັ້ນ 6–8 ✅ · ຂັ້ນ 9 ⚠️ ບໍ່ commit ເອງ — ວິທີທົດສອບ, ຮູບຜົນ ແລະສິ່ງທີ່ຍັງຄ້າງຢູ່ທີ່ [[tuning]] ຂໍ້ 4
 
 ### ໃຊ້ grill-me / grilling ກ່ອນເລີ່ມ feature ໃໝ່ (ຖ້າຕິດຕັ້ງໄວ້)
 
@@ -315,6 +324,9 @@ cd my-real-project
 opencode
 ```
 
+> [!important] ເປີດ `open-design` ໃຫ້ project ນີ້ກ່ອນ
+> MCP `open-design` ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນ (ກິນ ~6.6k tokens ທຸກ turn) — ໃສ່ `{ "mcp": { "open-design": { "enabled": true } } }` ໃນ `my-real-project/opencode.json` ແລ້ວເປີດ opencode ໃໝ່ ກວດດ້ວຍ `opencode mcp list` ວ່າ `open-design` ຂຶ້ນ `connected`
+
 ```
 ໃຊ້ open-design tool list_projects ເບິ່ງວ່າມີ project ຫຍັງແດ່
 ແລ້ວດຶງໄຟລ໌ຈາກ project <ຊື່> ມາໃສ່ໃນໂຟນເດີນີ້ ຕໍ່ດ້ວຍເພີ່ມ backend API
@@ -348,3 +360,6 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 - **ຄຳສັ່ງດຽວກັນໄດ້ຜົນບໍ່ຕົງກັນລະຫວ່າງ terminal** → ທົດສອບຜ່ານ PowerShell ແທນ Git Bash (ຂໍ້ 5)
 - **MCP `sonarqube` ຂຶ້ນ connected ແຕ່ 401/403** → ກວດ token ວ່າເປັນ "User Token" ບໍ່ (ເບິ່ງ [[mcp-servers]])
 - **`trivy` ຂຶ້ນ `command not found`** → restart terminal (ເບິ່ງ [[mcp-servers]])
+- **ແຕ່ລະ turn ຊ້າ / compaction ເລື້ອຍ / agent ອ່ານໄຟລ໌ເດີມຊ້ຳໆ** → ວັດຂະໜາດ prompt ແລະເບິ່ງປະຫວັດການໃຊ້ tool ດ້ວຍ script ໃນ [[tuning]] (ຂໍ້ 11 ແລະ 13)
+- **agent ບໍ່ໃຊ້ graft ທັງທີ່ມີ `graft/` index** → ຕ້ອງມີກົດ "graft first, even inside a skill" ໃນ global AGENTS.md (ຂໍ້ 12)
+- **`opencode debug skill` ສະແດງ skill ຂອງ Claude Code ປົນມາ** → ຕັ້ງ `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (ຂໍ້ 15)

@@ -17,8 +17,9 @@ Detalyadong gabay sa pag-setup at paggamit ng [OpenCode](https://opencode.ai/) C
 | [mcp-servers.md](mcp-servers.md) | Detalye ng bawat MCP server (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) kasama ang sariling hakbang sa pag-install |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (isang batch-interview skill na dagdag sa superpowers), ang custom na `graft-deep` plugin, `ponytail` (buong source code + ang OpenCode Plugin Hook API), at `i-have-adhd` (maikli, diretso-sa-punto na istilo ng sagot) |
 | [USER-MANUAL.md](USER-MANUAL.md) | Aktwal na araw-araw na paggamit — vibe coding, ang graft workflow, ang OpenDesign → OpenCode workflow |
-| [gotchas.md](gotchas.md) | 8 aktwal na problemang naranasan, may kasamang ayos (Windows PATH/env snapshotting, native module ABI mismatch, reasoning-model output cap, atbp.) |
+| [gotchas.md](gotchas.md) | 16 aktwal na problemang naranasan, may kasamang ayos (Windows PATH/env snapshotting, native module ABI mismatch, reasoning-model output cap, prompt na lumaki dahil sa MCP tools, skill na nananaig sa AGENTS.md, atbp.) |
 | [updating.md](updating.md) | Paano i-update/i-upgrade ang OpenCode CLI, MCP servers, plugins, at OpenDesign, isa-isa |
+| [tuning.md](tuning.md) | **Sukatin, saka i-tune** — laki ng prompt bawat turn, aling tools ang talagang tinatawag ng agent, isang end-to-end na test ng workflow (kasama ang mga larawan ng resulta at scripts sa `scripts/`) |
 
 ## Saklaw na Stack
 

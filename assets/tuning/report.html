@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenCode Tuning Report</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --ring: rgba(11, 11, 11, 0.10);
+    --s1: #2a78d6;  /* blue */
+    --s2: #eb6834;  /* orange */
+    --s3: #1baf7a;  /* aqua */
+    --before: #c3c2b7;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --critical: #d03b3b;
+    --good-text: #006300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --before: #52514e; --good-text: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --before: #52514e; --good-text: #0ca30c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; padding-block: 24px; padding-inline: 16px; }
+  main { max-width: 960px; margin: 0 auto; display: grid; gap: 20px; }
+  header h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; }
+  header p { margin: 0; color: var(--ink-2); }
+  section { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 20px 22px 18px; }
+  h2 { font-size: 16px; margin: 0 0 2px; font-weight: 650; }
+  .sub { color: var(--ink-2); margin: 0 0 14px; font-size: 13px; }
+  .note { color: var(--muted); font-size: 12px; margin: 12px 0 0; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .tile { flex: 1 1 180px; border: 1px solid var(--ring); border-radius: 10px; padding: 10px 14px; }
+  .tile .label { color: var(--ink-2); font-size: 12px; }
+  .tile .value { font-size: 26px; font-weight: 650; }
+  .tile .delta { font-size: 12px; color: var(--good-text); font-weight: 600; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin: 0 0 10px; }
+  .key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .chart { display: grid; grid-template-columns: 210px 1fr; gap: 6px 12px; align-items: center; }
+  .chart .name { font-size: 13px; color: var(--ink); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chart .name small { color: var(--muted); }
+  .track { position: relative; display: grid; gap: 2px; border-left: 1px solid var(--axis); padding: 2px 0; }
+  .bar { height: 11px; border-radius: 0 4px 4px 0; display: flex; align-items: center; }
+  .chart .name.two-line { white-space: normal; line-height: 1.25; }
+  .chart .name.two-line small { display: block; }
+  .two { align-items: start; }
+  .two td:first-child { width: 46%; }
+  .bar.thick { height: 20px; }
+  .val { font-size: 12px; color: var(--ink-2); margin-left: calc(100% + 6px); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .row-line { display: flex; align-items: center; }
+  .row-line .val { margin-left: 6px; }
+  .stack { display: flex; gap: 2px; height: 20px; }
+  .stack span { display: block; height: 100%; }
+  .stack span:last-child { border-radius: 0 4px 4px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { color: var(--ink-2); font-weight: 600; font-size: 12px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .status { font-weight: 600; }
+  .status::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  .ok::before { background: var(--good); } .warn::before { background: var(--warning); } .bad::before { background: var(--critical); }
+  .na::before { background: var(--axis); }
+  ul.changes { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+  ul.changes b { font-weight: 600; }
+  code { font: 12px ui-monospace, SFMono-Regular, Consolas, monospace; background: color-mix(in srgb, var(--grid) 55%, transparent); padding: 1px 4px; border-radius: 4px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .chart { grid-template-columns: 120px 1fr; } .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>OpenCode tuning report</h1>
+    <p>Measured 2026-10-03 · OpenCode 1.18.34 · graft 0.21.1 · self-hosted Qwen3.8 27B (llama.cpp, 131k context) · scripts in <code>scripts/</code></p>
+  </header>
+
+  <section id="budget">
+    <h2>Prompt budget per turn — before vs after tuning</h2>
+    <p class="sub">Every turn re-sends the system prompt, all AGENTS.md files, the skill list and every enabled tool's definition. Captured with <code>capture-server.mjs</code>, split with <code>analyze-prompt.mjs</code>.</p>
+    <div class="tiles">
+      <div class="tile"><div class="label">Prompt tokens before any work</div><div class="value">43.3k → 32.6k</div><div class="delta">−10.7k tokens (−25%)</div></div>
+      <div class="tile"><div class="label">Tool definitions sent</div><div class="value">131 → 84</div><div class="delta">−47 tools</div></div>
+      <div class="tile"><div class="label">Share of 131k context left for work</div><div class="value">67% → 75%</div><div class="delta">+8 points</div></div>
+    </div>
+    <div class="legend"><span><i class="key" style="background:var(--before)"></i>Before (all MCP servers on)</span><span><i class="key" style="background:var(--s1)"></i>After (open-design &amp; playwright off by default, new AGENTS.md rules)</span></div>
+    <div class="chart" id="budget-chart"></div>
+    <p class="note">Token counts = characters ÷ 3.6. Check: the "before" total (43.3k) matches the 42,920 prompt tokens the provider reported for the same prompt. Global AGENTS.md grows by ~480 tokens because of the three new rules.</p>
+  </section>
+
+  <section id="usage">
+    <h2>What the agent actually called — real sessions since 2026-09-01</h2>
+    <p class="sub">Tool calls summed over 7 working sessions across 4 projects (<code>session-report.mjs usage</code>), before tuning. MCP servers in the architecture vs. how often they were used.</p>
+    <div class="chart" id="usage-chart"></div>
+    <p class="note">Rarely or never used while costing tokens every turn: open-design (1 call, ~6.6k tokens/turn), playwright (33 calls vs 541 for chrome-devtools, same job), memory (1 call, file never created), trivy (0 calls). graft: 25 calls vs 486 whole-file reads.</p>
+  </section>
+
+  <section id="rereads">
+    <h2>Why files were read again</h2>
+    <p class="sub">Each repeated <code>read</code> of the same file, classified by what happened since the previous read (<code>session-report.mjs rereads</code>).</p>
+    <div class="legend"><span><i class="key" style="background:var(--s1)"></i>After the agent's own edit</span><span><i class="key" style="background:var(--s2)"></i>After a compaction</span><span><i class="key" style="background:var(--s3)"></i>No new information</span></div>
+    <div class="chart" id="reread-chart"></div>
+    <p class="note">260 of 341 re-reads (76%) came right after a compaction — the summary drops file contents, so the agent reads whole files again. Sessions compacted 4–10 times. Fix: <code>compaction.prune</code> + a "ranged re-read" rule (not yet verified on a long session).</p>
+  </section>
+
+  <section id="e2e">
+    <h2>End-to-end test — "add a pause feature (P / Esc)" in an isolated copy of the sample game</h2>
+    <p class="sub">Run headless with <code>opencode run</code> against the real local model, then inspected with <code>session-report.mjs session</code>.</p>
+    <div class="two">
+      <table>
+        <thead><tr><th>USER-MANUAL step</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>superpowers picks <code>brainstorming</code></td><td class="status ok">Yes, first call</td></tr>
+          <tr><td>graft finds the relevant code</td><td class="status ok">Fixed (0 → 2 calls)</td></tr>
+          <tr><td>batched grilling questions</td><td class="status na">Not needed — bounded task, one design + approval</td></tr>
+          <tr><td>ponytail keeps the change small</td><td class="status ok">1 file, ~10 lines</td></tr>
+          <tr><td>tests + browser check</td><td class="status ok">5/5 suites, P/Esc verified in Chrome</td></tr>
+          <tr><td>memory recalls across sessions</td><td class="status ok">Stored, then recalled in a new session</td></tr>
+          <tr><td>one scoped commit</td><td class="status warn">Not done — left uncommitted</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Turn 1 (explore + design)</th><th class="num">Before rule</th><th class="num">After rule</th></tr></thead>
+        <tbody>
+          <tr><td>graft calls</td><td class="num">0</td><td class="num">2</td></tr>
+          <tr><td>read calls</td><td class="num">7</td><td class="num">2</td></tr>
+          <tr><td>directory listings via read</td><td class="num">4</td><td class="num">0</td></tr>
+          <tr><td>total tool calls</td><td class="num">11</td><td class="num">7</td></tr>
+          <tr><td>wall time</td><td class="num">4m 52s</td><td class="num">6m 00s</td></tr>
+        </tbody>
+        <thead><tr><th colspan="3">Turn 2 (implement + verify)</th></tr></thead>
+        <tbody>
+          <tr><td>tool calls / of them chrome-devtools</td><td class="num" colspan="2">60 / 37</td></tr>
+          <tr><td>wall time</td><td class="num" colspan="2">32m 40s</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Root cause of the missing graft calls: brainstorming's first step says "Explore project context — check files, docs, recent commits", and the model followed it over AGENTS.md — even though graft-deep had injected a "use graft first" hint. The new global AGENTS.md rule reconciles the two, like the existing grilling rule.</p>
+  </section>
+
+  <section id="changes">
+    <h2>What was changed</h2>
+    <ul class="changes">
+      <li><b>open-design and playwright off by default</b> (<code>"enabled": false</code>) — enable per project in its <code>opencode.json</code>.</li>
+      <li><b><code>compaction.prune: true</code></b> — drops tool outputs older than the last 2 turns / newest 40k tokens, in ≥20k chunks.</li>
+      <li><b>Global AGENTS.md: 3 new rules</b> — graft first even inside a skill · ranged re-reads after compaction · when to search and save memory.</li>
+      <li><b><code>OPENCODE_DISABLE_EXTERNAL_SKILLS=1</code></b> — keeps <code>~/.claude/skills</code> and <code>~/.agents/skills</code> out (86 → 25 skills).</li>
+      <li><b>context7 as a remote MCP</b> with the key from <code>{env:CONTEXT7_API_KEY}</code>, never inline.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+  const fmt = (n) => n.toLocaleString('en-US');
+  const budget = [
+    ['open-design', 'MCP', 6646, 0], ['chrome-devtools', 'MCP', 6397, 6397], ['built-in tools', '', 5899, 5899],
+    ['sonarqube', 'MCP', 4939, 4939], ['playwright', 'MCP', 4475, 0], ['skill list', '', 3352, 3352],
+    ['OpenCode base prompt', '', 2454, 2454], ['trivy', 'MCP', 1746, 1746], ['context7', 'MCP', 1449, 1449],
+    ['ponytail ruleset', 'plugin', 1442, 1442], ['graft', 'MCP', 1171, 1171], ['memory', 'MCP', 1087, 1087],
+    ['superpowers bootstrap', 'plugin', 1048, 1048], ['AGENTS.md (global)', '', 484, 967], ['AGENTS.md (project)', '', 698, 698],
+  ];
+  const bmax = 7000;
+  document.getElementById('budget-chart').innerHTML = budget.map(([n, tag, b, a]) => `
+    <div class="name" title="${n}">${n}${tag ? ` <small>${tag}</small>` : ''}</div>
+    <div class="track">
+      <div class="row-line"><div class="bar" style="width:${(b / bmax) * 85}%;background:var(--before)" title="before: ${fmt(b)} tokens"></div><span class="val">${fmt(b)}</span></div>
+      <div class="row-line"><div class="bar" style="width:${(a / bmax) * 85}%;background:var(--s1)" title="after: ${fmt(a)} tokens"></div><span class="val">${a ? fmt(a) : 'off'}</span></div>
+    </div>`).join('');
+
+  const usage = [
+    ['chrome-devtools', 'MCP · execution', 541], ['read', 'built-in', 486], ['bash', 'built-in', 388], ['edit', 'built-in', 210],
+    ['playwright', 'MCP · execution', 33], ['grep', 'built-in', 31], ['graft', 'MCP · knowledge', 25], ['sonarqube', 'MCP · governance', 16],
+    ['context7', 'MCP · knowledge', 8], ['memory', 'MCP · knowledge', 1], ['open-design', 'MCP · knowledge', 1], ['trivy', 'MCP · governance', 0],
+  ];
+  const umax = 600;
+  document.getElementById('usage-chart').innerHTML = usage.map(([n, tag, v]) => `
+    <div class="name" title="${n}">${n} <small>${tag}</small></div>
+    <div class="track"><div class="row-line"><div class="bar thick" style="width:${(v / umax) * 85}%;background:var(--s1)" title="${n}: ${v} calls"></div><span class="val">${v === 0 ? '0 — never called' : fmt(v)}</span></div></div>`).join('');
+
+  const rereads = [
+    ['Sonic sample — build', 78, 7, 11, 23, 10], ['Sonic sample — explore', 85, 8, 28, 35, 2], ['Project B — game', 25, 4, 8, 4, 1],
+    ['Project C — dashboard UI', 204, 10, 6, 162, 2], ['Sonic sample — scan', 87, 8, 6, 36, 7],
+  ];
+  const rmax = 180;
+  document.getElementById('reread-chart').innerHTML = rereads.map(([n, reads, comp, e, c, x]) => `
+    <div class="name two-line" title="${n}">${n} <small>${reads} reads · ${comp} compactions</small></div>
+    <div class="track"><div class="row-line">
+      <div class="stack" style="width:${((e + c + x) / rmax) * 85}%" title="${n}: ${e} after edit, ${c} after compaction, ${x} no new info">
+        <span style="flex:${e};background:var(--s1)"></span><span style="flex:${c};background:var(--s2)"></span><span style="flex:${x};background:var(--s3)"></span>
+      </div><span class="val">${e} / ${c} / ${x}</span></div></div>`).join('');
+</script>
+</body>
+</html>
