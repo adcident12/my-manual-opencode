@@ -367,7 +367,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 
 ### 9.4 ທົດສອບຄົບວົງຈອນ ຄຳຂໍດຽວກັບຂໍ້ 4
 
-`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay` ໃນສຳເນົາໃໝ່ຂອງເກມຕົວຢ່າງ ໂມເດວ Qwen3.8 27B ທີ່ host ເອງ
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay` ໃນສຳເນົາໃໝ່ຂອງເກມຕົວຢ່າງ ໂມເດວ Ternary-Bonsai-2-27B ທີ່ host ເອງ (Qwen3.8-27B ແບບ ternary 1.7 bit, ~42 tok/s ເທິງ GPU ໂຕດຽວ) server ແລ່ນໂມເດວນີ້ໃນທຸກຮອບຂ້າງລຸ່ມ ແຕ່ OpenCode ຕິດປ້າຍ session ວ່າ `qwen3.8-27b-v3` ເພາະ llama-server ບໍ່ສົນຊື່ໂມເດວໃນ request ກ່ອນທຽບຕົວເລກຈຶ່ງຄວນກວດວ່າ server ໂຫຼດໂມເດວໃດຢູ່ແທ້
 
 | ຮອບ | ກົດທີ່ເພີ່ມໃນ global AGENTS.md | Turn 1 (ອອກແບບ) | ລົງມື + ກວດໃນ browser | ຜົນ |
 | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 - **ຂັ້ນອະນຸມັດກັບມາເຮັດວຽກແລ້ວ** ດ້ວຍກົດຊຸດສຸດທ້າຍ turn 1 ສຳຫຼວດສະເພາະ code ຂອງໂປຣເຈັກ (graft + 5–6 ໄຟລ໌) ສະແດງການອອກແບບສັ້ນໆ (ໄຟລ໌ ພຶດຕິກຳ ສິ່ງທີ່ຈະບໍ່ເຮັດ ແລະຄຳຖາມໜຶ່ງຂໍ້) ແລະບໍ່ແກ້ຫຍັງ — ປະມານ 6 ນາທີ
 - **ຮອບ 4 ບໍ່ໄດ້ໂຫຼດ `brainstorming` ເລີຍ** — ການອອກແບບມາຈາກກົດໃນ AGENTS.md ລ້ວນໆ superpowers 7 ຂ້າມຂັ້ນຕອນຂອງຕົນເອງເມື່ອເຫັນວ່າຄຳຂໍຊັດ ກົດນີ້ຄືສິ່ງທີ່ຮັກສາຂັ້ນອະນຸມັດໄວ້
 - **ການກວດໃນ browser ຍັງເປັນສ່ວນທີ່ແພງທີ່ສຸດ:** chrome-devtools 23–56 ເທື່ອຕໍ່ຮອບເທິງໂມເດວນີ້ ແລະມັກທົດສອບເກີນ "ໜຶ່ງ interaction" ທີ່ກົດກຳນົດ ສອງໃນສີ່ຮອບພົບກັບດັກຂອງ OpenCode 2 ໃນຂັ້ນນີ້ — ໜ້າທີ່ session ກ່ອນເປີດຄ້າງໄວ້ ແລະ script ໃນ Code Mode ທີ່ບໍ່ resolve ([[gotchas]] ຂໍ້ 26) ທັງສອງເລື່ອງເປັນກົດໃນ AGENTS.md ແລ້ວ ເລື່ອງທີສອງເພີ່ມຫຼັງຮອບ 4 ແລະຍັງບໍ່ໄດ້ທົດສອບຊ້ຳຄົບຮອບ
-- **ໂຕໂມເດວຄືຄໍຂວດ:** ໂມເດວ 27B ທີ່ແລ່ນໃນເຄື່ອງຄິດເປັນນາທີລະຫວ່າງ tool call ແຕ່ລະເທື່ອ ເຜື່ອເວລາ ~30 ນາທີສຳລັບ feature ນ້ອຍໜຶ່ງວຽກຕັ້ງແຕ່ຕົ້ນຈົນຈົບ
+- **ໂຕໂມເດວຄືຄໍຂວດ:** ເຖິງຈະໄດ້ ~42 tok/s ໂມເດວ 27B ທີ່ແລ່ນໃນເຄື່ອງກໍຍັງຄິດເປັນນາທີລະຫວ່າງ tool call ແຕ່ລະເທື່ອ ເຜື່ອເວລາ ~30 ນາທີສຳລັບ feature ນ້ອຍໜຶ່ງວຽກຕັ້ງແຕ່ຕົ້ນຈົນຈົບ
 
 > [!warning] ຢຸດ run ແບບ headless ບໍ່ໄດ້ຢຸດ session
 > ເທິງ OpenCode 2 `opencode run` ເປັນພຽງ client ຂອງ background service: kill ມັນ (Ctrl+C, timeout) ແລ້ວ session ຍັງເຮັດວຽກຕໍ່ ໃຫ້ຢຸດດ້ວຍ `Esc` ໃນ TUI ຫຼື `opencode api session.interrupt --param sessionID=<id>` (ຊອກ id ດ້ວຍ `opencode session list`)

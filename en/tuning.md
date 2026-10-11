@@ -367,7 +367,7 @@ The drop comes from **Code Mode**: instead of 70+ MCP tool definitions, the mode
 
 ### 9.4 End-to-end test, same request as section 4
 
-`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay`, in a fresh copy of the sample game, self-hosted Qwen3.8 27B.
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay`, in a fresh copy of the sample game, self-hosted Ternary-Bonsai-2-27B (Qwen3.8-27B with 1.7-bit ternary weights, ~42 tok/s on one GPU). The server ran this model for every run below; OpenCode labelled the sessions `qwen3.8-27b-v3` because llama-server ignores the model id in a request, so check which model the server really loaded before comparing numbers.
 
 | Run | Rules added to the global AGENTS.md | Turn 1 (design) | Build + browser check | Result |
 | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ What the numbers say:
 - **The approval step works again.** With the final rules, turn 1 explores only the project's own code (graft + 5–6 files), shows a short design (files, behavior, what it leaves out, one question) and changes nothing — about 6 minutes.
 - **In run 4 `brainstorming` wasn't loaded at all** — the AGENTS.md rule alone produced the design. superpowers 7 skips its own process for a request it judges clear; the rule is what keeps the approval step.
 - **The browser check is still the expensive part:** 23–56 chrome-devtools calls per run on this model, and it tends to keep testing past the one interaction the rule asks for. Two of four runs hit an OpenCode 2 trap in this step — pages left open by an earlier session, and a Code Mode script that never resolves ([[gotchas]] item 26). Both are now AGENTS.md rules; the second was added after run 4 and has not been re-tested in a full run yet.
-- **The model is the bottleneck:** a 27B model running locally reasons for minutes between tool calls. Plan on ~30 minutes for a small feature end to end.
+- **The model is the bottleneck:** even at ~42 tok/s, a local 27B model reasons for minutes between tool calls. Plan on ~30 minutes for a small feature end to end.
 
 > [!warning] Stopping a headless run doesn't stop the session
 > On OpenCode 2, `opencode run` is only a client of the background service: killing it (Ctrl+C, a timeout) leaves the session running. Stop it with `Esc` in the TUI, or `opencode api session.interrupt --param sessionID=<id>` (find the id with `opencode session list`).

@@ -367,7 +367,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ใส่ใน sh
 
 ### 9.4 ทดสอบครบวงจร คำขอเดียวกับข้อ 4
 
-`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay` ในสำเนาใหม่ของเกมตัวอย่าง โมเดล Qwen3.8 27B ที่ host เอง
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay` ในสำเนาใหม่ของเกมตัวอย่าง โมเดล Ternary-Bonsai-2-27B ที่ host เอง (Qwen3.8-27B แบบ ternary 1.7 bit, ~42 tok/s บน GPU ตัวเดียว) server รันโมเดลนี้ในทุกรอบด้านล่าง แต่ OpenCode ติดป้าย session ว่า `qwen3.8-27b-v3` เพราะ llama-server ไม่สนชื่อโมเดลใน request ก่อนเทียบตัวเลขจึงควรเช็คว่า server โหลดโมเดลไหนอยู่จริง
 
 | รอบ | กฎที่เพิ่มใน global AGENTS.md | Turn 1 (ดีไซน์) | ลงมือ + ตรวจในเบราว์เซอร์ | ผล |
 | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ใส่ใน sh
 - **ขั้นอนุมัติกลับมาทำงานแล้ว** ด้วยกฎชุดสุดท้าย turn 1 สำรวจเฉพาะโค้ดของโปรเจกต์ (graft + 5–6 ไฟล์) แสดงดีไซน์สั้นๆ (ไฟล์ พฤติกรรม สิ่งที่จะไม่ทำ และคำถามหนึ่งข้อ) และไม่แก้อะไร — ราว 6 นาที
 - **รอบ 4 ไม่ได้โหลด `brainstorming` เลย** — ดีไซน์มาจากกฎใน AGENTS.md ล้วนๆ superpowers 7 ข้ามขั้นตอนของตัวเองเมื่อมองว่าคำขอชัด กฎนี้คือสิ่งที่รักษาขั้นอนุมัติไว้
 - **การตรวจในเบราว์เซอร์ยังเป็นส่วนที่แพงที่สุด:** chrome-devtools 23–56 ครั้งต่อรอบบนโมเดลนี้ และมักทดสอบเกิน "หนึ่ง interaction" ที่กฎกำหนด สองในสี่รอบเจอกับดักของ OpenCode 2 ในขั้นนี้ — หน้าที่ session ก่อนเปิดค้างไว้ และ script ใน Code Mode ที่ไม่ resolve ([[gotchas]] ข้อ 26) ทั้งสองเรื่องเป็นกฎใน AGENTS.md แล้ว เรื่องที่สองเพิ่มหลังรอบ 4 และยังไม่ได้ทดสอบซ้ำครบรอบ
-- **ตัวโมเดลคือคอขวด:** โมเดล 27B ที่รันในเครื่องคิดเป็นนาทีระหว่าง tool call แต่ละครั้ง เผื่อเวลา ~30 นาทีสำหรับฟีเจอร์เล็กหนึ่งงานตั้งแต่ต้นจนจบ
+- **ตัวโมเดลคือคอขวด:** แม้จะได้ ~42 tok/s โมเดล 27B ที่รันในเครื่องก็ยังคิดเป็นนาทีระหว่าง tool call แต่ละครั้ง เผื่อเวลา ~30 นาทีสำหรับฟีเจอร์เล็กหนึ่งงานตั้งแต่ต้นจนจบ
 
 > [!warning] หยุด run แบบ headless ไม่ได้หยุด session
 > บน OpenCode 2 `opencode run` เป็นแค่ client ของ background service: kill มัน (Ctrl+C, timeout) แล้ว session ยังทำงานต่อ ให้หยุดด้วย `Esc` ใน TUI หรือ `opencode api session.interrupt --param sessionID=<id>` (หา id ด้วย `opencode session list`)

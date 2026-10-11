@@ -367,7 +367,7 @@ Galing ang pagbaba sa **Code Mode**: sa halip na 70+ MCP tool definitions, isang
 
 ### 9.4 End-to-end test, parehong request gaya ng section 4
 
-`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay`, sa bagong kopya ng sample game, self-hosted Qwen3.8 27B.
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay`, sa bagong kopya ng sample game, self-hosted Ternary-Bonsai-2-27B (Qwen3.8-27B na may 1.7-bit ternary weights, ~42 tok/s sa isang GPU). Ito ang model na pinatakbo ng server sa bawat run sa ibaba; may label na `qwen3.8-27b-v3` ang mga session sa OpenCode dahil binabalewala ng llama-server ang model id sa request, kaya tingnan muna kung aling model talaga ang naka-load sa server bago maghambing ng mga numero.
 
 | Run | Mga rule na idinagdag sa global AGENTS.md | Turn 1 (disenyo) | Pagbuo + browser check | Resulta |
 | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ Ang sinasabi ng mga numero:
 - **Gumagana ulit ang approval step.** Sa huling mga rule, ang turn 1 ay nag-e-explore lang ng sariling code ng project (graft + 5–6 na file), nagpapakita ng maikling disenyo (mga file, behavior, ang iiwan, isang tanong) at walang binabago — mga 6 na minuto.
 - **Sa run 4, hindi na-load ang `brainstorming`** — ang AGENTS.md rule lang ang gumawa ng disenyo. Nilalaktawan ng superpowers 7 ang sarili nitong proseso para sa request na itinuturing nitong malinaw; ang rule ang nagpapanatili ng approval step.
 - **Ang browser check pa rin ang pinakamahal na bahagi:** 23–56 chrome-devtools calls bawat run sa model na ito, at madalas itong magpatuloy sa pagsubok lampas sa isang interaction na hinihingi ng rule. Dalawa sa apat na run ang tinamaan ng OpenCode 2 trap sa hakbang na ito — mga page na iniwang bukas ng naunang session, at Code Mode script na hindi nag-resolve ([[gotchas]] item 26). Pareho na itong AGENTS.md rules; idinagdag ang pangalawa pagkatapos ng run 4 at hindi pa nasusubukan ulit sa buong run.
-- **Ang model ang bottleneck:** ilang minuto nag-iisip ang lokal na 27B model sa pagitan ng mga tool call. Maglaan ng ~30 minuto para sa maliit na feature mula simula hanggang tapos.
+- **Ang model ang bottleneck:** kahit ~42 tok/s, ilang minuto pa ring nag-iisip ang lokal na 27B model sa pagitan ng mga tool call. Maglaan ng ~30 minuto para sa maliit na feature mula simula hanggang tapos.
 
 > [!warning] Hindi napapahinto ng pagpapahinto sa headless run ang session
 > Sa OpenCode 2, client lang ng background service ang `opencode run`: ang pag-kill dito (Ctrl+C, timeout) ay nag-iiwan sa session na tumatakbo. Ihinto ito gamit ang `Esc` sa TUI, o ang `opencode api session.interrupt --param sessionID=<id>` (hanapin ang id gamit ang `opencode session list`).
