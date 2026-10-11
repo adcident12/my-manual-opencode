@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins, grill-me/grilling skill และ OpenDesign แต่ละตัว
 ---
 
@@ -22,7 +22,7 @@ node scripts/update-opencode.mjs --dry-run   # ดูว่าจะรันค
 node scripts/update-opencode.mjs --recreate-sonarqube   # เพิ่มการ recreate sonarqube server container ด้วย
 ```
 
-ครอบคลุม: OpenCode CLI, graft (พร้อม fallback อัตโนมัติถ้า `graft upgrade` พังตามบั๊กที่เจอใน [[gotchas]]), ล้าง cache ของ superpowers/ponytail, `git pull` ของ i-have-adhd, เทียบ diff ของ grill-me/grilling กับต้นฉบับ (ไม่ overwrite อัตโนมัติ), pull image ของ sonarqube MCP wrapper, อัปเดต trivy CLI/plugin
+ครอบคลุม: OpenCode CLI, graft (พร้อม fallback อัตโนมัติถ้า `graft upgrade` พังตามบั๊กที่เจอใน [[gotchas]]), ล้าง cache ของ superpowers/ponytail, `git pull` ของ i-have-adhd, เทียบ diff ของ grill-me/grilling กับต้นฉบับ (ไม่ overwrite อัตโนมัติ), pull image ของ sonarqube MCP wrapper, อัปเดต trivy CLI/plugin บน OpenCode 2 ส่วนของ superpowers/ponytail ใช้ `opencode plugin update` แทนการลบ cache และสคริปต์ตรวจด้วยว่า caveman ถูก port เป็น OpenCode 2 แล้วหรือยัง
 
 > [!warning] ขั้นตอนที่ **ไม่** ทำให้อัตโนมัติ (ต้องสั่ง flag/ทำเอง)
 > - **sonarqube Server container** — ข้ามเป็น default เพราะต้อง stop+rm+recreate container ที่รันอยู่ ต้องใส่ `--recreate-sonarqube` ถึงจะทำ (สคริปต์จะ `docker inspect` container เดิมก่อนเพื่อใช้ volume names จริงที่มีอยู่ ไม่ hardcode ทับ)
@@ -35,6 +35,26 @@ node scripts/update-opencode.mjs --recreate-sonarqube   # เพิ่มกา�
 > - `trivy plugin update` ที่ fail เพราะ network (plugin index อยู่บน github.io ซึ่งบาง network บล็อก) ตอนนี้เป็น ⚠️ warning ถ้า `trivy plugin upgrade` ยังสำเร็จ ไม่ใช่ ❌ failure
 >
 > ถ้ารันจากสำเนาในเครื่อง (เช่น `~/.config/opencode/scripts/update-opencode.mjs`) ให้แทนที่ด้วย [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) ตัวใหม่
+
+---
+
+## อัปเกรดจาก OpenCode 1 เป็น OpenCode 2 (ทำเมื่อ 2026-10-11, 1.18.34 → 2.0.26)
+
+OpenCode 2 อ่าน config, AGENTS.md, skills และ commands เดิมได้ แต่มี 3 เรื่องที่พัง และ setup นี้โดนครบ บวกกับพฤติกรรมที่เปลี่ยนอีก 2 เรื่อง ทำตามลำดับนี้:
+
+1. **สำรอง** `~/.config/opencode/` — V1 และ V2 ใช้โฟลเดอร์เดียวกัน
+2. **ติดตั้ง V2**: แพ็กเกจ npm ตอนนี้คือ `@opencode/cli` (`opencode-ai` ยังเป็น 1.x) ถอนตัวเก่าก่อน: `npm uninstall -g opencode-ai && npm install -g @opencode/cli` — [[gotchas]] ข้อ 20
+3. **Plugins** — plugin แบบ V1 ไม่ทำงานบน V2: แทน `plugin/graft-deep.js` ด้วย [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js), รัน [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs) และใน array `plugin` ให้เหลือแต่แพ็กเกจ — [[gotchas]] ข้อ 20–21
+4. **Skills** — `OPENCODE_DISABLE_EXTERNAL_SKILLS` ไม่มีผลแล้ว: เพิ่ม allow-list ใน `permissions` — [[gotchas]] ข้อ 15
+5. **Compaction** — `compaction.prune` ไม่มีผลแล้ว: ใช้ `keep.tokens` และ `buffer` — [[tuning]] หัวข้อ 9
+6. **global AGENTS.md** — ตอนนี้ tool ของ MCP ถูกเรียกใน `execute` (Code Mode) ชื่อ tool จึงเปลี่ยน (`graft_graft_find_code` → `tools.graft.graft_find_code`) และ superpowers 7 ต้องมีกฎ "Approval before building" — คัดลอก [`config/AGENTS.md`](../config/AGENTS.md) — [[gotchas]] ข้อ 23
+7. **MCP รายโปรเจกต์** — `{ "enabled": true }` ใช้ไม่ได้แล้ว ต้องใส่รายการเต็ม — [[gotchas]] ข้อ 22
+8. `opencode service restart` แล้วรันการตรวจใน [[USER-MANUAL]] "เริ่มใช้งานตั้งแต่ต้นจนจบ" ส่วน A
+
+ขั้น 3–6 มีไฟล์พร้อมใช้ใน [`config/`](../config/README.md) แล้ว ส่วนผลที่วัดก่อน/หลังอยู่ใน [[tuning]] หัวข้อ 9
+
+> [!warning] ฝั่งเรายังแก้ไม่ได้
+> OpenDesign 0.24.1 ใช้ OpenCode 2 เป็น engine ไม่ได้ — [[gotchas]] ข้อ 24 ส่วน `lsp` ยังรับค่าได้ แต่ OpenCode 2 ไม่รัน language server
 
 ---
 
@@ -51,11 +71,11 @@ opencode upgrade 0.1.48
 ```
 
 > [!tip] เลือก installation method ให้ตรงกับตอนติดตั้งครั้งแรก
-> ถ้าติดตั้งผ่าน `npm install -g opencode-ai` (ตามที่ [[setup]] แนะนำ) ใช้:
+> ถ้าติดตั้งผ่าน `npm install -g @opencode/cli` (ตามที่ [[setup]] แนะนำ) ใช้:
 > ```bash
 > opencode upgrade -m npm
 > ```
-> `-m`/`--method` รองรับ `curl`, `npm`, `pnpm`, `bun`, `brew`, `choco`, `scoop` — เลือกให้ตรงกับตอนติดตั้งจะได้ไม่มีสอง installation ปนกัน
+> `-m`/`--method` รองรับ `curl`, `npm`, `pnpm`, `bun`, `yarn`, `vp`, `brew` — เลือกให้ตรงกับตอนติดตั้งจะได้ไม่มีสอง installation ปนกัน
 
 ตรวจสอบเวอร์ชันหลังอัปเดต:
 
@@ -98,6 +118,9 @@ graft upgrade    # อัปเกรด global install ให้เป็นเ
 ---
 
 ## superpowers plugin (ติดตั้งผ่าน git)
+
+> [!tip] OpenCode 2: `opencode plugin update`
+> OpenCode 2 จัดการ plugin แบบแพ็กเกจเอง — `opencode plugin check` บอกว่า superpowers/ponytail ตามหลังไหม `opencode plugin update` อัปเดตทั้งคู่ การลบ cache ด้านล่างใช้กับ OpenCode 1 เท่านั้น superpowers 7.0.0 เปลี่ยนพฤติกรรมของ `brainstorming` — [[gotchas]] ข้อ 23
 
 ติดตั้งแบบ `superpowers@git+https://github.com/obra/superpowers.git` (ไม่ pin เวอร์ชัน) — ตามหลักการควรดึง commit ล่าสุดของ branch `main` ทุกครั้งที่ opencode โหลด plugin แต่ในทางปฏิบัติ **opencode/Bun บาง version จะ cache git dependency ที่ resolve ไว้แล้ว** ทำให้ restart เฉยๆ ไม่เห็นเวอร์ชันใหม่
 
@@ -148,6 +171,9 @@ rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
 
 > [!warning] อย่าอัปเดตด้วย installer
 > `bin/install.js` เขียน `opencode.jsonc` ใหม่เป็น JSON ธรรมดาและลบ comment ทิ้ง — [[gotchas]] ข้อ 18 สคริปต์ `update-opencode.mjs` ไม่แตะ caveman (ติดตั้งเวอร์ชันล่าสุดที่ทดสอบ: v3.1.0, 2026-10-03)
+
+> [!important] OpenCode 2: port ใหม่ทุกครั้งหลังดาวน์โหลด
+> การดาวน์โหลดจะเขียนทับ `plugin.js` ด้วย plugin แบบ V1 จากต้นทาง (v3.2.0 ก็ยังเป็น V1) ซึ่ง OpenCode 2 ข้ามไปเงียบๆ ให้รัน `node scripts/port-caveman-opencode2.mjs` หลังดาวน์โหลด — `update-opencode.mjs` จะเตือนเมื่อจำเป็น
 
 ---
 
@@ -296,9 +322,8 @@ trivy plugin upgrade     # อัปเกรด plugin ที่ติดตั
 | MCP ผ่าน npx (playwright, chrome-devtools, postgres, mysql, memory) | ❌ อัตโนมัติ | — |
 | context7 (remote) | ❌ อัตโนมัติ (ฝั่งเซิร์ฟเวอร์) | — |
 | graft | ✅ ต้องสั่งเอง | `graft upgrade` |
-| superpowers | ⚠️ ต้องสั่งเอง (เพราะปัญหา cache) | ลบ cache แล้ว restart |
-| ponytail | ⚠️ ต้องสั่งเอง (ถ้า lockfile pin ไว้) | ลบ cache แล้ว restart |
-| caveman | ✅ ต้องสั่งเอง (ไฟล์ล็อก tag) | เปลี่ยน tag แล้วดาวน์โหลดซ้ำ — ห้ามใช้ installer |
+| superpowers + ponytail | ✅ ต้องสั่งเอง | OpenCode 2: `opencode plugin update` · OpenCode 1: ลบ cache แล้ว restart |
+| caveman | ✅ ต้องสั่งเอง (ไฟล์ล็อก tag) | เปลี่ยน tag, ดาวน์โหลดซ้ำ แล้ว `port-caveman-opencode2.mjs` — ห้ามใช้ installer |
 | i-have-adhd (ถ้ายังใช้) | ✅ ต้องสั่งเอง (local clone) | `git pull` แล้ว restart |
 | grill-me / grilling | ✅ ต้องเช็ค diff เอง (vendored, ไม่มี manager) | curl raw URL เทียบ แล้ว merge การแก้กลับ |
 | graft-deep.js | ➖ ไม่มีต้นทาง (เขียนเอง) — แต่ต้องเทียบกับ hook ของ graft ทุกครั้งที่อัปเกรด graft | แก้ไฟล์ตรงๆ ดู [[plugins]] |

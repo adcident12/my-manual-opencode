@@ -1,7 +1,7 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-10-03
-summary: superpowers (skill library), grill-me/grilling (batch-interview skill na dagdag sa superpowers), graft-deep (manu-manong sinulat na custom plugin), ponytail (code-minimization ruleset), at i-have-adhd (pinipilit ang maikli, diretso-sa-punto na sagot) — paano i-install ang bawat isa, at ang Plugin Hook API ng OpenCode
+updated: 2026-10-11
+summary: superpowers (skill library), grill-me/grilling (batch-interview skill na dagdag sa superpowers), graft-deep (sariling-gawang custom plugin), ponytail (code-minimization ruleset), at caveman (maikling sagot, ginagamit sa halip na i-have-adhd) — paano i-install ang bawat isa sa OpenCode 2, at ang plugin API ng OpenCode 2
 ---
 
 # Plugins
@@ -23,13 +23,19 @@ Ang [obra/superpowers](https://github.com/obra/superpowers) ay isang set ng "ski
 { "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"] }
 ```
 
-I-restart ang OpenCode pagkatapos tignan:
+Patakbuhin ang `opencode service restart`, saka tingnan:
 
 ```bash
-opencode debug skill
+opencode plugin list     # superpowers  <commit>  superpowers@git+https://...
 ```
 
-Dapat makita mo ang lahat ng 14 skills: brainstorming, systematic-debugging, writing-plans, test-driven-development, executing-plans, using-git-worktrees, verification-before-completion, receiving-code-review, requesting-code-review, subagent-driven-development, finishing-a-development-branch, dispatching-parallel-agents, writing-skills, at using-superpowers.
+May 15 skills ang superpowers 7.0.0: brainstorming, diagnosing-superpowers, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills. Sa OpenCode 2, kailangan din ng bawat isa ng `allow` na linya sa listahan ng `permissions` ([[gotchas]] item 15).
+
+> [!warning] Binago ng superpowers 7.0.0 ang `brainstorming` (2026-10)
+> Sinusukat na muna nito ang trabaho. Ang "quick, clear task" (*"everything that matters is in the request"*) ay diretsong napupunta sa code nang walang design na aaprubahan; ang "small change" ay inilalarawan sa chat at naghihintay ng approval; ang "project" ay may nakasulat na design at plan. Para sa hindi malinaw na trabaho, nagtatanong ito ng **isang** open question bawat mensahe. Pinapanatili ng setup na ito ang sarili nitong workflow gamit ang dalawang rule sa global AGENTS.md: "Approval before building" (naghihintay ng approval ang bawat pagbabago ng behavior) at ang grill-me rule sa ibaba (naka-batch ang mga tanong) — [[gotchas]] item 23, [[tuning]] section 9.
+
+> [!info] Mga pangalan ng tool sa OpenCode 2
+> Kusang itinutugma ng bootstrap ng superpowers ang mga instruction nito sa tools ng OpenCode 2: `shell` sa halip na `bash`, `subagent` sa halip na `task`. **Walang todo tool** sa OpenCode 2 — sinusubaybayan ang plan sa markdown file nito.
 
 > [!info] Paano nag-i-inject ng context ang superpowers
 > Nag-i-inject ang superpowers ng isang "bootstrap" sa **unang** user message ng session (hindi system message) — sinadya ito para bawasan ang token bloat at iwasan ang problema ng ilang model (hal. Qwen) sa maraming system messages. Walang handang flag para patayin ang gawing ito.
@@ -225,40 +231,30 @@ Walang "deep integration" ang graft (tignan [[mcp-servers]]) para sa OpenCode �
 >
 > Dapat malaman: hindi sapat ang hint na "use graft first" na ini-inject ng plugin na ito para pigilan ang model sa pagbasa ng files isa-isa kapag iyon ang sinasabi ng isang naka-load na skill — kailangan din ng rule sa global AGENTS.md ([[gotchas]] item 12)
 
+> [!important] Isinulat ulit para sa OpenCode 2 (2026-10-11)
+> Hindi pinapatakbo ng OpenCode 2 ang V1 plugins ([[gotchas]] item 20), kaya nagde-default-export na ang plugin ng `{ id: 'graft-deep', setup(ctx) }`. Idinudugtong ang context sa **`prompt` hook**: tumatakbo ito nang isang beses kapag tinanggap ang prompt mo, at sine-save ang anumang idinagdag nito bilang bahagi ng mensahe mo. Iyon ang ugali ng Claude Code na laging sinusubukang gayahin ng plugin na ito — wala na ang cache-and-re-attach na lusot na kinailangan ng OpenCode 1. Hindi nagbago ang injection gate at ang async, injection-safe na tawag sa `graft ask`.
+>
+> Nakikitang pagkakaiba: lumalabas na ngayon ang mga linyang `[graft] possibly relevant code…` sa ilalim ng mensahe mo sa session history.
+
 ### Pag-install
 
-1. Ilagay ang file sa `~/.config/opencode/plugin/graft-deep.js` (gawin mismo ang `plugin` folder kung wala pa)
-2. Idagdag ang path na iyon sa `plugin` array ng global config
-3. Walang kailangang i-set bawat project — maliban sa `graft build` na kailangan pa ring patakbuhin nang isang beses bawat repo gaya ng dati (tignan [[mcp-servers]]). Pagkatapos noon, ang graft mismo ang magpapanatili ng kasariwaan ng graph sa tuwing tinatanong — wala nang kailangang mag-rebuild dito.
+1. Ilagay ang file sa `~/.config/opencode/plugin/graft-deep.js` (gumawa ng `plugin` folder kung wala pa). Sa Windows, patakbuhin din nang isang beses ang `npm install cross-spawn` sa `~/.config/opencode`.
+2. Walang kailangang idagdag sa `plugin` array — kusang nilo-load ng OpenCode 2 ang mga `.js` file sa folder na iyon, at tinatanggihan ang file path sa array ([[gotchas]] item 21)
+3. `opencode service restart`, saka dapat ilista ng `opencode api GET /api/plugin` ang `graft-deep` bilang `active`
+4. Walang kailangang per-project na setup — maliban sa `graft build`, na kailangan pa ring patakbuhin nang isang beses bawat repo gaya ng dati (tignan ang [[mcp-servers]]); pagkatapos noon, kusang pinapanatiling sariwa ng graft ang graph tuwing tinatanong ito
 
-> [!note] Nasa `plugin` array *at* nasa `plugin/` folder — isang beses pa rin lang itong naglo-load
-> Awtomatikong nilo-load ng OpenCode ang bawat `{plugin,plugins}/*.{ts,js}` sa config dir **at** lahat ng nasa `plugin` array, tapos inaalis ang doble batay sa eksaktong file URL (`deduplicatePluginOrigins` sa `config/plugin.ts`). Kumpirmado gamit ang `opencode debug config`: isang beses lang lumalabas ang `graft-deep.js`.
+### Plugin API ng OpenCode 2 na ginamit
 
-### OpenCode Plugin Hook API na ginamit
+Ang V2 plugin ay nagde-default-export ng definition; ang `setup(ctx)` ang nagre-register ng hooks sa domain na may-ari nito. Isa lang ang ginagamit ng graft-deep:
 
-Nagbabalik ang isang plugin ng object ng hooks batay sa type na `Hooks` mula sa `@opencode-ai/plugin` — isa lang ang ginagamit dito:
-
-| Hook | Kailan tumatakbo | Ginagawa ng graft-deep |
+| Hook | Kailan tumatakbo | Ano ang ginagawa ng graft-deep dito |
 | --- | --- | --- |
-| `experimental.chat.messages.transform` | Bago ang **bawat** LLM call — bawat agent step ng isang turn, at pati sa compaction | Sa unang step ng bagong user turn: tinatawag ang `graft ask` nang isang beses at kina-cache ang resulta ayon sa message ID. Sa bawat tawag: ibinabalik ang bawat naka-cache na context sa message nito |
+| `ctx.session.hook("prompt", …)` | Isang beses bawat prompt ng user, bago ito i-save — hindi sa synthetic messages, shell commands o compaction | Pinapatakbo ang `graft ask` sa `event.prompt.text` at idinudugtong ang pack (o ang hint) dito; ang binago ang nagiging naka-save na mensahe ng user |
 
-Ibang hooks na available pero hindi ginagamit dito: `tool.execute.before`, `tool.execute.after`, `chat.message`, `command.execute.before`, `session.compacting`, `event`, `tool.definition` — tignan ang buong type sa `node_modules/@opencode-ai/plugin/dist/index.d.ts`.
+Iba pang hook na ginagamit sa setup na ito: `ctx.session.hook("context", …)` (tumatakbo bago ang **bawat** tawag sa model; dito ipinu-push ng caveman ang rule set nito sa `event.system`) at `ctx.event.subscribe()` (binabantayan ng caveman ang `session.created`). Nasa [plugin docs](https://opencode.ai/v2/docs/build/plugins/) ng OpenCode ang buong listahan; nasa [[gotchas]] item 20 ang V1 → V2 na pagtutugma.
 
-### Paano pinapatakbo ng OpenCode ang hook na ito (sinuri sa source ng opencode 1.18.32)
-
-> [!important] **Pansamantala** lang ang mga pagbabago sa `messages.transform` — para sa iisang LLM call lang
-> Nilo-load muli ng prompt loop ang lahat ng message mula sa storage sa simula ng bawat step (`session/prompt.ts`, `MessageV2.filterCompactedEffect` sa loob ng `while (true)` loop) bago tawagin ang hook. Anuman ang idagdag ng hook ay ipinapadala sa model nang isang beses tapos itinatapon. Kabaligtaran ito ng Claude Code, kung saan permanenteng nasusulat sa transcript ang output ng `UserPromptSubmit` hook.
-
-Ang epekto nito sa nakaraang bersyon, at kung paano ito hinahawakan ng bersyong ito:
-
-| Gawi ng OpenCode | Nakaraang bersyon | Ngayon |
-| --- | --- | --- |
-| Bagong load ang mga message bawat step | Nag-inject sa step 1, tapos sa step 2+ agad nagre-return ang `injected.has(key)` → **nawala ang context sa sandaling tumawag ng unang tool ang agent** | Kinukuwenta ang pack nang isang beses bawat message, kina-cache ayon sa message ID, at **ibinabalik sa bawat tawag** — nakikita pa rin sa mga susunod na step at turn, gaya ng transcript ng Claude Code |
-| Tinatawag din ng compaction ang hook na ito, gamit ang kopya ng lumang history (`session/compaction.ts`) | Nagpatakbo ng walang-silbing `graft ask` laban sa lumang message | Tumatakbo lang ang `graft ask` kapag ang **huling** message ay sa user (unang step ng bagong turn); sa compaction, ibinabalik lang ang mga naka-cache na context |
-| Nagdadagdag ang sariling reminders ng OpenCode ng `synthetic` na text parts sa user message bago tumakbo ang hook (`session/reminders.ts` — mga prompt ng plan mode atbp.) | Nahalo ang boilerplate na iyon sa graft query | Ginagamit lang ng query ang mga text part na hindi `synthetic`/`ignored`; ang in-inject na part mismo ay may markang `synthetic: true`, ang sariling convention ng OpenCode |
-| Tumatakbo ang mga plugin sa parehong process ng TUI | Napapahinto ng `crossSpawn.sync` ang OpenCode nang hanggang 8 segundo | Tumatakbo ang `graft ask` sa pamamagitan ng async na `spawn` — tuloy-tuloy ang event loop |
-
-Mga side effect ng pagbabalik: nananatiling pareho ang prompt prefix bawat step (friendly sa prompt cache), at nagiging tapat ang "novelty" gate sa ibaba — ang pointer na naipakita na ay talagang nasa harap pa ng model. Nasa memory ang cache: pagkatapos i-restart ang OpenCode, nawawalan ng pack ang mga lumang message, at kasabay nitong nare-reset ang novelty memory, kaya nananatiling magkatugma ang dalawa.
+> [!note] Kasaysayan sa OpenCode 1
+> Sa OpenCode 1, ginamit ng plugin ang `experimental.chat.messages.transform`, na itinatapon ang mga binago pagkatapos ng bawat tawag sa model, kaya kinailangan nitong i-cache ang bawat pack ayon sa message ID at idikit ulit sa bawat step ([[gotchas]] item 9). Ginagawang hindi na kailangan ng `prompt` hook ang lahat ng iyon.
 
 ### Injection gate (ginagaya ang sariling Claude Code hook ng graft 0.19)
 
@@ -298,22 +294,15 @@ Isang sinukat na halimbawa (graft 0.19.0, isang totoong Next.js repo): ang promp
 
 ```js
 /**
- * Graft deep-integration plugin for OpenCode (global, cross-platform).
+ * Graft deep-integration plugin for OpenCode 2 (global, cross-platform).
  * Ports the auto-inject-context behavior that graft only ships natively
  * for Claude Code, using graft's public CLI (`graft ask --json`) instead
  * of internal modules.
  *
- * No longer does a manual auto-rebuild-on-edit: current graft CLI versions
- * refresh the graph themselves before answering any query (verified live —
- * an edit followed immediately by `graft ask`, no `graft build` in between,
- * printed "[graft] refreshed the graph (1 file changed) before answering").
- * The old debounced `graft build` hook here was therefore redundant, and
- * was the direct cause of the rebuild/ask race condition documented in
- * gotchas.md #6 — removing it fixes that race by removing its cause.
+ * No manual auto-rebuild-on-edit: the graft CLI refreshes the graph itself
+ * before answering any query, so a separate `graft build` hook only races it.
  *
- * Injection gate mirrors graft 0.19's own Claude prompt hook
- * (dist/claude/format.js `relevantRetrieval`), which replaced the old
- * single `coverage` floor:
+ * Injection gate mirrors graft's own Claude prompt hook (`relevantRetrieval`):
  *   1. strength — lexical results inject only if the top hit matched a
  *      symbol NAME (`coverageStrong` >= STRONG_FLOOR) or matched the query
  *      broadly (`coverage` >= HIGH_FLOOR); otherwise a short nudge is
@@ -322,18 +311,17 @@ Isang sinukat na halimbawa (graft 0.19.0, isang totoong Next.js repo): ang promp
  *   2. novelty — pointers already injected this session are dropped; if
  *      none remain, nothing is injected.
  *
- * OpenCode specifics (verified against opencode v1.18.32 source):
- * - `experimental.chat.messages.transform` edits are NOT persisted — the
- *   prompt loop reloads messages from storage on every agent step
- *   (session/prompt.ts). Claude Code keeps hook output in the transcript,
- *   so to match that (and to keep the novelty gate honest and the prompt
- *   prefix cache-stable) each message's context is computed once, cached by
- *   message ID, and re-attached to that message on every call.
- * - Compaction also fires this hook (session/compaction.ts) on older
- *   history, so a new `graft ask` runs only when the last message is the
- *   user's — i.e. the first step of a fresh turn.
- * - OpenCode's own reminders push `synthetic` text parts into the user
- *   message (plan mode etc.); those are excluded from the query.
+ * OpenCode 2 specifics (plugin API docs, opencode v2.0.26):
+ * - V1 plugin functions do not load on V2; this file default-exports a V2
+ *   definition ({ id, setup }).
+ * - The context is appended in the `prompt` hook, which runs once when a
+ *   user prompt is admitted and whose edits become the persisted user
+ *   message. That matches Claude Code, where hook output stays in the
+ *   transcript: the context is asked once per turn, survives later agent
+ *   steps, and keeps the prompt prefix cache-stable. The `context` hook
+ *   would instead run before every model call and change nothing durable.
+ * - Synthetic messages, compaction and shell messages do not run the
+ *   prompt hook, so no extra guard is needed for them.
  */
 import { spawn } from 'node:child_process';
 
@@ -346,118 +334,87 @@ const PACK_CAP = 3;
 const NUDGE_CAP = 2;
 const INJECTED_POINTERS_CAP = 40;
 
-export const GraftDeepPlugin = async ({ directory }) => {
-  const spawnFn = isWin ? (await import('cross-spawn')).default : spawn;
+export default {
+  id: 'graft-deep',
+  async setup(ctx) {
+    const directory = ctx.location.directory;
+    const spawnFn = isWin ? (await import('cross-spawn')).default : spawn;
+    const sessions = new Map(); // sessionID -> { injectedPointers, nudges }
 
-  const contexts = new Map(); // messageID -> injected text, or null (asked, nothing to inject)
-  const sessions = new Map(); // sessionID -> { injectedPointers, nudges }
-
-  function sessionState(id) {
-    let s = sessions.get(id);
-    if (!s) sessions.set(id, (s = { injectedPointers: [], nudges: 0 }));
-    return s;
-  }
-
-  // Async so a slow ask never blocks OpenCode's event loop (TUI, other sessions).
-  function graftAsk(prompt) {
-    const args = ['-y', '@nanonets/graft', 'ask', prompt, '.', '--json', '-n', String(PACK_CAP)];
-    return new Promise((resolve) => {
-      let out = '';
-      let child;
-      try {
-        child = spawnFn('npx', args, { cwd: directory, stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
-      } catch {
-        return resolve(null);
-      }
-      const timer = setTimeout(() => {
-        child.kill();
-        resolve(null);
-      }, ASK_TIMEOUT_MS);
-      child.stdout.setEncoding('utf8');
-      child.stdout.on('data', (c) => (out += c));
-      child.on('error', () => {
-        clearTimeout(timer);
-        resolve(null);
-      });
-      child.on('close', (code) => {
-        clearTimeout(timer);
-        try {
-          resolve(code === 0 && out ? JSON.parse(out) : null);
-        } catch {
-          resolve(null);
-        }
-      });
-    });
-  }
-
-  function weakMatchNudge(s, strong) {
-    if (s.nudges >= NUDGE_CAP) return null;
-    s.nudges += 1;
-    return `[graft] no strong match for this prompt (name-field match ${strong.toFixed(2)}) — the graph ` +
-      'has more than this probe found. Use the graft MCP tools (or `graft ask "<your task>" --source`) before grepping.';
-  }
-
-  function formatContext(result, s) {
-    const hits = result?.hits;
-    if (!Array.isArray(hits) || hits.length === 0) return null;
-
-    const lexical = typeof result.coverage === 'number' || typeof result.coverageStrong === 'number';
-    if (lexical) {
-      const strong = result.coverageStrong ?? 0;
-      const broad = result.coverage ?? 0;
-      if (strong < STRONG_FLOOR && broad < HIGH_FLOOR) return weakMatchNudge(s, strong);
+    function sessionState(id) {
+      let s = sessions.get(id);
+      if (!s) sessions.set(id, (s = { injectedPointers: [], nudges: 0 }));
+      return s;
     }
 
-    const seen = new Set(s.injectedPointers);
-    const fresh = hits.filter((h) => !seen.has(h.pointer)).slice(0, PACK_CAP);
-    if (fresh.length === 0) return null;
-    s.injectedPointers = [...s.injectedPointers, ...fresh.map((h) => h.pointer)].slice(-INJECTED_POINTERS_CAP);
-
-    const lines = fresh.map((h) => `- ${h.title} — ${(h.pointer ?? '').split(',')[0].trim()}`);
-    return `[graft] possibly relevant code for this request:\n${lines.join('\n')}\n(use the graft MCP tools for full detail if needed)`;
-  }
-
-  function attach(msg, text) {
-    msg.parts.push({
-      id: `${msg.info.id}-graft`,
-      messageID: msg.info.id,
-      sessionID: msg.info.sessionID,
-      type: 'text',
-      text,
-      synthetic: true,
-    });
-  }
-
-  return {
-    'experimental.chat.messages.transform': async (_input, output) => {
-      if (process.env.GRAFT_AUTO_CONTEXT === '0') return;
-      const messages = output?.messages;
-      if (!messages?.length) return;
-
-      // Fresh turn: the user's message is the last one (not a later agent step,
-      // not a compaction pass over older history). Ask graft once for it.
-      const last = messages[messages.length - 1];
-      if (last.info.role === 'user' && last.info.id && !contexts.has(last.info.id)) {
-        const text = last.parts
-          .filter((p) => p.type === 'text' && !p.synthetic && !p.ignored)
-          .map((p) => p.text)
-          .join(' ')
-          .trim();
-        if (text.length >= MIN_PROMPT_CHARS) {
-          contexts.set(last.info.id, null); // claim it; a failed ask is not retried
-          const result = await graftAsk(text);
-          if (result) contexts.set(last.info.id, formatContext(result, sessionState(last.info.sessionID || 'default')));
+    // Async so a slow ask never blocks OpenCode's event loop (TUI, other sessions).
+    function graftAsk(prompt) {
+      const args = ['-y', '@nanonets/graft', 'ask', prompt, '.', '--json', '-n', String(PACK_CAP)];
+      return new Promise((resolve) => {
+        let out = '';
+        let child;
+        try {
+          child = spawnFn('npx', args, { cwd: directory, stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true });
+        } catch {
+          return resolve(null);
         }
+        const timer = setTimeout(() => {
+          child.kill();
+          resolve(null);
+        }, ASK_TIMEOUT_MS);
+        child.stdout.setEncoding('utf8');
+        child.stdout.on('data', (c) => (out += c));
+        child.on('error', () => {
+          clearTimeout(timer);
+          resolve(null);
+        });
+        child.on('close', (code) => {
+          clearTimeout(timer);
+          try {
+            resolve(code === 0 && out ? JSON.parse(out) : null);
+          } catch {
+            resolve(null);
+          }
+        });
+      });
+    }
+
+    function weakMatchNudge(s, strong) {
+      if (s.nudges >= NUDGE_CAP) return null;
+      s.nudges += 1;
+      return `[graft] no strong match for this prompt (name-field match ${strong.toFixed(2)}) — the graph ` +
+        'has more than this probe found. Use the graft MCP tools (or `graft ask "<your task>" --source`) before grepping.';
+    }
+
+    function formatContext(result, s) {
+      const hits = result?.hits;
+      if (!Array.isArray(hits) || hits.length === 0) return null;
+
+      const lexical = typeof result.coverage === 'number' || typeof result.coverageStrong === 'number';
+      if (lexical) {
+        const strong = result.coverageStrong ?? 0;
+        const broad = result.coverage ?? 0;
+        if (strong < STRONG_FLOOR && broad < HIGH_FLOOR) return weakMatchNudge(s, strong);
       }
 
-      // Re-attach every cached context so it stays visible on later steps and turns.
-      for (const m of messages) {
-        if (m.info.role !== 'user') continue;
-        const ctx = contexts.get(m.info.id);
-        if (ctx) attach(m, ctx);
-      }
-    },
-  };
+      const seen = new Set(s.injectedPointers);
+      const fresh = hits.filter((h) => !seen.has(h.pointer)).slice(0, PACK_CAP);
+      if (fresh.length === 0) return null;
+      s.injectedPointers = [...s.injectedPointers, ...fresh.map((h) => h.pointer)].slice(-INJECTED_POINTERS_CAP);
+
+      const lines = fresh.map((h) => `- ${h.title} — ${(h.pointer ?? '').split(',')[0].trim()}`);
+      return `[graft] possibly relevant code for this request:\n${lines.join('\n')}\n(use the graft MCP tools for full detail if needed)`;
+    }
+
+    await ctx.session.hook('prompt', async (event) => {
+      if (process.env.GRAFT_AUTO_CONTEXT === '0') return;
+      const text = (event.prompt?.text ?? '').trim();
+      if (text.length < MIN_PROMPT_CHARS) return;
+      const result = await graftAsk(text);
+      const context = result && formatContext(result, sessionState(event.sessionID ?? 'default'));
+      if (context) event.prompt.text = `${event.prompt.text}\n\n${context}`;
+    });
+  },
 };
 ```
 
@@ -471,26 +428,24 @@ GRAFT_AUTO_CONTEXT=0 opencode
 
 ### Pag-test ng plugin nang hindi naghihintay sa mabagal na agent loop
 
-Direktang tawagin ang hook function mula sa isang node script sa halip na dumaan sa LLM (napakakapaki-pakinabang kapag mabagal ang model). Para i-test ito gaya ng totoong pagtakbo sa OpenCode, bigyan ang bawat step ng **bagong kopya** ng mga naka-store na message:
+Tawagin ang `setup` gamit ang pinakamaliit na pekeng `ctx` mula sa isang node script, saka direktang patakbuhin ang nakuhang `prompt` hook — walang model, walang OpenCode:
 
 ```js
 import { pathToFileURL } from "node:url";
-const { GraftDeepPlugin } = await import(pathToFileURL("<path-to-graft-deep.js>").href);
-const hooks = await GraftDeepPlugin({ directory: "<project-path>" });
-const transform = hooks["experimental.chat.messages.transform"];
-
-const storage = [{ info: { id: "u1", role: "user", sessionID: "S1" }, parts: [{ type: "text", text: "where is createTicket defined" }] }];
-const step = async () => { const msgs = structuredClone(storage); await transform({}, { messages: msgs }); return msgs; };
-
-console.log((await step())[0].parts.length);  // step 1 (nagtatanong sa graft): 2 kung may na-inject na pack/hint
-storage.push({ info: { id: "a1", role: "assistant", sessionID: "S1" }, parts: [{ type: "text", text: "..." }] });
-console.log((await step())[0].parts.length);  // step 2 (pagkatapos ng tool call): 2 pa rin — ibinalik, walang bagong graft call
+const plugin = (await import(pathToFileURL("<path-to-graft-deep.js>").href)).default;
+let onPrompt;
+await plugin.setup({
+  location: { directory: "<project-path>" },
+  session: { hook: async (name, fn) => { if (name === "prompt") onPrompt = fn; } },
+});
+for (const text of ["where is drawTrack defined", "where is drawTrack defined"]) {
+  const event = { sessionID: "S1", prompt: { text } };
+  await onPrompt(event);
+  console.log(event.prompt.text);   // 1st: ang prompt + "[graft] possibly relevant code…"; 2nd: walang pagbabago (novelty gate)
+}
 ```
 
-Sa Windows, patakbuhin ito na may `NODE_PATH` na nakaturo sa folder na may `cross-spawn` (hal. `NODE_PATH=~/.config/opencode/node_modules`), dahil ini-import ito ng plugin ayon sa pangalan.
-
-> [!info] Dati may babala tungkol sa race condition dito — hindi na nauugnay mula nang tanggalin ang auto-rebuild hook
-> Dati, may `tool.execute.after` hook pa rin ang plugin na nag-uutos ng `graft build` mismo, kaya ang pag-test nito kasabay ng `graft ask` ay maaaring magbanggaan (tahimik na nagfa-fail ang `graft ask`). Tinanggal na ang hook na iyon (tignan ang kahon sa itaas) dahil ang graft CLI mismo ay nagre-refresh na bago sumagot sa bawat tanong, kaya nawala ang problemang ito kasama ng dahilan nito — tignan [[gotchas]], item 6.
+Sa Windows, patakbuhin ito na may `NODE_PATH` na nakaturo sa folder na may `cross-spawn` (hal. `NODE_PATH=~/.config/opencode/node_modules`).
 
 ---
 
@@ -571,16 +526,18 @@ for s in caveman caveman-commit caveman-review; do
 done
 ```
 
-Idagdag nang manu-mano ang path ng plugin sa `plugin` array ng `opencode.jsonc` (subfolder ang `plugins/caveman/`, kaya hindi ito auto-load ng OpenCode):
+Pagkatapos, i-port ito sa OpenCode 2 — V1 plugin pa rin ang `plugin.js` ng upstream (pati v3.2.0), na tahimik na binabalewala ng OpenCode 2 ([[gotchas]] item 20):
 
-```jsonc
-{ "plugin": ["C:/Users/<user>/.config/opencode/plugins/caveman/plugin.js"] }
+```bash
+node scripts/port-caveman-opencode2.mjs     # mula sa repo na ito; itinatabi ang orihinal bilang plugin.v1.js
 ```
 
-> [!note] Walang rule block sa global AGENTS.md
-> Habang aktibo ang isang mode, inilalagay ng plugin ang buong `skills/caveman/SKILL.md` (~1.07k tokens) sa system prompt bawat turn sa pamamagitan ng `experimental.chat.system.transform`. Magiging doble ito ng AGENTS.md block na isinusulat ng installer, at patuloy pa iyong gagana kahit pagkatapos ng `/caveman off`. Walang network call at walang ini-spawn na process ang plugin (ang flag file na `~/.config/opencode/.caveman-active` lang ang binabasa/isinusulat nito).
+Tanggalin ang `~/.config/opencode/plugin/caveman.js`, `~/.config/opencode/plugins/caveman/`, `skills/caveman*/`, `commands/caveman*.md`, at ang file na `.caveman-active`.
 
-Tiyakin: buksan ulit ang OpenCode → nakalista sa `opencode debug skill` ang `caveman`, `caveman-commit`, `caveman-review`, at `caveman` ang laman ng `~/.config/opencode/.caveman-active`.
+> [!note] Walang rule block sa global AGENTS.md
+> Habang aktibo ang isang mode, inilalagay ng plugin ang buong `skills/caveman/SKILL.md` (~1.07k tokens) sa system prompt ng bawat tawag sa model (ang `context` hook). Uulitin lang ito ng block na isinusulat ng installer sa AGENTS.md at magpapatuloy pa kahit `/caveman off`. Walang network call ang plugin at walang pinapatakbong proseso (binabasa/sinusulat lang ang flag file na `~/.config/opencode/.caveman-active`).
+
+Tiyakin: `opencode service restart` → ililista ng `opencode api GET /api/plugin` ang `caveman` bilang `active`, ililista ng `opencode api GET /api/command` ang `caveman`, `caveman-commit`, `caveman-review`, at may `caveman` ang `~/.config/opencode/.caveman-active`. Kailangan din ng tatlong skill ng `allow` na linya (`caveman*`) sa `permissions`.
 
 ### Mga command
 
@@ -606,7 +563,7 @@ Tanggalin ang path sa `plugin` array, saka burahin ang `~/.config/opencode/plugi
 
 ### I-update
 
-Palitan ang `T=` ng bagong tag at patakbuhin ulit ang download block — tignan [[updating]].
+Palitan ang `T=` ng bagong tag, patakbuhin ulit ang download block, saka patakbuhin ulit ang `port-caveman-opencode2.mjs` — tignan [[updating]].
 
 ---
 

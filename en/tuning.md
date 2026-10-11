@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Measuring whether the USER-MANUAL/architecture workflow actually happens — prompt size per turn, which tools the agent really calls, why files get re-read, an end-to-end test — then tuning from what was measured, with scripts to repeat it on your own machine
 ---
 
@@ -18,6 +18,8 @@ A complete config is not the same as a working workflow. Every MCP server showin
 > | memory MCP | 1 call in 50 sessions, file never created | **stores and recalls across sessions** |
 > | Re-reading files | 76% happen right after a compaction | `compaction.prune` + a re-read rule (**not yet verified on a long session**) |
 > | Adding Caveman + benjamin-plus (section 8) | — | **no measurable improvement** — Caveman kept because replies read better (prompt becomes ~34.0k), benjamin-plus removed |
+>
+> **OpenCode 2 (2026-10-11):** the prompt per turn fell to **~14.2k** tokens (Code Mode), and the plugins, skill filter, compaction and AGENTS.md rules all had to be redone. Re-measured in **section 9**.
 
 All scripts are in [`scripts/`](../scripts/) — they need only Node.js (≥ 22.5 for `session-report.mjs`, which uses the built-in `node:sqlite`). The HTML source of every image on this page is [`assets/tuning/report.html`](../assets/tuning/report.html).
 
@@ -36,9 +38,10 @@ Same idea as [[gotchas]] item 8 (pointing `baseURL` at a local proxy), but no re
 node scripts/capture-server.mjs ./capture
 
 # terminal 2 — let OpenCode send one prompt (your real config is untouched — OPENCODE_CONFIG_CONTENT is merged on top for this process only)
+# OpenCode 2: add --standalone, otherwise the request goes to the background service, which never sees the variable
 cd my-project
 OPENCODE_CONFIG_CONTENT='{"provider":{"capture":{"npm":"@ai-sdk/openai-compatible","options":{"baseURL":"http://127.0.0.1:18555/v1"},"models":{"fake":{"limit":{"context":131072,"output":32768}}}}}}' \
-  opencode run -m capture/fake "Reply with exactly the word: ok"
+  opencode run --standalone -m capture/fake "Reply with exactly the word: ok"
 
 # split it into buckets
 node scripts/analyze-prompt.mjs ./capture/req-02.json
@@ -47,7 +50,7 @@ node scripts/analyze-prompt.mjs ./capture/req-02.json
 In PowerShell, set the variable like this instead: `$env:OPENCODE_CONFIG_CONTENT='{...}'; opencode run -m capture/fake "..."`
 
 > [!note] Which file is the main prompt
-> You get two files — the small one (`req-01`) is the session-title request; the big one (`req-02`) is the prompt the model really receives on the first turn.
+> On OpenCode 1 you get two files — the small one (`req-01`) is the session-title request; the big one (`req-02`) is the prompt the model really receives on the first turn. On OpenCode 2 a short `run` produced only one file, the main prompt.
 
 > [!tip] How accurate are the token numbers
 > `analyze-prompt.mjs` estimates tokens as characters ÷ 3.6 — the "before" total (~43.3k) was checked against the 42,920 prompt tokens the provider actually reported for the same prompt. If you have your own real number, pass `--tokens <N>` to calibrate the ratio exactly.
@@ -161,7 +164,7 @@ Turn one on for a single project in `<project>/opencode.json` (merged with the g
 { "mcp": { "open-design": { "enabled": true } } }
 ```
 
-### 5.2 Turn on `compaction.prune`
+### 5.2 Turn on `compaction.prune` (OpenCode 1 — on OpenCode 2 see section 9)
 
 ```jsonc
 "compaction": { "auto": true, "prune": true }
@@ -223,7 +226,7 @@ have not read since the last compaction.
 
 The memory rule, tested with the real model: session 1 said "remember …" → the agent called `memory_search_nodes`, then `memory_create_entities` with the date · a new session asked back → the agent called `memory_search_nodes` until it found the fact and answered correctly.
 
-### 5.4 Keep other tools' skills out — `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`
+### 5.4 Keep other tools' skills out — `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (OpenCode 1 — on OpenCode 2 see section 9)
 
 OpenCode also loads skills from `~/.claude/skills` (Claude Code) and `~/.agents/skills` automatically — on a machine with several AI tools installed, the skill list grew from 25 to 86 (every one of them sent every turn, and a small model picks the wrong one more easily). Set a user-level env var:
 
@@ -256,7 +259,7 @@ If you have a context7 key (optional — it works without one, just rate-limited
 
 - **The effect of `prune` + the re-read rule** — the test sessions were too short to compact at all. Run `session-report.mjs rereads` again after some real use and compare the "after a compaction" share against the original 76%
 - **The commit step** — to match [[USER-MANUAL]] step 9, add an AGENTS.md rule to make one scoped commit after verification passes (no push) — decide yourself whether you want the agent committing on its own
-- **Browser verification** — 37–40 calls / 33–36 minutes for a small feature. A token-efficiency rule set didn't help (section 8) — that is the cost of the check itself on a local model; no tested way to reduce it yet
+- **Browser verification** — 37–40 calls / 33–36 minutes for a small feature on OpenCode 1. A token-efficiency rule set didn't help (section 8). On OpenCode 2 the same feature took 15 minutes in total (section 9), and part of that time was spent writing a throwaway web server, which the UI rule now replaces with `npx http-server`
 - **trivy never called** — still enabled per [[architecture]] (~1.7k tokens/turn). If it is still 0 on a re-measure, consider turning it off and having the agent run `trivy fs .` via bash, or put it in CI per [[sdlc]]
 
 ---
@@ -314,3 +317,77 @@ What the numbers say:
 > 1. Always measure the **tool-call sequence** together with time (`session-report.mjs session <title>`) — an unusually fast run usually means a step went missing
 > 2. Look at the last step's `finish` value — one run ended with `tool-calls` (not `stop`) because the Chrome profile collided with another tool ([[gotchas]] item 17), so the run ended mid-task and its numbers were unusable
 > 3. Don't use chrome-devtools from another tool on the same machine while a test run is going, unless `--isolated` is set
+
+---
+
+## 9. OpenCode 2 — what changed and what was re-measured (2026-10-11)
+
+Upgrading from OpenCode 1.18.34 to **2.0.26** (superpowers moved to 7.0.0 at the same time) broke parts of this setup without any error on screen. Each fix below was checked against the real config on this machine. The upgrade steps are in [[updating]], and each problem has a gotcha.
+
+### 9.1 What broke, and the fix
+
+| Area | On OpenCode 2 | Fix | Gotcha |
+| --- | --- | --- | --- |
+| graft-deep, caveman | V1 plugins don't run | V2 plugin (`config/plugin/graft-deep.js`), `scripts/port-caveman-opencode2.mjs` | 20 |
+| `plugin` array | a file path is rejected, the `plugins/caveman` folder skipped silently | packages only; local plugins as `.js` files in `~/.config/opencode/plugin/` | 21 |
+| Other tools' skills | `OPENCODE_DISABLE_EXTERNAL_SKILLS` ignored — 90 skills offered | `permissions` allow-list → 27 | 15 |
+| `compaction.prune` | ignored | `keep.tokens: 24000` + `buffer: 32768` (below) | — |
+| Per-project MCP | `{ "enabled": true }` ignored | copy the whole entry | 22 |
+| Tool names in AGENTS.md | MCP tools are called inside `execute` | `tools.graft.graft_find_code` etc. | — |
+| `brainstorming` (superpowers 7) | a "clear" request goes straight to code | "Approval before building" rule | 23 |
+| OpenDesign engine | 1.x flags rejected | another engine until upstream fixes it | 24 |
+| Background service | sessions and the browser stay alive after `opencode run` ends | `session.interrupt`; UI rule: own page, front, close it | 26 |
+
+### 9.2 Prompt per turn: ~34.0k → ~14.6k tokens
+
+Measured with `capture-server.mjs` + `analyze-prompt.mjs` (section 1, with `--standalone`), same 6 MCP servers enabled, final config:
+
+| Bucket | ~tokens |
+| --- | --- |
+| built-in tools (12, including `execute`, `shell`, `subagent`) | 3,349 |
+| MCP catalog (Code Mode) | 2,493 |
+| skill list (27 skills) | 2,331 |
+| AGENTS.md — project (graft's block) | 1,989 |
+| AGENTS.md — global (6 sections) | 1,533 |
+| superpowers bootstrap | 1,216 |
+| OpenCode base prompt + `<env>` | 1,212 |
+| MCP server instructions (graft, context7) | 520 |
+| **Total** | **~14.6k** |
+
+The drop comes from **Code Mode**: instead of 70+ MCP tool definitions, the model gets one `execute` tool and a short catalog (a few tools per server; it finds the rest with `search(...)`). Turning MCP servers off to save prompt (section 5.1) matters much less now — each enabled server adds a few catalog lines. Keep rarely used servers off anyway: each one is a process that has to start, and sonarqube takes ~14 s through Docker.
+
+### 9.3 Compaction on OpenCode 2
+
+```jsonc
+"compaction": { "auto": true, "keep": { "tokens": 24000 }, "buffer": 32768 }
+```
+
+- **`keep.tokens`** — recent conversation kept next to the summary (default 15000). 24000 keeps more of the files the agent just read, which is what `prune` + the re-read rule were for on OpenCode 1. Not measured yet on a long session.
+- **`buffer`** — tokens kept free below the model's limit (default 10% ≈ 13k). The model server runs with `ctx-size 131072` and the model may reply with up to 32768 tokens, so the buffer is set to one full reply: compaction starts near ~98k instead of letting prompt + reply overflow the server's context. If llama.cpp runs with `--parallel N`, each slot only gets `131072 / N` — lower the model's `limit.context` to match.
+
+### 9.4 End-to-end test, same request as section 4
+
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay`, in a fresh copy of the sample game, self-hosted Qwen3.8 27B.
+
+| Run | Rules added to the global AGENTS.md | Turn 1 (design) | Build + browser check | Result |
+| --- | --- | --- | --- | --- |
+| 1 | OpenCode 1 rules, tool names updated | no design — straight to code | 15 min in total, 66 tool calls (23 chrome-devtools) | ✅ built and verified; the browser check found an inverted "PAUSED" overlay |
+| 2 | + "Approval before building" | 18+ min reading Phaser's minified source — stopped by hand | — | ❌ the design turn turned into research |
+| 3 | + "design from the project's own code", `npx http-server` | ✅ 6 min, 10 tool calls, a 1-file design + one question, no edits | 22+ min, 60 tool calls (46 chrome-devtools) on pages left open by run 1 — stopped by hand | ⚠️ code done, tests pass, browser check spiralled |
+| 4 | + "own page, bring it to the front, close it, stop after 2–3 checks" (fresh service) | ✅ 6 min, 13 tool calls, design, no edits | 11 min, then 8 min hung on an `execute` script whose promise never resolved — interrupted; after "continue": 16 min, 61 tool calls (56 chrome-devtools), P and Esc verified, console clean, page closed | ✅ built and verified, 1 file, 5/5 test files pass |
+
+What the numbers say:
+
+- **The approval step works again.** With the final rules, turn 1 explores only the project's own code (graft + 5–6 files), shows a short design (files, behavior, what it leaves out, one question) and changes nothing — about 6 minutes.
+- **In run 4 `brainstorming` wasn't loaded at all** — the AGENTS.md rule alone produced the design. superpowers 7 skips its own process for a request it judges clear; the rule is what keeps the approval step.
+- **The browser check is still the expensive part:** 23–56 chrome-devtools calls per run on this model, and it tends to keep testing past the one interaction the rule asks for. Two of four runs hit an OpenCode 2 trap in this step — pages left open by an earlier session, and a Code Mode script that never resolves ([[gotchas]] item 26). Both are now AGENTS.md rules; the second was added after run 4 and has not been re-tested in a full run yet.
+- **The model is the bottleneck:** a 27B model running locally reasons for minutes between tool calls. Plan on ~30 minutes for a small feature end to end.
+
+> [!warning] Stopping a headless run doesn't stop the session
+> On OpenCode 2, `opencode run` is only a client of the background service: killing it (Ctrl+C, a timeout) leaves the session running. Stop it with `Esc` in the TUI, or `opencode api session.interrupt --param sessionID=<id>` (find the id with `opencode session list`).
+
+### 9.5 Measuring on OpenCode 2
+
+- `session-report.mjs` now reads both OpenCode 1 sessions (`session`/`part`) and OpenCode 2 sessions (`session_v2`/`session_message`). On OpenCode 2 every MCP call happens inside an `execute` script; the report splits those scripts back into `<server>_<tool>` calls, so graft and chrome-devtools usage stays comparable with the older results.
+- `analyze-prompt.mjs` counts `shell`/`subagent`/`execute` as built-in tools and reports the Code Mode catalog as its own bucket.
+- For the capture method, add `--standalone` (section 1).

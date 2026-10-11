@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: ວັດຜົນຈິງວ່າ workflow ໃນ USER-MANUAL/architecture ເຮັດວຽກຄົບບໍ — ຂະໜາດ prompt ຕໍ່ turn, tool ທີ່ agent ເອີ້ນແທ້, ສາເຫດທີ່ອ່ານໄຟລ໌ຊ້ຳ, ທົດສອບຄົບວົງຈອນ — ແລ້ວປັບຈູນຈາກຜົນທີ່ວັດໄດ້ ພ້ອມ script ໃຫ້ວັດຊ້ຳເທິງເຄື່ອງຕົນເອງ
 ---
 
@@ -18,6 +18,8 @@ config ຄົບ ບໍ່ໄດ້ໝາຍຄວາມວ່າ workflow ເ�
 > | memory MCP | ເອີ້ນ 1 ເທື່ອໃນ 50 session, ໄຟລ໌ບໍ່ເຄີຍຖືກສ້າງ | **ບັນທຶກແລ້ວດຶງກັບມາໄດ້ຂ້າມ session** |
 > | ການອ່ານໄຟລ໌ຊ້ຳ | 76% ເກີດຫຼັງ compaction | ເປີດ `compaction.prune` + ກົດ re-read (**ຍັງບໍ່ໄດ້ຢືນຢັນກັບ session ຍາວ**) |
 > | ໃສ່ Caveman + benjamin-plus (ຂໍ້ 8) | — | **ບໍ່ດີຂຶ້ນແບບວັດໄດ້** — ເກັບ Caveman ໄວ້ເພາະຄຳຕອບອ່ານງ່າຍ (prompt ເປັນ ~34.0k), ຖອດ benjamin-plus |
+>
+> **OpenCode 2 (2026-10-11):** prompt ຕໍ່ turn ຫຼຸດເຫຼືອ **~14.2k** tokens (Code Mode) ສ່ວນ plugin, ໂຕກອງ skill, compaction ແລະກົດໃນ AGENTS.md ຕ້ອງເຮັດໃໝ່ທັງໝົດ ວັດຊ້ຳໃນ **ຂໍ້ 9**
 
 script ທັງໝົດຢູ່ໃນ [`scripts/`](../scripts/) — ໃຊ້ພຽງ Node.js (≥ 22.5 ສຳລັບ `session-report.mjs` ເພາະໃຊ້ `node:sqlite` ທີ່ມາກັບ Node) ຕົ້ນສະບັບ HTML ຂອງຮູບໃນໜ້ານີ້ຢູ່ທີ່ [`assets/tuning/report.html`](../assets/tuning/report.html)
 
@@ -36,9 +38,10 @@ script ທັງໝົດຢູ່ໃນ [`scripts/`](../scripts/) — ໃຊ້
 node scripts/capture-server.mjs ./capture
 
 # terminal 2 — ໃຫ້ OpenCode ສົ່ງ prompt ໜຶ່ງເທື່ອ (config ແທ້ບໍ່ຖືກແກ້ — OPENCODE_CONFIG_CONTENT ຖືກ merge ທັບສະເພາະໃນ process ນີ້)
+# OpenCode 2: ໃສ່ --standalone ບໍ່ດັ່ງນັ້ນ request ຈະໄປທີ່ background service ຊຶ່ງບໍ່ເຫັນຕົວແປນີ້
 cd my-project
 OPENCODE_CONFIG_CONTENT='{"provider":{"capture":{"npm":"@ai-sdk/openai-compatible","options":{"baseURL":"http://127.0.0.1:18555/v1"},"models":{"fake":{"limit":{"context":131072,"output":32768}}}}}}' \
-  opencode run -m capture/fake "Reply with exactly the word: ok"
+  opencode run --standalone -m capture/fake "Reply with exactly the word: ok"
 
 # ແຍກໝວດ
 node scripts/analyze-prompt.mjs ./capture/req-02.json
@@ -47,7 +50,7 @@ node scripts/analyze-prompt.mjs ./capture/req-02.json
 PowerShell ຕັ້ງ env var ແບບນີ້ແທນ: `$env:OPENCODE_CONFIG_CONTENT='{...}'; opencode run -m capture/fake "..."`
 
 > [!note] ໄຟລ໌ໃດຄື prompt ຫຼັກ
-> ຈະໄດ້ 2 ໄຟລ໌ — ໄຟລ໌ນ້ອຍ (`req-01`) ຄື request ສ້າງຊື່ session ໄຟລ໌ໃຫຍ່ (`req-02`) ຄື prompt ທີ່ໂມເດວໄດ້ຮັບແທ້ໃນ turn ທຳອິດ
+> ເທິງ OpenCode 1 ຈະໄດ້ 2 ໄຟລ໌ — ໄຟລ໌ນ້ອຍ (`req-01`) ຄື request ສ້າງຊື່ session ໄຟລ໌ໃຫຍ່ (`req-02`) ຄື prompt ທີ່ໂມເດວໄດ້ຮັບແທ້ໃນ turn ທຳອິດ ເທິງ OpenCode 2 ການ `run` ສັ້ນໆໄດ້ໄຟລ໌ດຽວຄື prompt ຫຼັກ
 
 > [!tip] ຕົວເລກ token ແມ່ນຍຳແຄ່ໃດ
 > `analyze-prompt.mjs` ປະມານ token ຈາກ ຈຳນວນຕົວອັກສອນ ÷ 3.6 — ກວດແລ້ວວ່າຍອດລວມ "ກ່ອນປັບ" (~43.3k) ຕົງກັບ 42,920 prompt tokens ທີ່ provider ລາຍງານແທ້ສຳລັບ prompt ດຽວກັນ ຖ້າມີຕົວເລກແທ້ຂອງຕົນເອງ ໃສ່ `--tokens <N>` ເພື່ອປັບອັດຕາໃຫ້ຕົງເປະ
@@ -161,7 +164,7 @@ opencode run -s <session-id> "go ahead"
 { "mcp": { "open-design": { "enabled": true } } }
 ```
 
-### 5.2 ເປີດ `compaction.prune`
+### 5.2 ເປີດ `compaction.prune` (OpenCode 1 — ເທິງ OpenCode 2 ເບິ່ງຂໍ້ 9)
 
 ```jsonc
 "compaction": { "auto": true, "prune": true }
@@ -223,7 +226,7 @@ have not read since the last compaction.
 
 ຜົນທົດສອບກົດ memory ດ້ວຍໂມເດວແທ້: session ທຳອິດສັ່ງ "remember …" → agent ເອີ້ນ `memory_search_nodes` ແລ້ວ `memory_create_entities` ພ້ອມວັນທີ · session ໃໝ່ຖາມກັບ → agent ເອີ້ນ `memory_search_nodes` ຈົນພົບແລ້ວຕອບຖືກ
 
-### 5.4 ຕັດ skill ຂອງເຄື່ອງມືອື່ນອອກ — `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`
+### 5.4 ຕັດ skill ຂອງເຄື່ອງມືອື່ນອອກ — `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (OpenCode 1 — ເທິງ OpenCode 2 ເບິ່ງຂໍ້ 9)
 
 OpenCode ໂຫຼດ skill ຈາກ `~/.claude/skills` (Claude Code) ແລະ `~/.agents/skills` ມານຳອັດຕະໂນມັດ — ເທິງເຄື່ອງທີ່ຕິດຕັ້ງເຄື່ອງມື AI ຫຼາຍໂຕ ລາຍຊື່ skill ພອງຈາກ 25 ເປັນ 86 ໂຕ (ທຸກໂຕຖືກສົ່ງໃນທຸກ turn ແລະໂມເດວນ້ອຍເລືອກຜິດງ່າຍ) ຕັ້ງ env var ລະດັບ user:
 
@@ -256,7 +259,7 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 
 - **ຜົນຂອງ `prune` + ກົດ re-read** — session ທົດສອບສັ້ນຈົນບໍ່ເກີດ compaction ເລີຍ ໃຫ້ແລ່ນ `session-report.mjs rereads` ອີກເທື່ອຫຼັງໃຊ້ງານແທ້ໄປໄລຍະໜຶ່ງ ແລ້ວທຽບສັດສ່ວນ "after a compaction" ກັບ 76% ເດີມ
 - **ຂັ້ນ commit** — ຖ້າຕ້ອງການໃຫ້ຕົງ [[USER-MANUAL]] ຂັ້ນທີ 9 ເພີ່ມກົດໃນ AGENTS.md ໃຫ້ commit ເປັນກ້ອນດຽວຫຼັງກວດຜ່ານ (ບໍ່ push) — ຕັດສິນໃຈເອງວ່າຢາກໃຫ້ agent commit ເອງຫຼືບໍ່
-- **ການກວດໃນ browser** — 37–40 calls / 33–36 ນາທີສຳລັບ feature ນ້ອຍໆ ລອງ ruleset ດ້ານ token efficiency ແລ້ວບໍ່ຊ່ວຍ (ຂໍ້ 8) — ຕົວເລກນີ້ຄືຕົ້ນທຶນຂອງການກວດເອງເທິງໂມເດວ local ຍັງບໍ່ມີວິທີຫຼຸດທີ່ທົດສອບແລ້ວ
+- **ການກວດໃນ browser** — 37–40 calls / 33–36 ນາທີສຳລັບ feature ນ້ອຍໆເທິງ OpenCode 1 ruleset ດ້ານ token efficiency ບໍ່ຊ່ວຍ (ຂໍ້ 8) ເທິງ OpenCode 2 feature ດຽວກັນໃຊ້ເວລາລວມ 15 ນາທີ (ຂໍ້ 9) ແລະສ່ວນໜຶ່ງໝົດໄປກັບການຂຽນ web server ຊົ່ວຄາວ ຊຶ່ງຕອນນີ້ກົດ UI ໃຫ້ໃຊ້ `npx http-server` ແທນ
 - **trivy ບໍ່ເຄີຍຖືກເອີ້ນ** — ຍັງເປີດໄວ້ຕາມ [[architecture]] (~1.7k tokens/turn) ຖ້າວັດຊ້ຳແລ້ວຍັງເປັນ 0 ພິຈາລະນາປິດ ແລ້ວໃຫ້ agent ແລ່ນ `trivy fs .` ຜ່ານ bash ຫຼືໃສ່ໃນ CI ຕາມ [[sdlc]]
 
 ---
@@ -314,3 +317,77 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 > 1. ວັດ**ລຳດັບ tool call** ຄູ່ກັບເວລາສະເໝີ (`session-report.mjs session <title>`) — ຮອບທີ່ໄວຜິດປົກກະຕິມັກໝາຍຄວາມວ່າມີຂັ້ນທີ່ຫາຍໄປ
 > 2. ເບິ່ງຄ່າ `finish` ຂອງ step ສຸດທ້າຍ — ຮອບໜຶ່ງຈົບດ້ວຍ `tool-calls` (ບໍ່ແມ່ນ `stop`) ເພາະ Chrome profile ຂັດກັບເຄື່ອງມືອື່ນ ([[gotchas]] ຂໍ້ 17) ເຮັດໃຫ້ run ຈົບກາງທາງແລະຕົວເລກໃຊ້ບໍ່ໄດ້
 > 3. ຢ່າໃຊ້ chrome-devtools ຈາກເຄື່ອງມືອື່ນເທິງເຄື່ອງດຽວກັນລະຫວ່າງແລ່ນທົດສອບ ຖ້າຍັງບໍ່ໄດ້ໃສ່ `--isolated`
+
+---
+
+## 9. OpenCode 2 — ສິ່ງທີ່ປ່ຽນ ແລະສິ່ງທີ່ວັດຊ້ຳ (2026-10-11)
+
+ການອັບເກຣດຈາກ OpenCode 1.18.34 ເປັນ **2.0.26** (superpowers ຂະຫຍັບເປັນ 7.0.0 ພ້ອມກັນ) ເຮັດໃຫ້ບາງສ່ວນຂອງ setup ນີ້ພັງໂດຍບໍ່ມີ error ຂຶ້ນຈໍ ວິທີແກ້ແຕ່ລະຂໍ້ຂ້າງລຸ່ມກວດກັບ config ແທ້ເທິງເຄື່ອງນີ້ແລ້ວ ຂັ້ນຕອນອັບເກຣດຢູ່ທີ່ [[updating]] ແລະແຕ່ລະບັນຫາມີຂໍ້ໃນ gotchas
+
+### 9.1 ສິ່ງທີ່ພັງ ແລະວິທີແກ້
+
+| ສ່ວນ | ເທິງ OpenCode 2 | ວິທີແກ້ | Gotcha |
+| --- | --- | --- | --- |
+| graft-deep, caveman | plugin ແບບ V1 ບໍ່ເຮັດວຽກ | plugin ແບບ V2 (`config/plugin/graft-deep.js`), `scripts/port-caveman-opencode2.mjs` | 20 |
+| array `plugin` | path ທີ່ເປັນໄຟລ໌ຖືກປະຕິເສດ folder `plugins/caveman` ຖືກຂ້າມງຽບໆ | ໃສ່ແຕ່ແພັກເກດ plugin ໃນເຄື່ອງເປັນໄຟລ໌ `.js` ໃນ `~/.config/opencode/plugin/` | 21 |
+| skill ຂອງເຄື່ອງມືອື່ນ | `OPENCODE_DISABLE_EXTERNAL_SKILLS` ບໍ່ມີຜົນ — ໂມເດວເຫັນ 90 skill | allow-list ໃນ `permissions` → 27 | 15 |
+| `compaction.prune` | ບໍ່ມີຜົນ | `keep.tokens: 24000` + `buffer: 32768` (ຂ້າງລຸ່ມ) | — |
+| MCP ລາຍໂປຣເຈັກ | `{ "enabled": true }` ບໍ່ມີຜົນ | ສຳເນົາລາຍການທັງກ້ອນ | 22 |
+| ຊື່ tool ໃນ AGENTS.md | tool ຂອງ MCP ຖືກເອີ້ນໃນ `execute` | `tools.graft.graft_find_code` ແລະອື່ນໆ | — |
+| `brainstorming` (superpowers 7) | ຄຳຂໍທີ່ "ຊັດ" ໄປຂຽນ code ທັນທີ | ກົດ "Approval before building" | 23 |
+| engine ຂອງ OpenDesign | flag ຂອງ 1.x ຖືກປະຕິເສດ | ໃຊ້ engine ອື່ນຈົນກວ່າຕົ້ນທາງຈະແກ້ | 24 |
+| background service | session ແລະ browser ຢູ່ຕໍ່ຫຼັງ `opencode run` ຈົບ | `session.interrupt`; ກົດ UI: ເປີດໜ້າຂອງຕົນເອງ ດຶງຂຶ້ນດ້ານໜ້າ ແລ້ວປິດ | 26 |
+
+### 9.2 prompt ຕໍ່ turn: ~34.0k → ~14.6k tokens
+
+ວັດດ້ວຍ `capture-server.mjs` + `analyze-prompt.mjs` (ຂໍ້ 1 ພ້ອມ `--standalone`) ເປີດ MCP 6 ໂຕເທົ່າເດີມ config ຊຸດສຸດທ້າຍ:
+
+| ສ່ວນ | ~tokens |
+| --- | --- |
+| built-in tools (12 ໂຕ ລວມ `execute`, `shell`, `subagent`) | 3,349 |
+| MCP catalog (Code Mode) | 2,493 |
+| ລາຍການ skill (27 ໂຕ) | 2,331 |
+| AGENTS.md — project (ບລັອກຂອງ graft) | 1,989 |
+| AGENTS.md — global (6 ຫົວຂໍ້) | 1,533 |
+| superpowers bootstrap | 1,216 |
+| prompt ພື້ນຖານຂອງ OpenCode + `<env>` | 1,212 |
+| instructions ຂອງ MCP server (graft, context7) | 520 |
+| **ລວມ** | **~14.6k** |
+
+ທີ່ຫຼຸດລົງເພາະ **Code Mode**: ແທນທີ່ຈະມີນິຍາມ tool ຂອງ MCP 70 ກວ່າໂຕ ໂມເດວໄດ້ tool `execute` ໂຕດຽວກັບ catalog ສັ້ນໆ (ບໍ່ເທົ່າໃດ tool ຕໍ່ server ທີ່ເຫຼືອຊອກເອງດ້ວຍ `search(...)`) ການປິດ MCP ເພື່ອປະຢັດ prompt (ຂໍ້ 5.1) ຈຶ່ງສຳຄັນໜ້ອຍລົງຫຼາຍ — server ທີ່ເປີດເພີ່ມກິນພຽງບໍ່ເທົ່າໃດແຖວໃນ catalog ແຕ່ຍັງຄວນປິດໂຕທີ່ໃຊ້ໜ້ອຍໄວ້ ເພາະແຕ່ລະໂຕຄື process ທີ່ຕ້ອງເປີດ ແລະ sonarqube ໃຊ້ ~14 ວິນາທີຜ່ານ Docker
+
+### 9.3 Compaction ເທິງ OpenCode 2
+
+```jsonc
+"compaction": { "auto": true, "keep": { "tokens": 24000 }, "buffer": 32768 }
+```
+
+- **`keep.tokens`** — ບົດສົນທະນາຫຼ້າສຸດທີ່ເກັບໄວ້ຄູ່ກັບສະຫຼຸບ (ຄ່າເລີ່ມຕົ້ນ 15000) 24000 ເກັບໄຟລ໌ທີ່ agent ຫາກໍອ່ານໄວ້ໄດ້ຫຼາຍຂຶ້ນ ຊຶ່ງເປັນວຽກທີ່ `prune` + ກົດ re-read ເຄີຍເຮັດເທິງ OpenCode 1 ຍັງບໍ່ໄດ້ວັດກັບ session ຍາວ
+- **`buffer`** — token ທີ່ເວັ້ນວ່າງໄວ້ໃຕ້ຂີດຈຳກັດຂອງໂມເດວ (ຄ່າເລີ່ມຕົ້ນ 10% ≈ 13k) server ໂມເດວແລ່ນດ້ວຍ `ctx-size 131072` ແລະໂມເດວຕອບໄດ້ສູງສຸດ 32768 tokens ຈຶ່ງຕັ້ງ buffer ເທົ່າຄຳຕອບເຕັມໜຶ່ງເທື່ອ: compaction ເລີ່ມທີ່ປະມານ ~98k ແທນທີ່ຈະປ່ອຍໃຫ້ prompt + ຄຳຕອບລົ້ນ context ຂອງ server ຖ້າ llama.cpp ແລ່ນດ້ວຍ `--parallel N` ແຕ່ລະ slot ໄດ້ພຽງ `131072 / N` — ໃຫ້ຫຼຸດ `limit.context` ຂອງໂມເດວໃຫ້ກົງ
+
+### 9.4 ທົດສອບຄົບວົງຈອນ ຄຳຂໍດຽວກັບຂໍ້ 4
+
+`please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay` ໃນສຳເນົາໃໝ່ຂອງເກມຕົວຢ່າງ ໂມເດວ Qwen3.8 27B ທີ່ host ເອງ
+
+| ຮອບ | ກົດທີ່ເພີ່ມໃນ global AGENTS.md | Turn 1 (ອອກແບບ) | ລົງມື + ກວດໃນ browser | ຜົນ |
+| --- | --- | --- | --- | --- |
+| 1 | ກົດຊຸດ OpenCode 1 ແກ້ຊື່ tool ແລ້ວ | ບໍ່ມີການອອກແບບ — ຂຽນ code ທັນທີ | ລວມ 15 ນາທີ 66 tool calls (chrome-devtools 23) | ✅ ສ້າງແລະກວດແລ້ວ ການກວດໃນ browser ພົບ overlay "PAUSED" ສະແດງກັບດ້ານ |
+| 2 | + "Approval before building" | 18 ນາທີກວ່າອ່ານ source ແບບ minified ຂອງ Phaser — ຢຸດເອງ | — | ❌ turn ອອກແບບກາຍເປັນການຄົ້ນຄວ້າ |
+| 3 | + "ອອກແບບຈາກ code ຂອງໂປຣເຈັກເອງ", `npx http-server` | ✅ 6 ນາທີ 10 tool calls ອອກແບບໄຟລ໌ດຽວ + ຄຳຖາມໜຶ່ງຂໍ້ ບໍ່ແກ້ໄຟລ໌ | 22 ນາທີກວ່າ 60 tool calls (chrome-devtools 46) ວົນຢູ່ກັບໜ້າທີ່ຮອບ 1 ເປີດຄ້າງໄວ້ — ຢຸດເອງ | ⚠️ code ແລ້ວ test ຜ່ານ ແຕ່ການກວດໃນ browser ວົນບໍ່ຈົບ |
+| 4 | + "ເປີດໜ້າຂອງຕົນເອງ ດຶງຂຶ້ນດ້ານໜ້າ ປິດເມື່ອແລ້ວ ຢຸດຫຼັງກວດ 2–3 ເທື່ອ" (service ໃໝ່) | ✅ 6 ນາທີ 13 tool calls ມີການອອກແບບ ບໍ່ແກ້ໄຟລ໌ | 11 ນາທີ ແລ້ວຄ້າງ 8 ນາທີທີ່ script ຂອງ `execute` ຊຶ່ງ promise ບໍ່ resolve — ຕ້ອງ interrupt ຫຼັງສັ່ງ "continue": 16 ນາທີ 61 tool calls (chrome-devtools 56) ກວດ P ແລະ Esc ແລ້ວ console ບໍ່ມີ error ປິດໜ້າແລ້ວ | ✅ ສ້າງແລະກວດແລ້ວ ໄຟລ໌ດຽວ test ຜ່ານ 5/5 ໄຟລ໌ |
+
+ສິ່ງທີ່ຕົວເລກບອກ:
+
+- **ຂັ້ນອະນຸມັດກັບມາເຮັດວຽກແລ້ວ** ດ້ວຍກົດຊຸດສຸດທ້າຍ turn 1 ສຳຫຼວດສະເພາະ code ຂອງໂປຣເຈັກ (graft + 5–6 ໄຟລ໌) ສະແດງການອອກແບບສັ້ນໆ (ໄຟລ໌ ພຶດຕິກຳ ສິ່ງທີ່ຈະບໍ່ເຮັດ ແລະຄຳຖາມໜຶ່ງຂໍ້) ແລະບໍ່ແກ້ຫຍັງ — ປະມານ 6 ນາທີ
+- **ຮອບ 4 ບໍ່ໄດ້ໂຫຼດ `brainstorming` ເລີຍ** — ການອອກແບບມາຈາກກົດໃນ AGENTS.md ລ້ວນໆ superpowers 7 ຂ້າມຂັ້ນຕອນຂອງຕົນເອງເມື່ອເຫັນວ່າຄຳຂໍຊັດ ກົດນີ້ຄືສິ່ງທີ່ຮັກສາຂັ້ນອະນຸມັດໄວ້
+- **ການກວດໃນ browser ຍັງເປັນສ່ວນທີ່ແພງທີ່ສຸດ:** chrome-devtools 23–56 ເທື່ອຕໍ່ຮອບເທິງໂມເດວນີ້ ແລະມັກທົດສອບເກີນ "ໜຶ່ງ interaction" ທີ່ກົດກຳນົດ ສອງໃນສີ່ຮອບພົບກັບດັກຂອງ OpenCode 2 ໃນຂັ້ນນີ້ — ໜ້າທີ່ session ກ່ອນເປີດຄ້າງໄວ້ ແລະ script ໃນ Code Mode ທີ່ບໍ່ resolve ([[gotchas]] ຂໍ້ 26) ທັງສອງເລື່ອງເປັນກົດໃນ AGENTS.md ແລ້ວ ເລື່ອງທີສອງເພີ່ມຫຼັງຮອບ 4 ແລະຍັງບໍ່ໄດ້ທົດສອບຊ້ຳຄົບຮອບ
+- **ໂຕໂມເດວຄືຄໍຂວດ:** ໂມເດວ 27B ທີ່ແລ່ນໃນເຄື່ອງຄິດເປັນນາທີລະຫວ່າງ tool call ແຕ່ລະເທື່ອ ເຜື່ອເວລາ ~30 ນາທີສຳລັບ feature ນ້ອຍໜຶ່ງວຽກຕັ້ງແຕ່ຕົ້ນຈົນຈົບ
+
+> [!warning] ຢຸດ run ແບບ headless ບໍ່ໄດ້ຢຸດ session
+> ເທິງ OpenCode 2 `opencode run` ເປັນພຽງ client ຂອງ background service: kill ມັນ (Ctrl+C, timeout) ແລ້ວ session ຍັງເຮັດວຽກຕໍ່ ໃຫ້ຢຸດດ້ວຍ `Esc` ໃນ TUI ຫຼື `opencode api session.interrupt --param sessionID=<id>` (ຊອກ id ດ້ວຍ `opencode session list`)
+
+### 9.5 ການວັດຜົນເທິງ OpenCode 2
+
+- ຕອນນີ້ `session-report.mjs` ອ່ານໄດ້ທັງ session ຂອງ OpenCode 1 (`session`/`part`) ແລະ OpenCode 2 (`session_v2`/`session_message`) ເທິງ OpenCode 2 ການເອີ້ນ MCP ທຸກເທື່ອເກີດໃນ script ຂອງ `execute` ລາຍງານຈະແຍກ script ເຫຼົ່ານັ້ນກັບເປັນການເອີ້ນ `<server>_<tool>` ເຮັດໃຫ້ຍັງທຽບການໃຊ້ graft ແລະ chrome-devtools ກັບຜົນເດີມໄດ້
+- `analyze-prompt.mjs` ນັບ `shell`/`subagent`/`execute` ເປັນ built-in tool ແລະແຍກ Code Mode catalog ເປັນຂອງຕົນເອງ
+- ວິທີ capture ໃຫ້ເພີ່ມ `--standalone` (ຂໍ້ 1)

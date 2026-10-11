@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Paano i-update/i-upgrade ang OpenCode CLI, MCP servers, plugins, ang grill-me/grilling skill, at OpenDesign, isa-isa
 ---
 
@@ -22,7 +22,7 @@ node scripts/update-opencode.mjs --dry-run   # tignan ang bawat command, walang 
 node scripts/update-opencode.mjs --recreate-sonarqube   # i-recreate din ang sonarqube server container
 ```
 
-Saklaw: ang OpenCode CLI, graft (may awtomatikong fallback kung tinamaan ng `graft upgrade` ang bug na nakadokumento sa [[gotchas]]), paglilinis ng cache ng superpowers/ponytail, isang `git pull` para sa i-have-adhd, pag-diff ng grill-me/grilling laban sa upstream (hindi kailanman awtomatikong nag-o-overwrite), pag-pull ng sonarqube MCP wrapper image, at pag-update ng trivy CLI/plugin.
+Saklaw: ang OpenCode CLI, graft (may awtomatikong fallback kung tinamaan ng `graft upgrade` ang bug na nakadokumento sa [[gotchas]]), paglilinis ng cache ng superpowers/ponytail, isang `git pull` para sa i-have-adhd, pag-diff ng grill-me/grilling laban sa upstream (hindi kailanman awtomatikong nag-o-overwrite), pag-pull ng sonarqube MCP wrapper image, at pag-update ng trivy CLI/plugin. Sa OpenCode 2, ginagamit ng bahagi para sa superpowers/ponytail ang `opencode plugin update` sa halip na paglilinis ng cache, at sinisiguro rin ng script na na-port na sa OpenCode 2 ang caveman.
 
 > [!warning] Ang hindi sinasadyang ino-automate (kailangan ng flag o manu-manong hakbang)
 > - **Ang sonarqube Server container** — naka-skip by default, dahil kailangan nitong isara/tanggalin ang isang tumatakbong container. I-pass ang `--recreate-sonarqube` para gawin ito (mismong `docker inspect`-in muna ng script ang meron nang container, kaya ginagamit ang tunay na pangalan ng volumes sa halip na i-hardcode ito).
@@ -35,6 +35,26 @@ Saklaw: ang OpenCode CLI, graft (may awtomatikong fallback kung tinamaan ng `gra
 > - Ang pag-fail ng `trivy plugin update` dahil sa network (nasa github.io ang plugin index, na bina-block ng ilang network) ay ⚠️ warning na ngayon kung nagtagumpay pa rin ang `trivy plugin upgrade`, hindi ❌ failure.
 >
 > Pinapatakbo mula sa lokal na kopya (hal. `~/.config/opencode/scripts/update-opencode.mjs`)? Palitan ang kopyang iyon ng bagong [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs).
+
+---
+
+## Pag-upgrade mula OpenCode 1 papuntang OpenCode 2 (ginawa 2026-10-11, 1.18.34 → 2.0.26)
+
+Binabasa ng OpenCode 2 ang dating config, AGENTS.md, skills at commands, pero tatlong bagay ang nasisira, at tinatamaan ng lahat ng ito ang setup na ito, dagdag pa ang dalawang pagbabago sa behavior. Ayon sa pagkakasunod-sunod:
+
+1. **I-back up** ang `~/.config/opencode/` — iisang folder ang ginagamit ng V1 at V2.
+2. **I-install ang V2**: `@opencode/cli` na ang npm package (nananatili sa 1.x ang `opencode-ai`). Alisin muna ang luma: `npm uninstall -g opencode-ai && npm install -g @opencode/cli` — [[gotchas]] item 20.
+3. **Plugins** — hindi tumatakbo ang V1 plugins sa V2: palitan ang `plugin/graft-deep.js` ng [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js), patakbuhin ang [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs), at packages lang ang iwan sa `plugin` array — [[gotchas]] items 20–21.
+4. **Skills** — binabalewala na ang `OPENCODE_DISABLE_EXTERNAL_SKILLS`: idagdag ang `permissions` allow-list — [[gotchas]] item 15.
+5. **Compaction** — binabalewala na ang `compaction.prune`: gamitin ang `keep.tokens` at `buffer` — [[tuning]] section 9.
+6. **Global AGENTS.md** — tinatawag na ngayon ang MCP tools sa loob ng `execute` (Code Mode), kaya nagbago ang mga pangalan ng tool (`graft_graft_find_code` → `tools.graft.graft_find_code`); kailangan din ng superpowers 7 ang rule na "Approval before building" — kopyahin ang [`config/AGENTS.md`](../config/AGENTS.md) — [[gotchas]] item 23.
+7. **Per-project MCP** — hindi na gumagana ang `{ "enabled": true }`; gumamit ng buong entries — [[gotchas]] item 22.
+8. `opencode service restart`, saka patakbuhin ang mga check sa [[USER-MANUAL]] "Mula simula hanggang tapos", bahagi A.
+
+Nasa [`config/`](../config/README.md) na ang mga hakbang 3–6; nasa [[tuning]] section 9 ang mga nasukat bago at pagkatapos.
+
+> [!warning] Hindi pa maaayos mula sa panig na ito
+> Hindi magamit ng OpenDesign 0.24.1 ang OpenCode 2 bilang engine — [[gotchas]] item 24. Tinatanggap ang `lsp` pero hindi nagpapatakbo ng language servers ang OpenCode 2.
 
 ---
 
@@ -51,11 +71,11 @@ opencode upgrade 0.1.48
 ```
 
 > [!tip] Itugma ang installation method sa paraan ng unang pag-install
-> Kung naka-install via `npm install -g opencode-ai` (gaya ng inirerekumenda sa [[setup]]), gamitin:
+> Kung naka-install via `npm install -g @opencode/cli` (gaya ng inirerekumenda sa [[setup]]), gamitin:
 > ```bash
 > opencode upgrade -m npm
 > ```
-> Sinusuportahan ng `-m`/`--method` ang `curl`, `npm`, `pnpm`, `bun`, `brew`, `choco`, `scoop` — itugma sa ginamit sa oras ng pag-install para hindi magkaroon ng dalawang magkahalong installation.
+> Sinusuportahan ng `-m`/`--method` ang `curl`, `npm`, `pnpm`, `bun`, `yarn`, `vp`, `brew` — itugma sa ginamit sa oras ng pag-install para hindi magkaroon ng dalawang magkahalong installation.
 
 Kumpirmahin ang bersyon pagkatapos mag-update:
 
@@ -98,6 +118,9 @@ graft upgrade    # i-upgrade ang global install sa pinakabagong bersyon
 ---
 
 ## superpowers plugin (naka-install via git)
+
+> [!tip] OpenCode 2: `opencode plugin update`
+> Ang OpenCode 2 na mismo ang namamahala sa package plugins — ipinapakita ng `opencode plugin check` kung luma na ang superpowers/ponytail, at ina-update ng `opencode plugin update` ang dalawa. Para sa OpenCode 1 lang ang paglilinis ng cache sa ibaba. Binago ng superpowers 7.0.0 ang ugali ng `brainstorming` — [[gotchas]] item 23.
 
 Naka-install bilang `superpowers@git+https://github.com/obra/superpowers.git` (walang naka-pin) — sa prinsipyo, dapat kunin nito ang pinakabagong commit ng `main` branch sa tuwing lino-load ng opencode ang plugin, pero sa praktika, **may ilang bersyon ng opencode/Bun na nag-ca-cache ng na-resolve na git dependency**, kaya hindi makikita ang bagong bersyon sa plain na restart lang.
 
@@ -148,6 +171,9 @@ In-install sa pamamagitan ng pag-download ng files mula sa naka-pin na tag (tign
 
 > [!warning] Huwag mag-update gamit ang installer
 > Isinusulat ulit ng `bin/install.js` ang `opencode.jsonc` bilang plain JSON at tinatanggal ang mga comment — [[gotchas]] item 18. Hindi ginagalaw ng `update-opencode.mjs` ang caveman (huling nasubukang bersyon: v3.1.0, 2026-10-03).
+
+> [!important] OpenCode 2: i-port ulit pagkatapos ng bawat download
+> Pinapalitan ng download ang `plugin.js` ng V1 plugin ng upstream (V1 pa rin sa v3.2.0), na tahimik na binabalewala ng OpenCode 2. Patakbuhin ang `node scripts/port-caveman-opencode2.mjs` pagkatapos ng download — nagbababala ang `update-opencode.mjs` kapag kailangan.
 
 ---
 
@@ -296,9 +322,8 @@ trivy plugin upgrade     # i-upgrade ang mga naka-install na plugin (kasama ang 
 | MCPs via npx (playwright, chrome-devtools, postgres, mysql, memory) | ❌ Awtomatiko | — |
 | context7 (remote) | ❌ Awtomatiko (server-side) | — |
 | graft | ✅ Manu-mano | `graft upgrade` |
-| superpowers | ⚠️ Manu-mano (dahil sa problema sa cache) | tanggalin ang cache, pagkatapos i-restart |
-| ponytail | ⚠️ Manu-mano (kung may naka-pin na bersyon ang lockfile) | tanggalin ang cache, pagkatapos i-restart |
-| caveman | ✅ Manu-mano (mga file na naka-pin sa tag) | palitan ang tag at i-download ulit — huwag kailanman ang installer |
+| superpowers + ponytail | ✅ Manu-mano | OpenCode 2: `opencode plugin update` · OpenCode 1: tanggalin ang cache, pagkatapos i-restart |
+| caveman | ✅ Manu-mano (mga file na naka-pin sa tag) | palitan ang tag, i-download ulit, saka `port-caveman-opencode2.mjs` — huwag kailanman ang installer |
 | i-have-adhd (kung ginagamit pa) | ✅ Manu-mano (lokal na clone) | `git pull`, pagkatapos i-restart |
 | grill-me / grilling | ✅ Manu-manong pag-diff (vendored, walang manager) | i-curl ang raw URL, ihambing, i-merge pabalik ang ayos |
 | graft-deep.js | ➖ Walang upstream (manu-manong sinulat) — pero ikumpara sa hook ng graft pagkatapos ng bawat graft upgrade | i-edit direkta ang file; tignan [[plugins]] |

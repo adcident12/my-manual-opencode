@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: How to update/upgrade the OpenCode CLI, MCP servers, plugins, the grill-me/grilling skill, and OpenDesign, one at a time
 ---
 
@@ -22,7 +22,7 @@ node scripts/update-opencode.mjs --dry-run   # preview every command, run nothin
 node scripts/update-opencode.mjs --recreate-sonarqube   # also recreate the sonarqube server container
 ```
 
-Covers: the OpenCode CLI, graft (with an automatic fallback if `graft upgrade` hits the bug documented in [[gotchas]]), clearing the superpowers/ponytail caches, a `git pull` for i-have-adhd, diffing grill-me/grilling against upstream (never auto-overwriting), pulling the sonarqube MCP wrapper image, and updating the trivy CLI/plugin.
+Covers: the OpenCode CLI, graft (with an automatic fallback if `graft upgrade` hits the bug documented in [[gotchas]]), superpowers/ponytail (`opencode plugin update` on OpenCode 2, clearing their caches on OpenCode 1), a check that caveman is ported to OpenCode 2, a `git pull` for i-have-adhd, diffing grill-me/grilling against upstream (never auto-overwriting), pulling the sonarqube MCP wrapper image, and updating the trivy CLI/plugin.
 
 > [!warning] What it deliberately does **not** automate (needs a flag or a manual step)
 > - **The sonarqube Server container** — skipped by default, since it means stopping/removing a running container. Pass `--recreate-sonarqube` to do it (the script `docker inspect`s the existing container first, so it reuses the real volume names in place rather than hardcoding over them).
@@ -35,6 +35,26 @@ Covers: the OpenCode CLI, graft (with an automatic fallback if `graft upgrade` h
 > - `trivy plugin update` failing on the network (the plugin index lives on github.io, which some networks block) is now a ⚠️ warning when `trivy plugin upgrade` still succeeded, not a ❌ failure.
 >
 > Running it from a local copy (e.g. `~/.config/opencode/scripts/update-opencode.mjs`)? Replace that copy with the new [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs).
+
+---
+
+## Upgrading from OpenCode 1 to OpenCode 2 (done 2026-10-11, 1.18.34 → 2.0.26)
+
+OpenCode 2 reads the existing config, AGENTS.md, skills and commands, but three things break, and this setup is hit by all of them plus two behavior changes. In order:
+
+1. **Back up** `~/.config/opencode/` — V1 and V2 use the same folder.
+2. **Install V2**: the npm package is now `@opencode/cli` (`opencode-ai` stays on 1.x). Remove the old one first: `npm uninstall -g opencode-ai && npm install -g @opencode/cli` — [[gotchas]] item 20.
+3. **Plugins** — V1 plugins don't run on V2: replace `plugin/graft-deep.js` with [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js), run [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs), and keep only packages in the `plugin` array — [[gotchas]] items 20–21.
+4. **Skills** — `OPENCODE_DISABLE_EXTERNAL_SKILLS` is ignored: add the `permissions` allow-list — [[gotchas]] item 15.
+5. **Compaction** — `compaction.prune` is ignored: use `keep.tokens` and `buffer` — [[tuning]] section 9.
+6. **Global AGENTS.md** — MCP tools are now called inside `execute` (Code Mode), so tool names changed (`graft_graft_find_code` → `tools.graft.graft_find_code`); superpowers 7 also needs the "Approval before building" rule — copy [`config/AGENTS.md`](../config/AGENTS.md) — [[gotchas]] item 23.
+7. **Per-project MCP** — `{ "enabled": true }` overrides no longer work; use full entries — [[gotchas]] item 22.
+8. `opencode service restart`, then run the checks in [[USER-MANUAL]] "Start to finish", part A.
+
+Steps 3–6 are already in [`config/`](../config/README.md); [[tuning]] section 9 has what was measured before and after.
+
+> [!warning] Not fixable on this side yet
+> OpenDesign 0.24.1 can't use OpenCode 2 as its engine — [[gotchas]] item 24. `lsp` is accepted but OpenCode 2 doesn't run language servers.
 
 ---
 
@@ -51,11 +71,11 @@ opencode upgrade 0.1.48
 ```
 
 > [!tip] Match the installation method to how it was first installed
-> If installed via `npm install -g opencode-ai` (as recommended in [[setup]]), use:
+> If installed via `npm install -g @opencode/cli` (OpenCode 2, as in [[setup]]), use:
 > ```bash
 > opencode upgrade -m npm
 > ```
-> `-m`/`--method` supports `curl`, `npm`, `pnpm`, `bun`, `brew`, `choco`, `scoop` — match whichever was used at install time so you don't end up with two installations mixed together.
+> `-m`/`--method` supports `curl`, `npm`, `pnpm`, `bun`, `yarn`, `vp`, `brew` — match whichever was used at install time so you don't end up with two installations mixed together.
 
 Confirm the version after updating:
 
@@ -98,6 +118,9 @@ graft upgrade    # upgrade the global install to the latest version
 ---
 
 ## superpowers plugin (installed via git)
+
+> [!tip] OpenCode 2: `opencode plugin update`
+> OpenCode 2 manages package plugins itself — `opencode plugin check` shows whether superpowers/ponytail are behind, `opencode plugin update` updates both. The cache-clearing below is for OpenCode 1 only. superpowers 7.0.0 changed how `brainstorming` behaves — [[gotchas]] item 23.
 
 Installed as `superpowers@git+https://github.com/obra/superpowers.git` (unpinned) — in principle, it should pull the latest commit of the `main` branch every time opencode loads the plugin, but in practice **some opencode/Bun versions cache the resolved git dependency**, so a plain restart won't show a new version.
 
@@ -147,7 +170,10 @@ Then restart OpenCode and confirm with `/ponytail-help`.
 Installed by downloading files from a pinned tag (see [[plugins]]), so nothing updates on its own. Watch for a new release at [github.com/JuliusBrussee/caveman/releases](https://github.com/JuliusBrussee/caveman/releases), change `T=` to the new tag, re-run the download block in [[plugins]] (it overwrites the files), then reopen OpenCode.
 
 > [!warning] Don't update with the installer
-> `bin/install.js` rewrites `opencode.jsonc` as plain JSON and drops the comments — [[gotchas]] item 18. `update-opencode.mjs` doesn't touch caveman (last tested version: v3.1.0, 2026-10-03).
+> `bin/install.js` rewrites `opencode.jsonc` as plain JSON and drops the comments — [[gotchas]] item 18. `update-opencode.mjs` doesn't update caveman (last tested version: v3.1.0, 2026-10-03).
+
+> [!important] OpenCode 2: port it again after every download
+> The download overwrites `plugin.js` with upstream's V1 plugin (still the case in v3.2.0), which OpenCode 2 silently ignores. Run `node scripts/port-caveman-opencode2.mjs` after the download — `update-opencode.mjs` warns when it's needed.
 
 ---
 
@@ -296,9 +322,8 @@ trivy plugin upgrade     # upgrade installed plugins (including mcp) to the late
 | MCPs via npx (playwright, chrome-devtools, postgres, mysql, memory) | ❌ Automatic | — |
 | context7 (remote) | ❌ Automatic (server-side) | — |
 | graft | ✅ Manual | `graft upgrade` |
-| superpowers | ⚠️ Manual (caching issue) | delete cache, then restart |
-| ponytail | ⚠️ Manual (if the lockfile pinned a version) | delete cache, then restart |
-| caveman | ✅ Manual (tag-pinned files) | change the tag and re-download — never the installer |
+| superpowers + ponytail | ✅ Manual | OpenCode 2: `opencode plugin update` · OpenCode 1: delete the cache, then restart |
+| caveman | ✅ Manual (tag-pinned files) | change the tag, re-download, then `port-caveman-opencode2.mjs` — never the installer |
 | i-have-adhd (if still used) | ✅ Manual (local clone) | `git pull`, then restart |
 | grill-me / grilling | ✅ Manual diffing (vendored, no manager) | curl the raw URL, compare, merge the fix back in |
 | graft-deep.js | ➖ No upstream (hand-written) — but compare with graft's hook after each graft upgrade | edit the file directly; see [[plugins]] |

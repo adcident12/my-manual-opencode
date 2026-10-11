@@ -28,6 +28,8 @@ const BUILTIN = new Set([
   'bash', 'edit', 'glob', 'grep', 'list', 'read', 'write', 'task', 'todowrite', 'todoread', 'webfetch',
   'websearch', 'codesearch', 'skill', 'question', 'patch', 'apply_patch', 'lsp', 'invalid',
   'list_mcp_resources', 'list_mcp_resource_templates', 'read_mcp_resource',
+  // OpenCode 2: shell/subagent replace bash/task; MCP tools are called inside execute (Code Mode)
+  'shell', 'subagent', 'execute',
 ]);
 const buckets = new Map();
 const add = (k, n) => n > 0 && buckets.set(k, (buckets.get(k) ?? 0) + n);
@@ -46,6 +48,8 @@ const mcpBlock = sys.match(/<mcp_instructions>([\s\S]*?)<\/mcp_instructions>/)?.
 for (const m of mcpBlock.matchAll(/<server name="([^"]+)">[\s\S]*?(?=<server name=|$)/g)) add(`mcp: ${m[1]}`, m[0].length);
 take(/<mcp_instructions>[\s\S]*?<\/mcp_instructions>/g);
 take(/<available_skills>[\s\S]*?<\/available_skills>/g, 'skill list (<available_skills>)');
+// OpenCode 2: the MCP tool catalog shown to the model for Code Mode
+take(/# Code Mode\n[\s\S]*?(?=\n# |\nInstructions from: |$)/g, 'MCP catalog (Code Mode)');
 
 const configDir = `${homedir()}`.toLowerCase();
 const instr = [...sys.matchAll(/Instructions from: (.+)\n([\s\S]*?)(?=Instructions from: |$)/g)];

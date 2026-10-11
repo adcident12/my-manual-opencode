@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: ລາຍລະອຽດ MCP server ແຕ່ລະໂຕທີ່ຕັ້ງໄວ້ໃນ OpenCode — ຂັ້ນຕອນຕິດຕັ້ງ, config, ວິທີທົດສອບ, ຂໍ້ຄວນລະວັງ
 ---
 
@@ -12,6 +12,11 @@ MCP ທຸກໂຕລຸ່ມນີ້ເພີ່ມເຂົ້າ `mcp` obj
 
 > [!note] ກ່ອນເລີ່ມ
 > ໜ້ານີ້ສົມມຸດວ່າຕິດຕັ້ງ Node.js/npm ແລະ OpenCode CLI ຮຽບຮ້ອຍແລ້ວ ຖ້າຍັງບໍ່ໄດ້ເຮັດ ຄືນໄປທີ່ [[setup]] Part 0–1 ກ່ອນ
+
+> [!important] OpenCode 2: tool ຂອງ MCP ຖືກເອີ້ນຜ່ານ `execute` ("Code Mode")
+> ເທິງ OpenCode 1 tool ຖືກຕັ້ງຊື່ເປັນ `<ຊື່ server>_<ຊື່ tool>` ຈຶ່ງເຫັນ `graft_graft_find_code`, `graft_graft_file_api` (ຄຳວ່າ graft ຊ້ຳສອງເທື່ອ) ເທິງ OpenCode 2 tool ຖືກເອີ້ນໃນ `execute` ເປັນ `tools.graft.graft_find_code(...)` ແລະ catalog ສະແດງ tool ຂອງ graft ພຽງ 3 ຈາກ 6 ໂຕ global AGENTS.md ຈຶ່ງລະບຸ path ໄວ້ໂດຍກົງ
+>
+> ການ**ເປີດ server ລາຍໂປຣເຈັກ**ຕ້ອງໃສ່ລາຍການຂອງ server ນັ້ນທັງກ້ອນໃນ config ຂອງໂປຣເຈັກ — ການຂຽນທັບສັ້ນໆ `{ "enabled": true }` ບໍ່ມີຜົນເທິງ OpenCode 2 ([[gotchas]] ຂໍ້ 22) ຕົວຢ່າງຂ້າງລຸ່ມໃຊ້ລາຍການເຕັມ
 
 ---
 
@@ -54,7 +59,7 @@ Remote MCP (ບໍ່ຕ້ອງແລ່ນຫຍັງເທິງເຄື�
 MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright — ໃຊ້ສຳລັບ automation, ປ້ອນ form, ຄລິກປຸ່ມ, ຖ່າຍ screenshot ແລະທົດສອບ flow ຂອງເວັບໄຊທ໌ແບບ end-to-end
 
 > [!info] ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນຫຼັງປັບຈູນ (2026-10-03)
-> ວັດແລ້ວວ່ານິຍາມ tool 25 ໂຕຂອງ playwright ກິນ ~4.5k tokens ທຸກ turn ແຕ່ໃນການໃຊ້ງານແທ້ agent ເອີ້ນ playwright 33 ເທື່ອ ທຽບກັບ chrome-devtools 541 ເທື່ອສຳລັບວຽກແບບດຽວກັນ ຈຶ່ງຕັ້ງ `"enabled": false` ໃນ global config ແລ້ວເປີດສະເພາະ project ທີ່ຕ້ອງການໃນ `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — ສ່ວນ e2e test suite ທີ່ຂຽນດ້ວຍ Playwright ຍັງແລ່ນຜ່ານ bash (`npx playwright test`) ໄດ້ຕາມປົກກະຕິ ເບິ່ງ [[tuning]] ແລະ [[gotchas]] ຂໍ້ 11
+> ວັດແລ້ວວ່ານິຍາມ tool 25 ໂຕຂອງ playwright ກິນ ~4.5k tokens ທຸກ turn ແຕ່ໃນການໃຊ້ງານແທ້ agent ເອີ້ນ playwright 33 ເທື່ອ ທຽບກັບ chrome-devtools 541 ເທື່ອສຳລັບວຽກແບບດຽວກັນ ຈຶ່ງຕັ້ງ `"enabled": false` ໃນ global config ແລ້ວເປີດສະເພາະ project ທີ່ຕ້ອງການໃນ `<project>/opencode.json`: `{ "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }` — ສ່ວນ e2e test suite ທີ່ຂຽນດ້ວຍ Playwright ຍັງແລ່ນຜ່ານ bash (`npx playwright test`) ໄດ້ຕາມປົກກະຕິ ເບິ່ງ [[tuning]] ແລະ [[gotchas]] ຂໍ້ 11
 
 ### ຂັ້ນຕອນຕິດຕັ້ງ
 
@@ -222,7 +227,7 @@ MCP server ທີ່ຄວບຄຸມ browser ຈິງຜ່ານ Playwright 
    ```
 
    > [!info] `"enabled": false` ເປັນຄ່າເລີ່ມຕົ້ນ ແລ້ວເປີດສະເພາະ project (2026-10-03)
-   > tool 22 ໂຕ + instructions ຂອງ server ນີ້ກິນ ~6.6k tokens ທຸກ turn — ຫຼາຍທີ່ສຸດໃນບັນດາ MCP ທັງໝົດ ແຕ່ໃຊ້ພຽງຕອນດຶງວຽກຈາກ OpenDesign ([[USER-MANUAL]] ຂໍ້ 5) ເປີດໃນ project ທີ່ກຳລັງເຮັດ Phase 2 ດ້ວຍ `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }` ເບິ່ງ [[tuning]]
+   > tool 22 ໂຕ + instructions ຂອງ server ນີ້ກິນ ~6.6k tokens ທຸກ turn — ຫຼາຍທີ່ສຸດໃນບັນດາ MCP ທັງໝົດ ແຕ່ໃຊ້ພຽງຕອນດຶງວຽກຈາກ OpenDesign ([[USER-MANUAL]] ຂໍ້ 5) ເປີດໃນ project ທີ່ກຳລັງເຮັດ Phase 2 ດ້ວຍ `<project>/opencode.json`: ລາຍການເຕັມຂອງມັນ (ສຳເນົາຈາກ [`config/opencode.jsonc`](../config/opencode.jsonc) ແລ້ວຕັ້ງ `"enabled": true`) ເບິ່ງ [[tuning]]
 
    > [!warning] Windows: ຖ້າ `od` ໄປພົບ `od.exe` ຂອງ Git
    > ເມື່ອ `...\Git\usr\bin` ຢູ່ກ່ອນ folder ຂອງ `od.cmd` ໃນ PATH ໃຫ້ໃຊ້ `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` ແທນ — [[gotchas]] ຂໍ້ 16
@@ -551,11 +556,15 @@ MCP server ນີ້ expose tool ສຳລັບ: analyze code, list issues, che
 1. ສ້າງ (ຫຼືແກ້) ໄຟລ໌ config ທີ່ **root ຂອງ project ນັ້ນ** ເພື່ອເປີດທັບ global:
 
    ```jsonc
-   // my-project/opencode.jsonc
+   // my-project/opencode.jsonc — ລາຍການເຕັມ ບໍ່ແມ່ນພຽງ "enabled" (gotchas.md ຂໍ້ 22)
    {
      "mcp": {
-       "postgres": { "enabled": true }
-       // ຫຼື "mysql": { "enabled": true }
+       "postgres": {
+         "type": "local",
+         "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+         "enabled": true
+       }
+       // mysql: ສຳເນົາລາຍການຂອງມັນຈາກ config/opencode.jsonc ແບບດຽວກັນ
      }
    }
    ```
@@ -617,4 +626,4 @@ opencode mcp list
 ```
 
 > [!tip] `connected` ບໍ່ໄດ້ໝາຍຄວາມວ່າຄຸ້ມ
-> ທຸກ server ທີ່ເປີດຢູ່ສົ່ງນິຍາມ tool ໄປໃນທຸກ turn — ວັດຄ່າໃຊ້ຈ່າຍແທ້ຕໍ່ server ດ້ວຍ `capture-server.mjs` + `analyze-prompt.mjs` ຕາມ [[tuning]] ຂໍ້ 1
+> ເທິງ OpenCode 2 server ທີ່ເປີດຢູ່ກິນ token ຕໍ່ turn ບໍ່ຫຼາຍ (ບໍ່ເທົ່າໃດແຖວໃນ catalog ຕໍ່ server) ແຕ່ແຕ່ລະໂຕຍັງເປັນ process ທີ່ຕ້ອງເປີດ — sonarqube ໃຊ້ ~14 ວິນາທີກວ່າຈະຂຶ້ນຜ່ານ Docker prompt ທຳອິດສຸດຂອງ `--standalone` ທີ່ຫາກໍເປີດຈຶ່ງອາດສົ່ງອອກໄປກ່ອນທີ່ມັນຈະຢູ່ໃນ catalog ວັດດ້ວຍ `capture-server.mjs` + `analyze-prompt.mjs` ຕາມ [[tuning]] ຂໍ້ 1

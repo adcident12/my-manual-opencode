@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows, with confirmed fixes (item 6 resolved by removing its cause, after discovering graft CLI's own built-in auto-refresh made the old hook redundant)
 ---
 
@@ -8,7 +8,7 @@ summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows,
 
 Overview at [[index]] · Setup at [[setup]]
 
-19 real problems, in the order they were hit during actual setup. Each one has an **Impact** and a confirmed working fix.
+26 real problems, in the order they were hit during actual setup (items 20–26: upgrading to OpenCode 2). Each one has an **Impact** and a confirmed working fix.
 
 ---
 
@@ -230,6 +230,9 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 > [!tip] Lesson
 > Two harnesses exposing a hook with a similar name doesn't mean the hooks behave the same. Read the host's source for where the hook is called and what happens to its output before porting behavior across.
 
+> [!note] OpenCode 2
+> This hook no longer exists on OpenCode 2 (item 20). graft-deep now appends its context in the `prompt` hook, which runs once per user prompt and whose edits are saved as the user message — the behavior this item had to work around is now the default.
+
 ---
 
 ## 10. `update-opencode.mjs` silently ignored the real SonarQube container settings on Windows
@@ -306,8 +309,19 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 
 **Cause:** OpenCode automatically scans "external skills" in `~/.claude/skills/` and `~/.agents/skills/` — and some tools install the same skill set into both (symlinked).
 
-> [!important] Fix
+> [!important] Fix (OpenCode 1)
 > Set the user-level env var `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, then fully restart terminals and the editor (item 2) — confirm with `opencode debug skill` that only this manual's skills remain.
+
+> [!warning] OpenCode 2 ignores that env var — use `permissions` instead
+> On 2.0.26 the same machine advertised 90 skills again. Deny every skill, then allow this setup's own by ID (the last matching rule wins) — the full list is in [`config/opencode.jsonc`](../config/opencode.jsonc):
+> ```jsonc
+> "permissions": [
+>   { "action": "skill", "resource": "*", "effect": "deny" },
+>   { "action": "skill", "resource": "brainstorming", "effect": "allow" },
+>   { "action": "skill", "resource": "ponytail*", "effect": "allow" }
+> ]
+> ```
+> `opencode debug skill` is gone on OpenCode 2, and the server's skill list (`opencode api GET /api/skill`) shows every *registered* skill, including denied ones. To see what the model is actually offered, ask it: `opencode run "list the skill IDs you can load, comma-separated"` — 27 on this setup. A skill you add to `~/.config/opencode/skills/` later needs its own `allow` line.
 >
 > **Don't** rely on `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` alone — it only drops `~/.claude/skills` (86 → 74 on the test machine); skills symlinked into `~/.agents/skills` still get in. If you really want a particular skill in OpenCode, copy it to `~/.config/opencode/skills/<name>/`.
 
@@ -373,3 +387,101 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 
 > [!tip] Lesson
 > "80% faster" must always be read next to "did it still do every step" — measure both time and the tool-call sequence with `session-report.mjs session <title>` before calling something an improvement.
+
+---
+
+## 20. After upgrading to OpenCode 2, the hand-written plugins silently stop working
+
+**Impact:** After `opencode upgrade` to 2.0.26, graft-deep no longer injected anything and caveman's terse mode never turned on. Nothing showed an error in the TUI.
+
+**Cause:** OpenCode 2 has a new plugin API and does not run V1 plugins at all ("Moving a file or renaming its config entry is not enough" — the official migration guide). A V1 plugin exports a function that returns hooks keyed by name (`'experimental.chat.system.transform'`, `'chat.message'`…); a V2 plugin default-exports `{ id, setup(ctx) }` and registers hooks through `ctx`. `opencode plugin list` shows a V1 plugin with no ID, and the server's plugin list says `failed: Plugin must export a default definition with an id and an effect or setup function`. superpowers (7.0.0) and ponytail (5.1.0) had already shipped V2 versions; caveman (even v3.2.0) and the custom graft-deep had not.
+
+> [!important] Fix
+> - **graft-deep** — use the V2 version in [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js) ([[plugins]]).
+> - **caveman** — after downloading it, run [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs): it replaces only the exported V1 function with a V2 definition (keeps the original as `plugin.v1.js`) and writes the loader shim from item 21.
+> - Check: `opencode api GET /api/plugin` — every non-builtin entry must be `active`.
+>
+> The V1 → V2 hook mapping used: `experimental.chat.system.transform` → `ctx.session.hook("context")` (push to `event.system`), `chat.message` → `ctx.session.hook("prompt")`, `event` → `ctx.event.subscribe()`.
+
+> [!warning] The npm package changed name
+> `npm install -g opencode-ai` still installs the **1.x** line (1.19.0 at the time of writing). OpenCode 2 is `npm install -g @opencode/cli`. Remove the old package first — V1 and V2 both install an `opencode` command and read the same config folder.
+
+---
+
+## 21. A local plugin listed in the config is not loaded
+
+**Impact:** Even after porting, caveman did not appear in `opencode plugin list` — not as active, not as failed.
+
+**Cause:** Two OpenCode 2 rules, the second one silent: (1) a local path in the config's `plugin` array must be a **directory** — a file path logs `configured plugin path must be a directory` and is skipped; (2) a directory entry such as `plugins/caveman` (a package folder with its own `package.json`) was skipped on 2.0.26 without any log line. graft-deep only kept working because OpenCode 2 also loads every `.js` file in `~/.config/opencode/plugin/` by itself.
+
+> [!important] Fix
+> Keep only packages in the `plugin` array (superpowers, ponytail). Local plugins go in `~/.config/opencode/plugin/` as `.js` files: `graft-deep.js`, plus a one-line shim `caveman.js` that loads the real plugin from `plugins/caveman/`:
+> ```js
+> export { default } from '../plugins/caveman/plugin.js';
+> ```
+> `port-caveman-opencode2.mjs` writes that shim for you.
+
+---
+
+## 22. Turning an MCP server on per project with `{ "enabled": true }` no longer works
+
+**Impact:** A project's `opencode.json` with `{ "mcp": { "playwright": { "enabled": true } } }` — the pattern this manual used for open-design, playwright and the databases — left the server `disabled`.
+
+**Cause:** OpenCode 2 drops "an enabled-only V1 MCP entry without a type" (the log says `omitted enabled-only legacy MCP`). The V2-shaped short form `{ "mcp": { "servers": { "playwright": { "disabled": false } } } }` is rejected as malformed too.
+
+> [!important] Fix
+> Copy the **whole** server entry from the global config into the project's config and turn it on there:
+> ```jsonc
+> // <project>/opencode.json
+> { "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }
+> ```
+> Both the V1 shape (above) and the full V2 shape (`mcp.servers.<name>` with `type`, `command`, `"disabled": false`) were tested and connect.
+
+> [!tip] `opencode mcp list` in a folder OpenCode hasn't seen yet
+> The first call for a new folder can answer `No MCP servers configured` before that folder's config has loaded. Run it again before concluding anything.
+
+---
+
+## 23. superpowers 7 goes straight to code for a clear request — no design to approve
+
+**Impact:** In the end-to-end test on OpenCode 2, *"please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay"* went from `brainstorming` straight to editing `GameScene.js`, with no design shown — step 3 of [[USER-MANUAL]] (approve the design before any code) was skipped.
+
+**Cause:** Not OpenCode — superpowers updated to 7.0.0 at the same time, and its `brainstorming` skill was rewritten. It now sorts work by size: *"Everything that matters is in the request … a quick, clear task. Do it, and say what you did"*; only a "small change" or a "project" waits for approval. It also asks **one** open question per message, which conflicts with this setup's batched `grilling` rounds.
+
+> [!important] Fix
+> A rule in the global AGENTS.md, "Approval before building" ([`config/AGENTS.md`](../config/AGENTS.md)): anything that adds or changes behavior gets a short design first and waits for approval, even when the request names every detail. Questions, explanations and fixes of an obvious mistake still go straight through, and so does any request where you say "just do it". The existing grill-me rule keeps questions in batched rounds. Results in [[tuning]] section 9.
+
+---
+
+## 24. OpenDesign can't use OpenCode 2 as its engine
+
+**Impact:** OpenDesign Studio (0.24.1, the latest release) fails when the selected agent is OpenCode.
+
+**Cause:** OpenDesign starts the engine with OpenCode 1 flags — `opencode run --format json --dir <workspace> --dangerously-skip-permissions --variant …` and `opencode models --verbose` — and OpenCode 2 rejects them (`Unrecognized flag: --verbose`). Reported upstream: [nexu-io/open-design#8313](https://github.com/nexu-io/open-design/issues/8313), [#8612](https://github.com/nexu-io/open-design/issues/8612).
+
+> [!important] Workaround until OpenDesign ships a fix
+> Pick another agent as OpenDesign's engine for the design phase. The other half of the workflow is unaffected: pulling generated files into a project still goes through the `open-design` **MCP server** inside OpenCode ([[USER-MANUAL]] section 5). Don't install OpenCode 1 next to 2 for this — both read `~/.config/opencode/`, and OpenCode 1 doesn't know the V2-only settings this setup now uses.
+
+---
+
+## 25. (Windows, Git Bash) `opencode api GET /api/...` fails with "Expected an operation name"
+
+**Impact:** `opencode api get /api/skill` in Git Bash prints `Error: Expected an operation name or an HTTP method and path`.
+
+**Cause:** Git Bash (MSYS) rewrites arguments that look like POSIX paths — `/api/skill` reaches OpenCode as `C:/Program Files/Git/api/skill`.
+
+> [!important] Fix
+> In Git Bash, prefix the command: `MSYS_NO_PATHCONV=1 opencode api GET /api/skill`. PowerShell and cmd don't need it.
+
+---
+
+## 26. On OpenCode 2, sessions and the browser outlive the command that started them
+
+**Impact:** Two things in the end-to-end tests: (1) stopping `opencode run` (Ctrl+C, a timeout) left the session working in the background for minutes; (2) in a later session the agent found browser pages left open by an earlier one, then spent 20 minutes debugging why "the game has no active scene" — its page was a background tab, and a background tab doesn't run animation frames, so the Phaser game never started.
+
+**Cause:** OpenCode 2 runs a background service. `opencode run` and the TUI are clients of it. Sessions and MCP servers live in the service, so chrome-devtools (and its browser) keeps running between sessions. On OpenCode 1 every run started its own MCP processes and a fresh browser.
+
+> [!important] Fix
+> - Stop a session with `Esc` in the TUI, or `opencode api session.interrupt --param sessionID=<id>` (`opencode session list` shows the ids).
+> - The "Verifying UI changes" rule in [`config/AGENTS.md`](../config/AGENTS.md) now says: open your own page with `new_page`, work only on that page id, bring it to the front before judging it, close it when done, and stop after two or three checks that don't behave.
+> - To start from a clean browser: `opencode service restart`.

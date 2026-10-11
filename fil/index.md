@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Home page ng OpenCode CLI setup at usage manual — saklaw ang MCP servers, Plugins, at Skills (Agent Skills open standard) para sa vibe coding
 ---
 
@@ -16,7 +16,7 @@ Itong set ng dokumento ay talaan ng aktwal, gumaganang setup — mula sa pag-ins
 
 | Bahagi | Detalye |
 | --- | --- |
-| **OpenCode CLI** | v1.18.18+, naka-install via `npm install -g opencode-ai` (global) |
+| **OpenCode CLI** | **OpenCode 2** (nasubukan sa 2.0.26), naka-install via `npm install -g @opencode/cli` (global) — galing sa 1.x: [[updating]] |
 | **Pangunahing model provider** | `home-llamacpp` — self-hosted llama.cpp server (URL na specific sa bawat makina), model na `qwen3.8-27b` (Q4_K, 131k context) sa pamamagitan ng OpenAI-compatible endpoint |
 | **Backup model (mabilis)** | `opencode/deepseek-v4-flash-free` — built-in sa OpenCode mismo, walang kailangang extra na API key, mabilis sumagot (~10 segundo) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (natatandaan ang context kahit magpalit ng session — pinapagana ng isang global AGENTS.md rule), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **ino-on per project:** open-design (kumukuha ng files mula sa isang OpenDesign project), playwright (browser automation), postgres/mysql · github (naka-disable hanggang may PAT) |
@@ -34,7 +34,7 @@ Itong set ng dokumento ay talaan ng aktwal, gumaganang setup — mula sa pag-ins
 - [[mcp-servers]] — detalye ng bawat MCP server: hakbang sa pag-install, config, at paano subukan ang bawat isa
 - [[plugins]] — superpowers, grill-me/grilling (batch-interview skill na dagdag sa superpowers), custom na plugin na graft-deep (buong source code + ang OpenCode Plugin Hook API), ponytail (code-minimization ruleset), at caveman (maikli, diretso-sa-punto na sagot — ginagamit sa halip na i-have-adhd, na nananatiling alternatibo)
 - [[USER-MANUAL]] — **mula simula hanggang tapos** (magbukas ng session → mag-request → mag-approve → suriin → commit) at aktwal na araw-araw na paggamit: vibe coding, ang graft workflow, ang OpenDesign workflow
-- [[gotchas]] — 19 aktwal na problemang naranasan may kasamang ayos (Windows PATH/env snapshotting, mabagal na model, native module ABI mismatch, reasoning-model output cap, prompt na lumaki dahil sa MCP tools, skill na nananaig sa AGENTS.md, atbp.)
+- [[gotchas]] — 26 aktwal na problemang naranasan may kasamang ayos (Windows PATH/env snapshotting, mabagal na model, native module ABI mismatch, reasoning-model output cap, prompt na lumaki dahil sa MCP tools, skill na nananaig sa AGENTS.md, atbp.)
 - [[updating]] — paano i-update/i-upgrade ang OpenCode CLI, MCP servers, plugins, at OpenDesign, isa-isa
 - [config/](../config/README.md) — ang mga file na isinusulat o ine-edit nang manu-mano ng setup na ito, handang kopyahin: ang template ng `opencode.jsonc`, global `AGENTS.md`, `graft-deep.js` plugin
 - [AGENT-SETUP.md](../AGENT-SETUP.md) — setup instructions na isinulat para sundin ng AI agent (sabihin sa agent mo: `basahin ang AGENT-SETUP.md at i-setup ito`)
@@ -46,7 +46,7 @@ Itong set ng dokumento ay talaan ng aktwal, gumaganang setup — mula sa pag-ins
 
 ```bash
 # 1. I-install ang CLI
-npm install -g opencode-ai
+npm install -g @opencode/cli
 
 # 2. Kumpirmahin na tama ang pag-install
 opencode --version

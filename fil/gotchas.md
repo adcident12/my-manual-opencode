@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP + Plugins sa Windows, may kumpirmadong ayos (naresolba na ang item 6 sa pamamagitan ng pagtanggal ng dahilan nito, matapos matuklasan na ang built-in na auto-refresh ng graft CLI ang gumawang redundant sa lumang hook)
 ---
 
@@ -8,7 +8,7 @@ summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP
 
 Buod sa [[index]] · Setup sa [[setup]]
 
-19 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup. Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
+26 aktwal na problema, ayon sa pagkakasunod-sunod kung kailan ito naranasan habang nagse-setup (items 20–26: pag-upgrade sa OpenCode 2). Bawat isa ay may **Impact** at isang kumpirmadong gumaganang ayos.
 
 ---
 
@@ -230,6 +230,9 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 > [!tip] Aral
 > Hindi ibig sabihin na magkapareho ang gawi ng dalawang hook dahil lang magkahawig ang pangalan nila sa dalawang harness. Basahin ang source ng host kung saan tinatawag ang hook at ano ang nangyayari sa output nito bago mag-port ng gawi.
 
+> [!note] OpenCode 2
+> Wala na ang hook na ito sa OpenCode 2 (item 20). Ngayon, idinudugtong ng graft-deep ang context nito sa `prompt` hook, na tumatakbo nang isang beses bawat prompt ng user at sine-save ang binago bilang mensahe ng user — ang ugaling kinailangang lusutan ng item na ito ay default na ngayon.
+
 ---
 
 ## 10. Tahimik na binalewala ng `update-opencode.mjs` ang tunay na settings ng SonarQube container sa Windows
@@ -311,6 +314,17 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 >
 > **Huwag** umasa sa `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` lang — `~/.claude/skills` lang ang tinatanggal nito (86 → 74 sa test machine); nakakapasok pa rin ang skills na naka-symlink sa `~/.agents/skills`. Kung talagang gusto mo ang isang partikular na skill sa OpenCode, kopyahin ito sa `~/.config/opencode/skills/<name>/`.
 
+> [!warning] Binabalewala na ng OpenCode 2 ang env var na iyon — gumamit ng `permissions`
+> Sa 2.0.26, 90 skills ulit ang inaalok sa parehong makina. I-deny ang lahat ng skill, saka i-allow isa-isa ayon sa ID ang sariling skills ng setup na ito (ang huling tumugmang rule ang nananaig) — nasa [`config/opencode.jsonc`](../config/opencode.jsonc) ang buong listahan:
+> ```jsonc
+> "permissions": [
+>   { "action": "skill", "resource": "*", "effect": "deny" },
+>   { "action": "skill", "resource": "brainstorming", "effect": "allow" },
+>   { "action": "skill", "resource": "ponytail*", "effect": "allow" }
+> ]
+> ```
+> Wala nang `opencode debug skill` sa OpenCode 2, at ipinapakita ng skill list ng server (`opencode api GET /api/skill`) ang bawat skill na *naka-register*, pati ang mga naka-deny. Para makita kung ano talaga ang inaalok sa model, itanong dito: `opencode run "list the skill IDs you can load, comma-separated"` — 27 sa setup na ito. Ang skill na idaragdag mo sa `~/.config/opencode/skills/` sa ibang pagkakataon ay kailangan ng sariling `allow` na linya.
+
 ---
 
 ## 16. (Windows) Napupunta ang `od` sa `od.exe` ng Git sa halip na sa OpenDesign shim
@@ -373,3 +387,101 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 
 > [!tip] Aral
 > Ang "80% na mas mabilis" ay laging dapat basahin katabi ng "ginawa pa rin ba nito ang bawat hakbang" — sukatin ang oras at ang pagkakasunod ng tool calls gamit ang `session-report.mjs session <title>` bago tawaging improvement ang isang bagay.
+
+---
+
+## 20. Pagkatapos mag-upgrade sa OpenCode 2, tahimik na tumigil ang mga sariling-gawang plugin
+
+**Impact:** Pagkatapos ng `opencode upgrade` sa 2.0.26, wala nang idinadagdag ang graft-deep at hindi na bumukas ang terse mode ng caveman. Walang error na lumabas sa TUI.
+
+**Sanhi:** May bagong plugin API ang OpenCode 2 at hindi na nito pinapatakbo ang V1 plugins ("Moving a file or renaming its config entry is not enough" — opisyal na migration guide). Ang V1 plugin ay nag-e-export ng function na nagbabalik ng hooks ayon sa pangalan (`'experimental.chat.system.transform'`, `'chat.message'`…); ang V2 plugin ay nagde-default-export ng `{ id, setup(ctx) }` at nagre-register ng hooks sa `ctx`. Ipinapakita ng `opencode plugin list` ang V1 plugin nang walang ID, at sinasabi ng plugin list ng server ang `failed: Plugin must export a default definition with an id and an effect or setup function`. May V2 version na ang superpowers (7.0.0) at ponytail (5.1.0); wala pa ang caveman (kahit v3.2.0) at ang custom na graft-deep.
+
+> [!important] Ayos
+> - **graft-deep** — gamitin ang V2 version sa [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js) ([[plugins]]).
+> - **caveman** — pagkatapos i-download, patakbuhin ang [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs): pinapalitan lang nito ang na-export na V1 function ng V2 definition (itinatabi ang orihinal bilang `plugin.v1.js`) at isinusulat ang loader shim mula sa item 21.
+> - Tingnan: `opencode api GET /api/plugin` — dapat `active` ang bawat hindi-builtin na entry.
+>
+> Ang ginamit na V1 → V2 na pagtutugma ng hooks: `experimental.chat.system.transform` → `ctx.session.hook("context")` (i-push sa `event.system`), `chat.message` → `ctx.session.hook("prompt")`, `event` → `ctx.event.subscribe()`.
+
+> [!warning] Nagpalit ng pangalan ang npm package
+> Ang `npm install -g opencode-ai` ay nag-i-install pa rin ng **1.x** (1.19.0 nang isulat ito). Ang OpenCode 2 ay `npm install -g @opencode/cli`. Alisin muna ang luma — parehong nag-i-install ng `opencode` command ang V1 at V2 at iisang config folder ang binabasa nila.
+
+---
+
+## 21. Hindi nilo-load ang lokal na plugin na nakalista sa config
+
+**Impact:** Kahit na-port na, hindi lumabas ang caveman sa `opencode plugin list` — hindi bilang active, hindi rin bilang failed.
+
+**Sanhi:** Dalawang rule ng OpenCode 2, at tahimik ang pangalawa: (1) ang lokal na path sa `plugin` array ay dapat **directory** — ang file path ay nagla-log ng `configured plugin path must be a directory` at nilalaktawan; (2) ang directory entry gaya ng `plugins/caveman` (isang package folder na may sariling `package.json`) ay nilaktawan sa 2.0.26 nang walang anumang log. Gumana pa rin ang graft-deep dahil kusa ring nilo-load ng OpenCode 2 ang bawat `.js` file sa `~/.config/opencode/plugin/`.
+
+> [!important] Ayos
+> Packages lang ang ilagay sa `plugin` array (superpowers, ponytail). Ang mga lokal na plugin ay ilagay sa `~/.config/opencode/plugin/` bilang `.js` files: `graft-deep.js`, at isang one-line shim na `caveman.js` na naglo-load ng tunay na plugin mula sa `plugins/caveman/`:
+> ```js
+> export { default } from '../plugins/caveman/plugin.js';
+> ```
+> Ang `port-caveman-opencode2.mjs` ang sumusulat ng shim na iyon para sa iyo.
+
+---
+
+## 22. Hindi na gumagana ang pag-on ng MCP server per project gamit ang `{ "enabled": true }`
+
+**Impact:** Ang `opencode.json` ng isang project na may `{ "mcp": { "playwright": { "enabled": true } } }` — ang pattern na ginamit ng manual na ito para sa open-design, playwright at mga database — ay nag-iwan sa server na `disabled`.
+
+**Sanhi:** Itinatapon ng OpenCode 2 ang "isang enabled-only na V1 MCP entry na walang type" (sabi ng log: `omitted enabled-only legacy MCP`). Tinatanggihan din bilang malformed ang maikling V2 na anyo na `{ "mcp": { "servers": { "playwright": { "disabled": false } } } }`.
+
+> [!important] Ayos
+> Kopyahin ang **buong** entry ng server mula sa global config papunta sa config ng project at i-on doon:
+> ```jsonc
+> // <project>/opencode.json
+> { "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }
+> ```
+> Nasubukan at kumokonekta ang V1 na anyo (sa itaas) at ang buong V2 na anyo (`mcp.servers.<name>` na may `type`, `command`, `"disabled": false`).
+
+> [!tip] `opencode mcp list` sa folder na hindi pa nakikita ng OpenCode
+> Ang unang tawag para sa bagong folder ay puwedeng sumagot ng `No MCP servers configured` bago pa ma-load ang config ng folder na iyon. Patakbuhin ulit bago magkonklusyon.
+
+---
+
+## 23. Diretsong nagko-code ang superpowers 7 kapag malinaw ang request — walang design na aaprubahan
+
+**Impact:** Sa end-to-end test sa OpenCode 2, ang *"please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay"* ay dumiretso mula `brainstorming` sa pag-edit ng `GameScene.js`, nang walang ipinakitang design — nilaktawan ang step 3 ng [[USER-MANUAL]] (aprubahan ang design bago ang anumang code).
+
+**Sanhi:** Hindi ang OpenCode — sabay na nag-update ang superpowers sa 7.0.0, at isinulat ulit ang `brainstorming` skill nito. Inaayos na nito ang trabaho ayon sa laki: *"Everything that matters is in the request … a quick, clear task. Do it, and say what you did"*; ang "small change" at "project" lang ang naghihintay ng approval. Nagtatanong din ito ng **isang** open question bawat mensahe, na salungat sa batched na `grilling` rounds ng setup na ito.
+
+> [!important] Ayos
+> Isang rule sa global AGENTS.md, "Approval before building" ([`config/AGENTS.md`](../config/AGENTS.md)): anumang nagdadagdag o nagbabago ng behavior ay may maikling design muna at naghihintay ng approval, kahit nakasaad na sa request ang bawat detalye. Diretso pa rin ang mga tanong, paliwanag at pag-ayos ng halatang mali, pati ang request na nagsasabing "just do it". Pinapanatili ng dating grill-me rule na naka-batch ang mga tanong. Mga resulta sa [[tuning]] section 9.
+
+---
+
+## 24. Hindi magamit ng OpenDesign ang OpenCode 2 bilang engine
+
+**Impact:** Pumapalya ang OpenDesign Studio (0.24.1, ang pinakabagong release) kapag OpenCode ang napiling agent.
+
+**Sanhi:** Sinisimulan ng OpenDesign ang engine gamit ang mga flag ng OpenCode 1 — `opencode run --format json --dir <workspace> --dangerously-skip-permissions --variant …` at `opencode models --verbose` — at tinatanggihan ng OpenCode 2 ang mga ito (`Unrecognized flag: --verbose`). Naiulat na sa upstream: [nexu-io/open-design#8313](https://github.com/nexu-io/open-design/issues/8313), [#8612](https://github.com/nexu-io/open-design/issues/8612).
+
+> [!important] Pansamantalang paraan habang wala pang ayos ang OpenDesign
+> Pumili ng ibang agent bilang engine ng OpenDesign para sa design phase. Hindi apektado ang kabilang kalahati ng workflow: ang paghila ng mga generated na file papunta sa project ay dumadaan pa rin sa `open-design` **MCP server** sa loob ng OpenCode ([[USER-MANUAL]] section 5). Huwag mag-install ng OpenCode 1 katabi ng 2 para dito — pareho nilang binabasa ang `~/.config/opencode/`, at hindi alam ng OpenCode 1 ang mga V2-only na setting na ginagamit na ng setup na ito.
+
+---
+
+## 25. (Windows, Git Bash) Pumapalya ang `opencode api GET /api/...` na may "Expected an operation name"
+
+**Impact:** Ang `opencode api get /api/skill` sa Git Bash ay nagpi-print ng `Error: Expected an operation name or an HTTP method and path`.
+
+**Sanhi:** Binabago ng Git Bash (MSYS) ang mga argument na mukhang POSIX path — umaabot ang `/api/skill` sa OpenCode bilang `C:/Program Files/Git/api/skill`.
+
+> [!important] Ayos
+> Sa Git Bash, unahan ang command: `MSYS_NO_PATHCONV=1 opencode api GET /api/skill`. Hindi ito kailangan sa PowerShell at cmd.
+
+---
+
+## 26. Sa OpenCode 2, nananatili ang mga session at ang browser pagkatapos matapos ang command na nagsimula sa kanila
+
+**Impact:** Dalawang bagay sa end-to-end tests: (1) ang pagpapahinto sa `opencode run` (Ctrl+C, timeout) ay nag-iwan sa session na gumagana sa background nang ilang minuto; (2) sa sumunod na session, nakakita ang agent ng mga browser page na iniwang bukas ng nauna, saka gumugol ng 20 minuto sa pag-debug kung bakit "walang active scene ang game" — background tab ang page nito, at hindi nagpapatakbo ng animation frames ang background tab, kaya hindi kailanman nagsimula ang Phaser game.
+
+**Sanhi:** May background service ang OpenCode 2. Mga client lang nito ang `opencode run` at ang TUI. Nasa service ang mga session at MCP server, kaya patuloy na tumatakbo ang chrome-devtools (at ang browser nito) sa pagitan ng mga session. Sa OpenCode 1, bawat run ay nagsisimula ng sariling MCP processes at bagong browser.
+
+> [!important] Ayos
+> - Ihinto ang session gamit ang `Esc` sa TUI, o ang `opencode api session.interrupt --param sessionID=<id>` (ipinapakita ng `opencode session list` ang mga id).
+> - Sinasabi na ngayon ng rule na "Verifying UI changes" sa [`config/AGENTS.md`](../config/AGENTS.md): magbukas ng sariling page gamit ang `new_page`, gumawa lang sa page id na iyon, dalhin ito sa harap bago husgahan, isara kapag tapos, at huminto pagkatapos ng dalawa o tatlong check na hindi gumagana nang tama.
+> - Para magsimula sa malinis na browser: `opencode service restart`.

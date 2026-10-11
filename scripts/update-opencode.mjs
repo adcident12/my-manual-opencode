@@ -126,12 +126,36 @@ function updateGraft() {
   else record('graft', 'fail', firstLine(r.stderr) || firstLine(r.stdout));
 }
 
-function updateSuperpowers() {
-  clearCache('superpowers', join(CACHE_DIR, 'superpowers@git+https_'));
+// OpenCode 2 manages package plugins itself (`opencode plugin update`); OpenCode 1
+// re-fetched them only after their cache folder was removed.
+function opencodeMajor() {
+  if (!which('opencode')) return 0;
+  const r = spawnSync('opencode', ['--version'], { encoding: 'utf8', shell: isWin });
+  const m = /(\d+)\.\d+\.\d+/.exec(r.stdout || '');
+  return m ? Number(m[1]) : 0;
 }
 
-function updatePonytail() {
+function updatePackagePlugins() {
+  if (OPENCODE_MAJOR >= 2) {
+    const r = run('opencode', ['plugin', 'update']);
+    if (DRY_RUN || r.status === 0) record('superpowers + ponytail', 'ok', firstLine(r.stdout) || 'opencode plugin update');
+    else record('superpowers + ponytail', 'fail', firstLine(r.stderr) || firstLine(r.stdout));
+    return;
+  }
+  clearCache('superpowers', join(CACHE_DIR, 'superpowers@git+https_'));
   clearCache('ponytail', join(CACHE_DIR, '@dietrichgebert'));
+}
+
+// caveman is downloaded by hand; on OpenCode 2 its V1 plugin must be ported
+// (scripts/port-caveman-opencode2.mjs) or it silently does nothing (gotchas.md item 20).
+function checkCaveman() {
+  const file = join(CONFIG_DIR, 'plugins', 'caveman', 'plugin.js');
+  if (!existsSync(file)) return record('caveman', 'skip', 'not installed');
+  if (OPENCODE_MAJOR < 2) return record('caveman', 'skip', 'pinned tag — update by hand (updating.md)');
+  const ported = readFileSync(file, 'utf8').includes("id: 'caveman'");
+  const shim = existsSync(join(CONFIG_DIR, 'plugin', 'caveman.js'));
+  if (ported && shim) record('caveman', 'ok', 'ported to OpenCode 2; pinned tag — update by hand (updating.md)');
+  else record('caveman', 'warn', 'not ported to OpenCode 2 — run: node scripts/port-caveman-opencode2.mjs');
 }
 
 function updateIHaveAdhd() {
@@ -318,9 +342,10 @@ console.log(`OpenCode setup — update check${DRY_RUN ? ' (dry run)' : ''}`);
 console.log('='.repeat(50));
 
 updateOpencodeCli();
+const OPENCODE_MAJOR = opencodeMajor();
 updateGraft();
-updateSuperpowers();
-updatePonytail();
+updatePackagePlugins();
+checkCaveman();
 updateIHaveAdhd();
 await checkGrillMeGrilling();
 
@@ -332,7 +357,7 @@ updateTrivyCli();
 updateTrivyPlugin();
 
 record('graft-deep.js', 'skip', 'hand-written, no upstream — edit ~/.config/opencode/plugin/graft-deep.js directly if needed');
-record('OpenDesign', 'skip', 'launcher auto-updater — check Settings → About in the app (Windows: the od.mjs shim follows the active version by itself)');
+record('OpenDesign', 'skip', 'launcher auto-updater — check Settings → About in the app (Windows: the od.mjs shim follows the active version by itself). On OpenCode 2 its engine mode is broken until upstream fixes it (gotchas.md item 24)');
 record('MCPs via npx (playwright, chrome-devtools, memory)', 'ok', 'already auto-update on every launch, nothing to do');
 
 printSummary();

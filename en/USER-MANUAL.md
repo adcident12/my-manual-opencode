@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: OpenCode usage manual, start to finish (open a session, ask, approve, check, commit) and day to day — vibe coding, the graft workflow, grill-me/grilling, and the OpenDesign workflow
 ---
 
@@ -58,16 +58,16 @@ graph TD
 Open a **new** terminal (env vars you just set aren't visible in an old one — [[gotchas]] item 2) and run:
 
 ```bash
-opencode --version       # the CLI is installed
+opencode --version       # 2.x — this manual is for OpenCode 2
 opencode mcp list        # enabled MCP servers must show connected
-opencode debug skill     # the skills that loaded
-opencode run "say hi"    # the model answers
+opencode plugin list     # the package plugins (superpowers, ponytail) and the local ones
+opencode run "list the skill IDs you can load, comma-separated"   # the model answers + the skills it is offered
 ```
 
 ✅ **You should see:**
 - `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` as `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` as `disabled` (normal — they're turned on per project)
-- `debug skill`: 27 skills — 15 from superpowers, 6 from ponytail, 3 from caveman, `grill-me`, `grilling`, `customize-opencode`. Many more than that means another tool's skills are leaking in ([[gotchas]] item 15)
-- `run "say hi"`: a reply. If it takes more than 1–2 minutes see [[gotchas]] item 1
+- `plugin list`: `superpowers`, `ponytail`, `graft-deep`, `caveman`. If `graft-deep` or `caveman` has no ID, it's still a V1 plugin and does nothing ([[gotchas]] items 20–21)
+- `run …`: a reply listing 27 skills — `opencode` and `report` (built in), 15 from superpowers, 6 from ponytail, 3 from caveman, `grilling` (`grill-me` is hidden from the model by its own `disable-model-invocation: true` — it only forwards to `grilling`; `@grill-me` still loads it). Many more means another tool's skills are leaking in ([[gotchas]] item 15). If the reply takes more than 1–2 minutes see [[gotchas]] item 1
 
 ### B. Once per project — prepare the repo
 
@@ -84,10 +84,10 @@ opencode            # a new session
 opencode -c         # or: continue the last session
 ```
 
-Inside the TUI: `/sessions` picks an older session · `/new` starts a fresh one · `/models` switches model · `/help` lists every command
+Inside the TUI: `/sessions` picks an older session · `/new` starts a fresh one · `/models` switches model · `Ctrl+P` opens the command palette with every command
 
 > [!tip] One piece of work = one session
-> The base prompt already weighs ~34k tokens of the 131k context ([[tuning]]) — always `/new` for new work. A session that spans several tasks compacts often, and the agent has to re-read the same files.
+> The base prompt weighs ~14k tokens of the 131k context on OpenCode 2 (~34k on OpenCode 1 — [[tuning]] section 9), and it grows with every step. Always `/new` for new work. A session that spans several tasks compacts often, and the agent has to re-read the same files.
 
 **Step 2 — Ask in plain language**
 
@@ -97,10 +97,13 @@ Say **what you want to end up with**, not how to do it and not which tool to use
 | --- | --- | --- |
 | `how does ring collection work` (a question / explain) | find the code with graft and answer with `file:line` references | read — done at this step |
 | `fix the typo on the menu screen` (a small fix) | just edit → run tests | skip to step 5 |
-| `please add a pause feature to the game` (a new feature) | call `brainstorming` → explore with graft → ask questions or propose a design → **stop and wait** | go to step 3 |
+| `please add a pause feature to the game` (a new feature) | call `brainstorming` → explore with graft → ask questions or propose a short design → **stop and wait** — even when your request already names every detail | go to step 3 (or say `just do it` up front to skip it) |
 | `the game freezes when I jump` (a bug) | call `systematic-debugging` — find the cause before fixing | confirm the cause, then let it fix |
 | `move the level system to zones` (large, multi-file work) | write a spec under `docs/superpowers/specs/` + a plan (`writing-plans`) | read the spec, then approve |
 | `grill me about <idea>` (not building yet, just thinking it through) | ask in `grilling` rounds — no spec, no code | answer the questions |
+
+> [!info] Why "stop and wait" needs a rule since superpowers 7
+> superpowers 7.0.0's `brainstorming` treats a request that "names everything that matters" as a quick task and goes straight to code. On OpenCode 2 the pause-feature test did exactly that. The global AGENTS.md rule "Approval before building" keeps this step: anything that adds or changes behavior gets a design first ([[gotchas]] item 23). Questions, explanations and obvious-mistake fixes still go straight through.
 
 **Step 3 — Answer questions and approve the design** (new features / large work only)
 
@@ -113,10 +116,12 @@ Read the design carefully here — this is the cheapest point to change directio
 
 **Step 4 — The agent works** (you just wait)
 
-What happens, in order: ponytail checks whether something existing can be reused before writing new code → edits with a todo list → runs tests → **for anything visible in a browser, opens Chrome through chrome-devtools and checks it once** (a rule in the global AGENTS.md — [[tuning]]) → summarizes.
+What happens, in order: ponytail checks whether something existing can be reused before writing new code → edits (for a written plan, progress is tracked in the plan file — OpenCode 2 has no todo tool) → runs tests → **for anything visible in a browser, opens Chrome through chrome-devtools and checks it once** (a rule in the global AGENTS.md — [[tuning]]) → summarizes.
 
-- `Esc` stops it mid-way · `/undo` reverts the last message together with its file changes (the project must be a git repo) · `/redo` re-applies
-- **The browser check is the slowest step** — measured at ~30–36 minutes for a small feature on a local model, but it's the step that finds bugs the tests don't cover ([[tuning]] sections 4 and 8). Work with no UI skips it
+On OpenCode 2 you'll see MCP tools (graft, chrome-devtools, memory…) appear as `execute` calls: the agent writes a short script that calls `tools.graft.graft_find_code(…)` and similar ("Code Mode").
+
+- `Esc` stops it mid-way · `/undo` (`Ctrl+X U`) reverts the last message together with its file changes and puts your prompt back in the box to edit · `/redo` (`Ctrl+X R`) cancels the undo
+- **The browser check is the slowest step**, but it's the step that finds bugs the tests don't cover. On OpenCode 2 it found an inverted "PAUSED" overlay that all 5 test files had missed ([[tuning]] section 9). Work with no UI skips it
 - If the agent stops silently with no summary, the model usually hit its output ceiling ([[gotchas]] item 8) — type `continue`
 
 **Step 5 — Check the result before accepting it**
@@ -154,9 +159,9 @@ Push yourself when ready — nothing runs automatically in CI in this setup ([[s
 
 **Step 7 — Close the work**
 
-- Next piece of work → `/new` (or `/exit` and reopen)
+- Next piece of work → `/new` (`Ctrl+X N`), or quit with `Ctrl+C` and reopen
 - A preference or decision you want remembered across sessions → type `remember that <thing>` — the agent saves it to memory, and the next session searches memory before asking again
-- A long session nearing the context limit with work still unfinished → `/compact`
+- A long session nearing the context limit with work still unfinished → `Ctrl+X C` (compact the session)
 - No need to rebuild graft yourself — the CLI refreshes the graph before every answer
 
 ### Commands you'll use most
@@ -166,8 +171,9 @@ Push yourself when ready — nothing runs automatically in CI in this setup ([[s
 | Open a new session / continue the last one | `opencode` / `opencode -c` |
 | Start new work in the same TUI | `/new` |
 | Go back to an older session | `/sessions` |
-| Stop the agent / revert the last message | `Esc` / `/undo` |
-| Shrink a long session's context | `/compact` |
+| Stop the agent / revert the last message | `Esc` / `/undo` (`Ctrl+X U`) |
+| Shrink a long session's context | `Ctrl+X C` |
+| Every command and shortcut | `Ctrl+P` (command palette) |
 | Get full, uncompressed replies / go back to terse | `/caveman off` (or `normal mode`) / `/caveman` |
 | A commit message / a review of the diff | `/caveman-commit` / `/caveman-review` |
 | Turn ponytail's intensity down or up | `/ponytail lite\|full\|ultra\|off` |
@@ -295,18 +301,24 @@ graft map
 
 **Step 4 — (only if needed) enable a project-specific MCP**
 
-If this project needs a database, create a config specific to this repo (won't affect other projects):
+If this project needs a database, create a config specific to this repo (won't affect other projects). Copy the **whole** server entry from the global config and set `"enabled": true`. On OpenCode 2 a short `{ "postgres": { "enabled": true } }` is ignored ([[gotchas]] item 22):
 
 ```jsonc
 // my-new-project/opencode.jsonc
-{ "mcp": { "postgres": { "enabled": true } } }
+{
+  "mcp": {
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
+  }
+}
 ```
 
-The same goes for the other servers that are off by default — `open-design` (when pulling work in from OpenDesign, section 5) and `playwright` (if you want it instead of / alongside chrome-devtools):
+The same goes for the other servers that are off by default — `open-design` (when pulling work in from OpenDesign, section 5) and `playwright` (if you want it instead of / alongside chrome-devtools). The entries to copy are in [`config/opencode.jsonc`](../config/opencode.jsonc).
 
-```jsonc
-{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
-```
+✅ **You should see:** `opencode mcp list` (run inside the project) shows that server as `connected`. The first run in a new folder can print `No MCP servers configured` — run it again.
 
 Set the env var **before** opening opencode every time (set it once in a shell profile and you won't have to type it each time):
 
@@ -327,10 +339,11 @@ Try asking something that needs real code references, e.g. `summarize this proje
 **Step 6 — (recommended) confirm skills/plugins loaded correctly**
 
 ```bash
-opencode debug skill
+opencode plugin list
+opencode run "list the skill IDs you can load, comma-separated"
 ```
 
-✅ **You should see:** 15 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s 6 skills (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, and `grill-me`/`grilling` if installed — 27 in total with OpenCode's own `customize-opencode` (see [[plugins]] for what each one is).
+✅ **You should see:** four plugins (`superpowers`, `ponytail`, `graft-deep`, `caveman`), and 27 skills: OpenCode's own `opencode` and `report`, 15 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), `ponytail`'s 6 (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, and `grilling` (`grill-me` is hidden from the model by its own `disable-model-invocation: true` — it only forwards to `grilling`; `@grill-me` still loads it) (see [[plugins]] for what each one is). `opencode debug skill` no longer exists on OpenCode 2.
 
 > [!tip] Done all 6 steps? Go straight to section 3
 > No need to repeat this checklist for the same project again — just open `opencode` and use it per section 3. Only redo this checklist when starting a genuinely new project.
@@ -360,13 +373,16 @@ The "agent's per-request workflow" diagram in section 1 is an abstract overview 
 
 1. **Type a command:** `please add level 3 to the game`
 2. **superpowers picks a skill** — recognizes this is building a new feature → calls `brainstorming` (visible from the agent talking about "classifying scope" as bounded/architectural first)
-3. **graft finds relevant code** — the agent calls graft itself (`graft_find_code`/`graft_file_api` via MCP) to find out how the current level system works, instead of opening every file itself — visible from a fact summary citing real `file:line` references
+3. **graft finds relevant code** — the agent calls graft itself (`tools.graft.graft_find_code`/`graft_file_api` inside an `execute` call on OpenCode 2) to find out how the current level system works, instead of opening every file itself — visible from a fact summary citing real `file:line` references
 4. **Asks clarifying questions in a batch (grilling format)** — fires several questions at once, each with a `➡️` recommendation attached (see the next section for where this format comes from)
 5. **Answer the questions** — a short reply, e.g. `go with your recommendations`
 6. **ponytail checks the decision ladder** — before writing new code, checks whether there's something existing to reuse (visible in the resulting code usually editing an existing file/adding a field to an existing data structure, rather than building a parallel new system)
-7. **Write/edit code**, with a todo list tracking progress
+7. **Write/edit code** (for a written plan, progress is tracked in the plan file)
 8. **Run tests + verify in the browser** (via the chrome-devtools MCP, for work visible in a browser — the "Verifying UI changes" rule in the global AGENTS.md)
 9. **Commit** as one scoped commit, with a short, to-the-point message — in the re-test the agent did **not** commit by itself; you have to ask (`/caveman-commit` for a message, or type `commit this for me`). See step 6 of "Start to finish"
+
+> [!info] Re-tested on OpenCode 2 (2026-10-11)
+> Same request, OpenCode 2.0.26 + superpowers 7.0.0: steps 2, 3 (graft through `execute`), 6, 7 and 8 ✅ — the browser check found and fixed a real bug. Without the new "Approval before building" rule, step 4/5 was skipped (no design shown). Results with the rule in [[tuning]] section 9.
 
 > [!tip] It's normal not to see every step
 > Small requests (fixing a typo, a general question) skip straight past steps 2–6 and go directly to steps 7–9 — going through every step like this only happens for work that's genuinely "building a new feature."
@@ -468,6 +484,9 @@ graft check
 
 ## 5. Building a website with OpenDesign, then pulling it into opencode
 
+> [!warning] OpenDesign 0.24.1 can't use OpenCode 2 as its engine
+> OpenDesign starts OpenCode with 1.x flags that OpenCode 2 rejects ([[gotchas]] item 24, upstream issue #8313). Until it's fixed, choose another agent as OpenDesign's engine for Phase 1. Phase 2 (the `open-design` MCP inside OpenCode) works normally.
+
 ### Phase 1 — Design/prototype in OpenDesign
 
 1. Open the OpenDesign app → the **Home** page
@@ -489,7 +508,7 @@ opencode
 ```
 
 > [!important] Turn `open-design` on for this project first
-> The `open-design` MCP is off by default (it costs ~6.6k tokens every turn) — put `{ "mcp": { "open-design": { "enabled": true } } }` in `my-real-project/opencode.json`, reopen opencode, and check `opencode mcp list` shows `open-design` as `connected`.
+> The `open-design` MCP is off by default — copy its **whole** entry from [`config/opencode.jsonc`](../config/opencode.jsonc) into `my-real-project/opencode.json` with `"enabled": true` (a short `{ "enabled": true }` is ignored on OpenCode 2, [[gotchas]] item 22), reopen opencode, and check `opencode mcp list` shows `open-design` as `connected`.
 
 ```
 Use the open-design tool list_projects to see what projects exist,
@@ -533,4 +552,7 @@ Full list with fixes at [[gotchas]] — the short version:
 - **`trivy` shows `command not found` even though winget said it installed successfully** → restart the terminal (VS Code needs the whole app closed) — the same PATH staleness as item 2 (see [[mcp-servers]], the trivy section)
 - **Every turn is slow / compactions are frequent / the agent keeps re-reading the same files** → measure the prompt size and the tool-call history with the scripts in [[tuning]] (items 11 and 13)
 - **The agent doesn't use graft even though there's a `graft/` index** → the global AGENTS.md needs the "graft first, even inside a skill" rule (item 12)
-- **`opencode debug skill` lists Claude Code's skills too** → set `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (item 15)
+- **The model is offered Claude Code's or `~/.agents` skills** → a `permissions` allow-list in `opencode.jsonc` (item 15 — the old env var is ignored on OpenCode 2)
+- **After upgrading to OpenCode 2, graft context / caveman stopped working** → V1 plugins don't run on V2 (items 20–21)
+- **A project's `{ "enabled": true }` doesn't turn an MCP server on** → copy the whole entry (item 22)
+- **A new feature gets built without a design to approve** → the "Approval before building" rule in the global AGENTS.md (item 23)

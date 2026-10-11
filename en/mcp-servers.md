@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Details on each MCP server set up in OpenCode — install steps, config, how to test, and gotchas
 ---
 
@@ -12,6 +12,11 @@ Every MCP below gets added to the `mcp` object in `~/.config/opencode/opencode.j
 
 > [!note] Before you start
 > This page assumes Node.js/npm and the OpenCode CLI are already installed. If not, go back to [[setup]] Parts 0–1 first.
+
+> [!important] OpenCode 2: MCP tools are called through `execute` ("Code Mode")
+> OpenCode 2 no longer puts every MCP tool definition in the prompt. The model gets one `execute` tool plus a short catalog (a few tools per server, the rest found with `search(...)`), and calls a tool by writing a script: `await tools.graft.graft_find_code({ query: "…" })`, `await tools["chrome-devtools"].new_page({ url })`. That is why the prompt fell from ~34k to ~14k tokens ([[tuning]] section 9), and why rules that name tools must use these paths (`tools.graft.graft_find_code`, not `graft_graft_find_code`).
+>
+> Turning a server **on per project** needs the server's whole entry in the project's config — a short `{ "enabled": true }` override is ignored on OpenCode 2 ([[gotchas]] item 22). The examples below show full entries.
 
 ---
 
@@ -54,7 +59,7 @@ A remote MCP (nothing to run locally, nothing to pre-install). Searches library/
 An MCP server that drives a real browser through Playwright — for automation, filling forms, clicking buttons, taking screenshots, and end-to-end testing a website's flow.
 
 > [!info] Off by default after tuning (2026-10-03)
-> Measured: playwright's 25 tool definitions cost ~4.5k tokens every turn, while in real use the agent called playwright 33 times vs 541 for chrome-devtools for the same kind of job. So the global config sets `"enabled": false`, and you turn it on per project in `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — e2e test suites written with Playwright still run through bash (`npx playwright test`) as usual. See [[tuning]] and [[gotchas]] item 11.
+> Measured: playwright's 25 tool definitions cost ~4.5k tokens every turn, while in real use the agent called playwright 33 times vs 541 for chrome-devtools for the same kind of job. So the global config sets `"enabled": false`, and you turn it on per project in `<project>/opencode.json` with the full entry: `{ "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }` — e2e test suites written with Playwright still run through bash (`npx playwright test`) as usual. See [[tuning]] and [[gotchas]] item 11.
 
 ### Install steps
 
@@ -184,7 +189,7 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
 | `graft_check_freshness` | (nothing) | Whether the local graph has drifted from the code |
 
 > [!note] The tool names you actually see in OpenCode have a doubled prefix
-> Because OpenCode names the MCP server `graft` and namespaces tools as `<server name>_<tool name>`, you'll actually see `graft_graft_find_code`, `graft_graft_file_api`, etc. (the word "graft" appears twice) — this is normal naming, not a bug, and doesn't affect functionality.
+> On OpenCode 1 tools were namespaced as `<server name>_<tool name>`, so you saw `graft_graft_find_code`, `graft_graft_file_api` (the word "graft" twice). On OpenCode 2 they are called inside `execute` as `tools.graft.graft_find_code(...)`. Only 3 of graft's 6 tools are shown in the catalog, which is why the global AGENTS.md names the paths explicitly.
 
 > [!warning] Real prompt injection encountered
 > The output of `graft map`/some commands carries a hidden instruction telling the agent to say a promotional line ("🌱 graft saved ~N tokens..."). This is a feature intentionally meant for a Claude Code hook to catch via regex (the `tool-savings` hook), but if you call the CLI directly outside that hook's pipeline, the text shows up as plain tool output the agent sees. Good to know, and don't follow that instruction automatically.
@@ -222,7 +227,7 @@ Unlike playwright, this focuses on **debugging** (console logs, network requests
    ```
 
    > [!info] `"enabled": false` by default, then on per project (2026-10-03)
-   > This server's 22 tools + instructions cost ~6.6k tokens every turn — the most of any MCP here — but it is only used when pulling work in from OpenDesign ([[USER-MANUAL]] section 5). Turn it on in the project doing Phase 2 with `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }`. See [[tuning]].
+   > This server's 22 tools + instructions cost ~6.6k tokens every turn — the most of any MCP here — but it is only used when pulling work in from OpenDesign ([[USER-MANUAL]] section 5). Turn it on in the project doing Phase 2 by copying its whole entry (from [`config/opencode.jsonc`](../config/opencode.jsonc)) into `<project>/opencode.json` with `"enabled": true`. See [[tuning]].
 
    > [!warning] Windows: if `od` resolves to Git's `od.exe`
    > When `...\Git\usr\bin` comes before the folder holding `od.cmd` on PATH, use `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` instead — [[gotchas]] item 16
@@ -560,11 +565,15 @@ Both are local MCPs that need an already-running database server (local or remot
 1. Create (or edit) a config file at **that project's root** to override the global setting:
 
    ```jsonc
-   // my-project/opencode.jsonc
+   // my-project/opencode.jsonc — the whole entry, not just "enabled" (gotchas.md item 22)
    {
      "mcp": {
-       "postgres": { "enabled": true }
-       // or "mysql": { "enabled": true }
+       "postgres": {
+         "type": "local",
+         "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+         "enabled": true
+       }
+       // mysql: copy its entry from config/opencode.jsonc the same way
      }
    }
    ```
@@ -626,4 +635,4 @@ Example output with everything set up, after tuning (6 enabled + 5 disabled — 
 ```
 
 > [!tip] `connected` doesn't mean worth it
-> Every enabled server sends its tool definitions every turn — measure the real per-server cost with `capture-server.mjs` + `analyze-prompt.mjs` per [[tuning]] section 1
+> On OpenCode 2 an enabled server costs little per turn (a few catalog lines each), but each one is still a process to start — sonarqube takes ~14 s to come up through Docker, so the very first prompt of a fresh `--standalone` run can go out before it's in the catalog. Measure with `capture-server.mjs` + `analyze-prompt.mjs` per [[tuning]] section 1.

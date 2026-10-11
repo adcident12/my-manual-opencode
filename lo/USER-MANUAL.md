@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: ຄູ່ມືການໃຊ້ງານ OpenCode ຕັ້ງແຕ່ຕົ້ນຈົນຈົບ (ເປີດ session, ສັ່ງວຽກ, ອະນຸມັດ, ກວດຜົນ, commit) ແລະປະຈຳວັນ — vibe coding, graft workflow, grill-me/grilling ແລະ OpenDesign workflow
 ---
 
@@ -58,16 +58,16 @@ graph TD
 ເປີດ terminal **ໃໝ່** (env var ທີ່ຫາກໍຕັ້ງຈະຍັງບໍ່ມີຜົນໃນ terminal ເດີມ — [[gotchas]] ຂໍ້ 2) ແລ້ວແລ່ນ:
 
 ```bash
-opencode --version       # ຕິດຕັ້ງ CLI ແລ້ວ
-opencode mcp list        # MCP ທີ່ເປີດໃຊ້ຕ້ອງຂຶ້ນ connected
-opencode debug skill     # skill ທີ່ໂຫຼດໄດ້
-opencode run "say hi"    # ໂມເດວຕອບກັບໄດ້
+opencode --version       # 2.x — ຄູ່ມືນີ້ສຳລັບ OpenCode 2
+opencode mcp list        # MCP ທີ່ເປີດໄວ້ຕ້ອງຂຶ້ນ connected
+opencode plugin list     # plugin ແບບແພັກເກດ (superpowers, ponytail) ແລະໂຕໃນເຄື່ອງ
+opencode run "list the skill IDs you can load, comma-separated"   # ໂມເດວຕອບໄດ້ + skill ທີ່ມັນເຫັນ
 ```
 
 ✅ **ຕ້ອງເຫັນ:**
 - `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` ຂຶ້ນ `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` ຂຶ້ນ `disabled` (ປົກກະຕິ — ເປີດຕໍ່ project)
-- `debug skill`: 27 ໂຕ — superpowers 15, ponytail 6, caveman 3, `grill-me`, `grilling`, `customize-opencode` ຖ້າເຫັນຫຼາຍກວ່ານີ້ຫຼາຍ ໝາຍຄວາມວ່າ skill ຂອງເຄື່ອງມືອື່ນປົນເຂົ້າມາ ([[gotchas]] ຂໍ້ 15)
-- `run "say hi"`: ໄດ້ຄຳຕອບກັບ ຖ້າຊ້າເກີນ 1–2 ນາທີເບິ່ງ [[gotchas]] ຂໍ້ 1
+- `plugin list`: `superpowers`, `ponytail`, `graft-deep`, `caveman` ຖ້າ `graft-deep` ຫຼື `caveman` ບໍ່ມີ ID ໝາຍຄວາມວ່າຍັງເປັນ plugin ແບບ V1 ແລະບໍ່ໄດ້ເຮັດຫຍັງເລີຍ ([[gotchas]] ຂໍ້ 20–21)
+- `run …`: ໄດ້ຄຳຕອບທີ່ມີ 27 skill — `opencode` ແລະ `report` (ມາກັບ OpenCode), superpowers 15, ponytail 6, caveman 3, `grilling` (`grill-me` ຖືກເຊື່ອງຈາກໂມເດວດ້ວຍ `disable-model-invocation: true` ຂອງມັນເອງ — ມັນພຽງສົ່ງຕໍ່ໄປ `grilling` ແລະພິມ `@grill-me` ກໍຍັງໂຫຼດໄດ້) ຖ້າຫຼາຍກວ່ານີ້ຫຼາຍໝາຍຄວາມວ່າ skill ຂອງເຄື່ອງມືອື່ນປົນເຂົ້າມາ ([[gotchas]] ຂໍ້ 15) ຖ້າຕອບຊ້າເກີນ 1–2 ນາທີເບິ່ງ [[gotchas]] ຂໍ້ 1
 
 ### ຂ. ເທື່ອດຽວຕໍ່ project — ກຽມ repo
 
@@ -84,10 +84,10 @@ opencode            # session ໃໝ່
 opencode -c         # ຫຼື: ເຮັດວຽກເດີມຕໍ່ຈາກ session ຫຼ້າສຸດ
 ```
 
-ໃນ TUI: `/sessions` ເລືອກ session ເກົ່າ · `/new` ເລີ່ມ session ໃໝ່ · `/models` ປ່ຽນໂມເດວ · `/help` ເບິ່ງຄຳສັ່ງທັງໝົດ
+ໃນ TUI: `/sessions` ເລືອກ session ເກົ່າ · `/new` ເລີ່ມ session ໃໝ່ · `/models` ປ່ຽນໂມເດວ · `Ctrl+P` ເປີດ command palette ທີ່ມີທຸກຄຳສັ່ງ
 
 > [!tip] ໜຶ່ງວຽກ = ໜຶ່ງ session
-> prompt ພື້ນຖານໜັກ ~34k tokens ຈາກ context 131k ([[tuning]]) — ວຽກໃໝ່ໃຫ້ `/new` ສະເໝີ session ທີ່ຍາວຂ້າມຫຼາຍວຽກຈະ compact ເລື້ອຍ ແລະ agent ຕ້ອງອ່ານໄຟລ໌ເດີມຊ້ຳ
+> prompt ພື້ນຖານໜັກ ~14k tokens ຈາກ context 131k ເທິງ OpenCode 2 (~34k ເທິງ OpenCode 1 — [[tuning]] ຂໍ້ 9) ແລະໃຫຍ່ຂຶ້ນທຸກ step ວຽກໃໝ່ໃຫ້ `/new` ສະເໝີ
 
 **ຂັ້ນ 2 — ສັ່ງວຽກເປັນພາສາຄົນ**
 
@@ -97,10 +97,13 @@ opencode -c         # ຫຼື: ເຮັດວຽກເດີມຕໍ່ຈ�
 | --- | --- | --- |
 | `ລະບົບເກັບແຫວນເຮັດວຽກແນວໃດ` (ຖາມ/ໃຫ້ອະທິບາຍ) | ຫາ code ດ້ວຍ graft ແລ້ວຕອບໂດຍອ້າງ `file:line` | ອ່ານ — ຈົບທີ່ຂັ້ນນີ້ |
 | `ແກ້ຄຳຜິດໃນໜ້າ menu` (ແກ້ນ້ອຍ) | ແກ້ເລີຍ → ແລ່ນ test | ຂ້າມໄປຂັ້ນ 5 |
-| `ຊ່ວຍເພີ່ມລະບົບ pause ໃຫ້ເກມ` (feature ໃໝ່) | ເອີ້ນ `brainstorming` → ສຳຫຼວດດ້ວຍ graft → ຖາມຄຳຖາມຫຼືສະເໜີການອອກແບບ → **ຢຸດລໍ** | ໄປຂັ້ນ 3 |
+| `ຊ່ວຍເພີ່ມລະບົບ pause ໃຫ້ເກມ` (feature ໃໝ່) | ເອີ້ນ `brainstorming` → ສຳຫຼວດດ້ວຍ graft → ຖາມຄຳຖາມ ຫຼືສະເໜີການອອກແບບສັ້ນໆ → **ຢຸດລໍ** — ເຖິງວ່າຄຳຂໍຂອງທ່ານຈະລະບຸລາຍລະອຽດຄົບແລ້ວ | ໄປຂັ້ນ 3 (ຫຼືບອກ `just do it` ຕັ້ງແຕ່ຕົ້ນເພື່ອຂ້າມ) |
 | `ກົດໂດດແລ້ວເກມຄ້າງ` (bug) | ເອີ້ນ `systematic-debugging` — ຫາສາເຫດໃຫ້ໄດ້ກ່ອນແກ້ | ຢືນຢັນສາເຫດ ແລ້ວໃຫ້ແກ້ |
 | `ຍ້າຍລະບົບດ່ານເປັນແບບ zone` (ວຽກໃຫຍ່ຫຼາຍໄຟລ໌) | ຂຽນ spec ທີ່ `docs/superpowers/specs/` + ແຜນ (`writing-plans`) | ອ່ານ spec ແລ້ວອະນຸມັດ |
 | `grill me about <ໄອເດຍ>` (ຍັງບໍ່ເຮັດ ພຽງຢາກຄິດໃຫ້ຕົກ) | ຖາມເປັນຮອບແບບ `grilling` ບໍ່ມີ spec ບໍ່ຂຽນ code | ຕອບຄຳຖາມ |
+
+> [!info] ເປັນຫຍັງ "ຢຸດລໍ" ຕ້ອງມີກົດຕັ້ງແຕ່ superpowers 7
+> `brainstorming` ຂອງ superpowers 7.0.0 ເບິ່ງຄຳຂໍທີ່ "ລະບຸທຸກຢ່າງທີ່ສຳຄັນແລ້ວ" ເປັນວຽກໄວ ແລະລົງມືຂຽນ code ທັນທີ ເທິງ OpenCode 2 ການທົດສອບ feature pause ເປັນແບບນັ້ນແທ້ ກົດ "Approval before building" ໃນ global AGENTS.md ຮັກສາຂັ້ນນີ້ໄວ້: ສິ່ງທີ່ເພີ່ມ ຫຼືປ່ຽນພຶດຕິກຳຕ້ອງມີການອອກແບບກ່ອນ ([[gotchas]] ຂໍ້ 23) ສ່ວນຄຳຖາມ ການອະທິບາຍ ແລະການແກ້ຄວາມຜິດພາດທີ່ເຫັນຊັດ ຍັງໄປກົງໄດ້ຄືເດີມ
 
 **ຂັ້ນ 3 — ຕອບຄຳຖາມ ແລະອະນຸມັດການອອກແບບ** (ສະເພາະ feature ໃໝ່/ວຽກໃຫຍ່)
 
@@ -113,10 +116,12 @@ agent ຈະ**ບໍ່ຂຽນ code** ຈົນກວ່າຈະຜ່ານ�
 
 **ຂັ້ນ 4 — agent ລົງມື** (ທ່ານພຽງລໍ)
 
-ລຳດັບທີ່ເກີດຂຶ້ນ: ponytail ກວດວ່າມີຂອງເດີມໃຫ້ໃຊ້ກ່ອນຂຽນໃໝ່ → ແກ້ code ພ້ອມ todo list → ແລ່ນ test → **ຖ້າເປັນວຽກທີ່ເຫັນໃນ browser ຈະເປີດ Chrome ຜ່ານ chrome-devtools ກວດໜຶ່ງຮອບ** (ກົດໃນ global AGENTS.md — [[tuning]]) → ສະຫຼຸບຜົນ
+ລຳດັບທີ່ເກີດຂຶ້ນ: ponytail ກວດວ່າມີຂອງເດີມໃຫ້ໃຊ້ກ່ອນຂຽນໃໝ່ → ແກ້ code (ຖ້າມີ plan ເປັນໄຟລ໌ ຄວາມຄືບໜ້າຈະຖືກຕິດຕາມໃນໄຟລ໌ plan — OpenCode 2 ບໍ່ມີ todo tool) → ແລ່ນ test → **ຖ້າເປັນວຽກທີ່ເຫັນໃນ browser ຈະເປີດ Chrome ຜ່ານ chrome-devtools ກວດໜຶ່ງຮອບ** (ກົດໃນ global AGENTS.md — [[tuning]]) → ສະຫຼຸບຜົນ
 
-- ກົດ `Esc` ເພື່ອຢຸດກາງທາງ · `/undo` ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດພ້ອມການແກ້ໄຟລ໌ຂອງຂໍ້ຄວາມນັ້ນ (project ຕ້ອງເປັນ git repo) · `/redo` ເຮັດຊ້ຳ
-- **ຂັ້ນກວດໃນ browser ໃຊ້ເວລາດົນທີ່ສຸດ** — ວັດໄດ້ ~30–36 ນາທີສຳລັບ feature ນ້ອຍເທິງໂມເດວ local ແຕ່ເປັນຂັ້ນທີ່ພົບ bug ທີ່ test ບໍ່ຄອບຄຸມ ([[tuning]] ຂໍ້ 4 ແລະ 8) ຖ້າວຽກບໍ່ກ່ຽວກັບ UI ຂັ້ນນີ້ຈະຖືກຂ້າມ
+ເທິງ OpenCode 2 ທ່ານຈະເຫັນ tool ຂອງ MCP (graft, chrome-devtools, memory…) ຂຶ້ນເປັນການເອີ້ນ `execute`: agent ຂຽນ script ສັ້ນໆທີ່ເອີ້ນ `tools.graft.graft_find_code(…)` ແລະອື່ນໆ ("Code Mode")
+
+- ກົດ `Esc` ເພື່ອຢຸດກາງທາງ · `/undo` (`Ctrl+X U`) ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດພ້ອມການແກ້ໄຟລ໌ຂອງຂໍ້ຄວາມນັ້ນ ແລ້ວເອົາ prompt ຂອງທ່ານກັບມາໃນຊ່ອງພິມໃຫ້ແກ້ · `/redo` (`Ctrl+X R`) ຍົກເລີກການ undo
+- **ຂັ້ນກວດໃນ browser ໃຊ້ເວລາດົນທີ່ສຸດ** ແຕ່ເປັນຂັ້ນທີ່ພົບ bug ທີ່ test ບໍ່ຄອບຄຸມ ເທິງ OpenCode 2 ມັນພົບ overlay "PAUSED" ທີ່ສະແດງກັບດ້ານ ຊຶ່ງໄຟລ໌ test ທັງ 5 ໄຟລ໌ບໍ່ຈັບ ([[tuning]] ຂໍ້ 9) ຖ້າວຽກບໍ່ກ່ຽວກັບ UI ຂັ້ນນີ້ຈະຖືກຂ້າມ
 - ຖ້າ agent ຢຸດງຽບກາງທາງໂດຍບໍ່ສະຫຼຸບ ມັກເປັນເພາະໂມເດວຊົນເພດານ output ([[gotchas]] ຂໍ້ 8) — ພິມ `continue`
 
 **ຂັ້ນ 5 — ກວດຜົນກ່ອນຮັບວຽກ**
@@ -154,9 +159,9 @@ push ເອງເມື່ອພ້ອມ — ບໍ່ມີ CI ແລ່ນອ
 
 **ຂັ້ນ 7 — ປິດວຽກ**
 
-- ວຽກຕໍ່ໄປ → `/new` (ຫຼື `/exit` ແລ້ວເປີດໃໝ່)
+- ວຽກຕໍ່ໄປ → `/new` (`Ctrl+X N`) ຫຼືອອກດ້ວຍ `Ctrl+C` ແລ້ວເປີດໃໝ່
 - ມີຄວາມມັກ/ຂໍ້ຕັດສິນໃຈທີ່ຢາກໃຫ້ຈື່ຂ້າມ session → ພິມ `ຈື່ໄວ້ວ່າ <ເລື່ອງ>` — agent ບັນທຶກລົງ memory ແລະ session ໜ້າຈະຄົ້ນກ່ອນຖາມຊ້ຳ
-- session ຍາວຈົນ context ໃກ້ເຕັມແຕ່ວຽກຍັງບໍ່ຈົບ → `/compact`
+- session ຍາວຈົນ context ໃກ້ເຕັມແຕ່ວຽກຍັງບໍ່ຈົບ → `Ctrl+X C` (compact session)
 - ບໍ່ຕ້ອງ rebuild graft ເອງ — CLI refresh graph ກ່ອນຕອບທຸກເທື່ອ
 
 ### ຄຳສັ່ງທີ່ໃຊ້ເລື້ອຍ
@@ -166,8 +171,9 @@ push ເອງເມື່ອພ້ອມ — ບໍ່ມີ CI ແລ່ນອ
 | ເປີດ session ໃໝ່ / ຕໍ່ session ຫຼ້າສຸດ | `opencode` / `opencode -c` |
 | ເລີ່ມວຽກໃໝ່ໃນ TUI ເດີມ | `/new` |
 | ກັບໄປ session ເກົ່າ | `/sessions` |
-| ຢຸດ agent / ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດ | `Esc` / `/undo` |
-| ຫຍໍ້ context ຂອງ session ຍາວ | `/compact` |
+| ຢຸດ agent / ຍ້ອນຂໍ້ຄວາມຫຼ້າສຸດ | `Esc` / `/undo` (`Ctrl+X U`) |
+| ຫຍໍ້ context ຂອງ session ຍາວ | `Ctrl+X C` |
+| ທຸກຄຳສັ່ງແລະ shortcut | `Ctrl+P` (command palette) |
 | ໃຫ້ຕອບແບບເຕັມ ບໍ່ຫຍໍ້ / ກັບມາຕອບສັ້ນ | `/caveman off` (ຫຼື `normal mode`) / `/caveman` |
 | ຂໍ້ຄວາມ commit / ຣີວິວ diff | `/caveman-commit` / `/caveman-review` |
 | ຫຼຸດ/ເພີ່ມຄວາມເຂັ້ມຂອງ ponytail | `/ponytail lite\|full\|ultra\|off` |
@@ -293,18 +299,24 @@ graft map
 
 ✅ **ຕ້ອງເຫັນ:** ສະຫຼຸບ `repo map — N files · N symbols · N edges · <ພາສາຫຼັກ>`
 
-**ຂັ້ນ 4 — (ສະເພາະກໍລະນີຕ້ອງໃຊ້) ເປີດ MCP ສະເພາະ project**
+ຖ້າໂປຣເຈັກນີ້ຕ້ອງຕໍ່ຖານຂໍ້ມູນ ສ້າງ config ສະເພາະ repo ນີ້ (ບໍ່ກະທົບໂປຣເຈັກອື່ນ) ໂດຍສຳເນົາລາຍການຂອງ server ນັ້ນ **ທັງກ້ອນ** ຈາກ config global ແລ້ວຕັ້ງ `"enabled": true` ເທິງ OpenCode 2 ການຂຽນສັ້ນໆ `{ "postgres": { "enabled": true } }` ຈະບໍ່ມີຜົນ ([[gotchas]] ຂໍ້ 22):
 
 ```jsonc
 // my-new-project/opencode.jsonc
-{ "mcp": { "postgres": { "enabled": true } } }
+{
+  "mcp": {
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
+  }
+}
 ```
 
-ໃຊ້ວິທີດຽວກັນກັບ MCP ທີ່ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນໂຕອື່ນ — `open-design` (ເມື່ອຈະດຶງວຽກຈາກ OpenDesign, ຂໍ້ 5) ແລະ `playwright` (ຖ້າຢາກໃຊ້ແທນ/ຄູ່ກັບ chrome-devtools):
+ໃຊ້ວິທີດຽວກັນກັບ MCP ທີ່ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນໂຕອື່ນ — `open-design` (ເມື່ອຈະດຶງວຽກຈາກ OpenDesign, ຂໍ້ 5) ແລະ `playwright` (ຖ້າຢາກໃຊ້ແທນ/ຄູ່ກັບ chrome-devtools) ລາຍການທີ່ຕ້ອງສຳເນົາຢູ່ໃນ [`config/opencode.jsonc`](../config/opencode.jsonc)
 
-```jsonc
-{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
-```
+✅ **ຕ້ອງເຫັນ:** `opencode mcp list` (ແລ່ນໃນໂປຣເຈັກ) ສະແດງ server ນັ້ນເປັນ `connected` ເທື່ອທຳອິດໃນ folder ໃໝ່ອາດຂຶ້ນ `No MCP servers configured` — ໃຫ້ແລ່ນຊ້ຳ
 
 ```bash
 export POSTGRES_CONNECTION_STRING="postgresql://user:pass@host/db"
@@ -323,10 +335,11 @@ opencode
 **ຂັ້ນ 6 — (ແນະນຳ) ຢືນຢັນວ່າ skill/plugin ໂຫຼດຄົບ**
 
 ```bash
-opencode debug skill
+opencode plugin list
+opencode run "list the skill IDs you can load, comma-separated"
 ```
 
-✅ **ຕ້ອງເຫັນ:** skill ຈາກ `superpowers` 15 ໂຕ, skill ຂອງ `ponytail` 6 ໂຕ, `caveman`/`caveman-commit`/`caveman-review`, ແລະ `grill-me`/`grilling` ຖ້າຕິດຕັ້ງໄວ້ — ລວມ 27 ໂຕກັບ `customize-opencode` ທີ່ມາກັບ OpenCode
+✅ **ຕ້ອງເຫັນ:** plugin 4 ໂຕ (`superpowers`, `ponytail`, `graft-deep`, `caveman`) ແລະ skill 27 ໂຕ: `opencode` ກັບ `report` ທີ່ມາກັບ OpenCode, skill ຈາກ `superpowers` 15 ໂຕ (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), ຂອງ `ponytail` 6 ໂຕ (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review` ແລະ `grilling` (`grill-me` ຖືກເຊື່ອງຈາກໂມເດວດ້ວຍ `disable-model-invocation: true` ຂອງມັນເອງ — ມັນພຽງສົ່ງຕໍ່ໄປ `grilling` ແລະພິມ `@grill-me` ກໍຍັງໂຫຼດໄດ້) (ເບິ່ງ [[plugins]] ວ່າແຕ່ລະໂຕຄືຫຍັງ) OpenCode 2 ບໍ່ມີ `opencode debug skill` ແລ້ວ
 
 > [!tip] ເຮັດຄົບ 6 ຂັ້ນແລ້ວໄປຫົວຂໍ້ 3 ໄດ້ເລີຍ
 > ຈາກນີ້ບໍ່ຕ້ອງເຮັດ checklist ນີ້ຊ້ຳອີກສຳລັບ project ເດີມ
@@ -354,13 +367,16 @@ opencode run -m home-llamacpp/qwen3.8-27b "..."   # ລະບຸໂມເດວ�
 
 1. **ພິມຄຳສັ່ງ:** `ຊ່ວຍເພີ່ມດ່ານ 3 ໃຫ້ເກມແດ່`
 2. **superpowers ເລືອກ skill** — ພົບວ່າເປັນວຽກສ້າງ feature ໃໝ່ → ເອີ້ນ `brainstorming`
-3. **graft ຫາໂຄ້ດທີ່ກ່ຽວຂ້ອງ** — agent ເອີ້ນ graft ເອງ (`graft_find_code`/`graft_file_api` ຜ່ານ MCP) ຫາວ່າລະບົບດ່ານປັດຈຸບັນເຮັດວຽກແນວໃດ
+3. **graft ຫາໂຄ້ດທີ່ກ່ຽວຂ້ອງ** — agent ເອີ້ນ graft ເອງ (`tools.graft.graft_find_code`/`graft_file_api` ພາຍໃນການເອີ້ນ `execute` ເທິງ OpenCode 2) ເພື່ອເບິ່ງວ່າລະບົບເດີມເຮັດວຽກແນວໃດ ແທນທີ່ຈະເປີດອ່ານທຸກໄຟລ໌ເອງ — ສັງເກດໄດ້ຈາກສະຫຼຸບຂໍ້ເທັດຈິງທີ່ອ້າງ `file:line` ແທ້
 4. **ຖາມຄຳຖາມຊີ້ແຈງແບບ batch (grilling format)** — ຍິງຄຳຖາມພ້ອມກັນຫຼາຍຂໍ້ ພ້ອມຄຳແນະນຳ `➡️` ຕໍ່ທ້າຍ
 5. **ຕອບຄຳຖາມ** — ພິມສັ້ນໆ ເຊັ່ນ `ຕາມແນະນຳທັງໝົດ`
 6. **ponytail ກວດ decision ladder** — ກ່ອນຂຽນໂຄ້ດໃໝ່ ກວດວ່າມີຂອງເດີມໃຫ້ reuse ບໍ່
-7. **ຂຽນ/ແກ້ໂຄ້ດ** ພ້ອມ todo list ກຳກັບຄວາມຄືບໜ້າ
+7. **ຂຽນ/ແກ້ໂຄ້ດ** (ຖ້າມີ plan ເປັນໄຟລ໌ ຄວາມຄືບໜ້າຈະຖືກຕິດຕາມໃນໄຟລ໌ plan)
 8. **ແລ່ນ test + ກວດໃນ browser** (ຜ່ານ chrome-devtools MCP ຖ້າເປັນວຽກທີ່ເຫັນໃນ browser — ກົດ "Verifying UI changes" ໃນ global AGENTS.md)
 9. **commit** ເປັນ scoped commit ດຽວ ພ້ອມຂໍ້ຄວາມສັ້ນກົງປະເດັນ — ໃນການທົດສອບຊ້ຳ agent **ບໍ່ commit ເອງ** ຕ້ອງສັ່ງ (`/caveman-commit` ໃຫ້ຂໍ້ຄວາມ ຫຼືພິມ `commit ໃຫ້ແດ່`) ເບິ່ງຂັ້ນ 6 ໃນ "ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ"
+
+> [!info] ທົດສອບຊ້ຳເທິງ OpenCode 2 (2026-10-11)
+> ຄຳຂໍດຽວກັນເທິງ OpenCode 2.0.26 + superpowers 7.0.0: ຂັ້ນ 2, 3 (graft ຜ່ານ `execute`), 6, 7 ແລະ 8 ✅ — ການກວດໃນ browser ພົບ ແລະແກ້ bug ແທ້ ຖ້າບໍ່ມີກົດ "Approval before building" ໃໝ່ ຂັ້ນ 4/5 ຖືກຂ້າມ (ບໍ່ສະແດງການອອກແບບ) ຜົນເມື່ອມີກົດຢູ່ໃນ [[tuning]] ຂໍ້ 9
 
 > [!tip] ບໍ່ເຫັນຄົບທຸກຂັ້ນກໍປົກກະຕິ
 > ຄຳສັ່ງນ້ອຍໆ (ແກ້ typo, ຖາມຄຳຖາມທົ່ວໄປ) ຈະຂ້າມຂັ້ນ 2-6 ໄປເລີຍ ເຂົ້າຂັ້ນ 7-9 ໂດຍກົງ
@@ -458,6 +474,9 @@ graft check
 
 ## 5. ສ້າງເວັບໄຊທ໌ດ້ວຍ OpenDesign ແລ້ວດຶງມາຕໍ່ໃນ opencode
 
+> [!warning] OpenDesign 0.24.1 ໃຊ້ OpenCode 2 ເປັນ engine ບໍ່ໄດ້
+> OpenDesign ເອີ້ນ OpenCode ດ້ວຍ flag ຂອງ 1.x ທີ່ OpenCode 2 ປະຕິເສດ ([[gotchas]] ຂໍ້ 24, issue ຕົ້ນທາງ #8313) ລະຫວ່າງລໍແກ້ ໃຫ້ເລືອກ agent ອື່ນເປັນ engine ຂອງ OpenDesign ໃນເຟສ 1 ສ່ວນເຟສ 2 (MCP `open-design` ໃນ OpenCode) ໃຊ້ໄດ້ຕາມປົກກະຕິ
+
 ### Phase 1 — ອອກແບບ/ສ້າງຕົ້ນແບບໃນ OpenDesign
 
 1. ເປີດແອັບ OpenDesign → ໜ້າ **Home**
@@ -476,7 +495,7 @@ opencode
 ```
 
 > [!important] ເປີດ `open-design` ໃຫ້ project ນີ້ກ່ອນ
-> MCP `open-design` ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນ (ກິນ ~6.6k tokens ທຸກ turn) — ໃສ່ `{ "mcp": { "open-design": { "enabled": true } } }` ໃນ `my-real-project/opencode.json` ແລ້ວເປີດ opencode ໃໝ່ ກວດດ້ວຍ `opencode mcp list` ວ່າ `open-design` ຂຶ້ນ `connected`
+> MCP `open-design` ປິດໄວ້ເປັນຄ່າເລີ່ມຕົ້ນ — ສຳເນົາລາຍການຂອງມັນ **ທັງກ້ອນ** ຈາກ [`config/opencode.jsonc`](../config/opencode.jsonc) ໄປໃສ່ `my-real-project/opencode.json` ພ້ອມ `"enabled": true` (ເທິງ OpenCode 2 ການຂຽນສັ້ນໆ `{ "enabled": true }` ບໍ່ມີຜົນ [[gotchas]] ຂໍ້ 22) ແລ້ວເປີດ opencode ໃໝ່ ກວດດ້ວຍ `opencode mcp list` ວ່າ `open-design` ຂຶ້ນ `connected`
 
 ```
 ໃຊ້ open-design tool list_projects ເບິ່ງວ່າມີ project ຫຍັງແດ່
@@ -513,4 +532,7 @@ opencode run -m opencode/deepseek-v4-flash-free "..."
 - **`trivy` ຂຶ້ນ `command not found`** → restart terminal (ເບິ່ງ [[mcp-servers]])
 - **ແຕ່ລະ turn ຊ້າ / compaction ເລື້ອຍ / agent ອ່ານໄຟລ໌ເດີມຊ້ຳໆ** → ວັດຂະໜາດ prompt ແລະເບິ່ງປະຫວັດການໃຊ້ tool ດ້ວຍ script ໃນ [[tuning]] (ຂໍ້ 11 ແລະ 13)
 - **agent ບໍ່ໃຊ້ graft ທັງທີ່ມີ `graft/` index** → ຕ້ອງມີກົດ "graft first, even inside a skill" ໃນ global AGENTS.md (ຂໍ້ 12)
-- **`opencode debug skill` ສະແດງ skill ຂອງ Claude Code ປົນມາ** → ຕັ້ງ `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (ຂໍ້ 15)
+- **ໂມເດວເຫັນ skill ຂອງ Claude Code ຫຼື `~/.agents`** → ໃຊ້ allow-list ໃນ `permissions` ຂອງ `opencode.jsonc` (ຂໍ້ 15 — env var ເດີມບໍ່ມີຜົນເທິງ OpenCode 2)
+- **ຫຼັງອັບເກຣດເປັນ OpenCode 2 context ຂອງ graft / caveman ຢຸດເຮັດວຽກ** → plugin ແບບ V1 ບໍ່ແລ່ນເທິງ V2 (ຂໍ້ 20–21)
+- **`{ "enabled": true }` ໃນໂປຣເຈັກບໍ່ເປີດ MCP server** → ສຳເນົາລາຍການທັງກ້ອນ (ຂໍ້ 22)
+- **feature ໃໝ່ຖືກສ້າງໂດຍບໍ່ມີການອອກແບບໃຫ້ອະນຸມັດ** → ກົດ "Approval before building" ໃນ global AGENTS.md (ຂໍ້ 23)

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ້ງຄ່າ OpenCode + MCP + Plugins ເທິງ Windows ພ້ອມວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ (ຂໍ້ 6 ໄດ້ຮັບການແກ້ໄຂແລ້ວໂດຍການຕັດສາເຫດຖິ້ມ ຫຼັງພົບວ່າ auto-refresh ໃນຕົວຂອງ graft CLI ເຮັດໃຫ້ hook ເດີມຊ້ຳຊ້ອນ)
 ---
 
@@ -8,7 +8,7 @@ summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ�
 
 ພາບລວມທີ [[index]] · ການຕັ້ງຄ່າທີ [[setup]]
 
-ລວມບັນຫາທີ່ພົບຈິງ 19 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
+ລວມບັນຫາທີ່ພົບຈິງ 26 ເລື່ອງ ຮຽງຕາມລຳດັບທີ່ພົບລະຫວ່າງຕັ້ງຄ່າຈິງ (ຂໍ້ 20–26: ຕອນອັບເກຣດເປັນ OpenCode 2) ແຕ່ລະຂໍ້ມີທັງ **Impact** ແລະວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້
 
 ---
 
@@ -230,6 +230,9 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 > [!tip] ບົດຮຽນ
 > hook ຊື່ຄ້າຍກັນໃນສອງ harness ບໍ່ໄດ້ແປວ່າເຮັດວຽກຄືກັນ ກ່ອນ port ພຶດຕິກຳຂ້າມກັນ ໃຫ້ອ່ານ source ຂອງ host ວ່າເອີ້ນ hook ຢູ່ໃສ ແລະ output ຂອງມັນຖືກເຮັດຫຍັງຕໍ່
 
+> [!note] OpenCode 2
+> OpenCode 2 ບໍ່ມີ hook ນີ້ແລ້ວ (ຂໍ້ 20) ຕອນນີ້ graft-deep ຕໍ່ context ໃນ hook `prompt` ຊຶ່ງເຮັດວຽກເທື່ອດຽວຕໍ່ prompt ຂອງຜູ້ໃຊ້ ແລະສິ່ງທີ່ແກ້ຈະຖືກບັນທຶກເປັນຂໍ້ຄວາມຂອງຜູ້ໃຊ້ເລີຍ — ພຶດຕິກຳທີ່ຂໍ້ນີ້ຕ້ອງຫາທາງອ້ອມ ກາຍເປັນຄ່າເລີ່ມຕົ້ນໄປແລ້ວ
+
 ---
 
 ## 10. `update-opencode.mjs` ມອງຂ້າມຄ່າແທ້ຂອງ SonarQube container ແບບງຽບໆ ເທິງ Windows
@@ -311,6 +314,17 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 >
 > **ຢ່າໃຊ້** `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` ຢ່າງດຽວ — ມັນຕັດພຽງ `~/.claude/skills` (86 → 74 ເທິງເຄື່ອງທີ່ທົດສອບ) skill ທີ່ຖືກ symlink ໄວ້ໃນ `~/.agents/skills` ນຳຈະຍັງເຂົ້າມາໄດ້ ຖ້າຕ້ອງການ skill ໂຕໃດໃນ OpenCode ແທ້ໆ ໃຫ້ copy ໄປໄວ້ທີ່ `~/.config/opencode/skills/<name>/`
 
+> [!warning] OpenCode 2 ບໍ່ສົນໃຈ env var ນັ້ນແລ້ວ — ໃຊ້ `permissions` ແທນ
+> ເທິງ 2.0.26 ເຄື່ອງເດີມກັບມາສະເໜີ skill 90 ໂຕອີກ ວິທີແກ້ຄື deny ທຸກ skill ແລ້ວ allow ສະເພາະຂອງ setup ນີ້ທີລະ ID (ກົດທີ່ກົງໂຕຫຼັງສຸດຊະນະ) — ລາຍການເຕັມຢູ່ໃນ [`config/opencode.jsonc`](../config/opencode.jsonc):
+> ```jsonc
+> "permissions": [
+>   { "action": "skill", "resource": "*", "effect": "deny" },
+>   { "action": "skill", "resource": "brainstorming", "effect": "allow" },
+>   { "action": "skill", "resource": "ponytail*", "effect": "allow" }
+> ]
+> ```
+> OpenCode 2 ບໍ່ມີ `opencode debug skill` ແລ້ວ ແລະລາຍການ skill ຂອງ server (`opencode api GET /api/skill`) ສະແດງທຸກ skill ທີ່ *ລົງທະບຽນ* ລວມໂຕທີ່ຖືກ deny ນຳ ຖ້າຈະເບິ່ງວ່າໂມເດວເຫັນຫຍັງແທ້ໃຫ້ຖາມມັນ: `opencode run "list the skill IDs you can load, comma-separated"` — setup ນີ້ໄດ້ 27 ໂຕ skill ທີ່ເພີ່ມໃນ `~/.config/opencode/skills/` ພາຍຫຼັງຕ້ອງມີແຖວ `allow` ຂອງຕົນເອງ
+
 ---
 
 ## 16. (Windows) `od` ໄປພົບ `od.exe` ຂອງ Git ແທນ shim ຂອງ OpenDesign
@@ -373,3 +387,101 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 
 > [!tip] ບົດຮຽນ
 > ຕົວເລກ "ໄວຂຶ້ນ 80%" ຕ້ອງເບິ່ງຄູ່ກັບ "ຍັງເຮັດຄົບທຸກຂັ້ນບໍ" ສະເໝີ — ວັດທັງເວລາແລະລຳດັບ tool call ດ້ວຍ `session-report.mjs session <title>` ກ່ອນສະຫຼຸບວ່າດີຂຶ້ນ
+
+---
+
+## 20. ຫຼັງອັບເກຣດເປັນ OpenCode 2 plugin ທີ່ຂຽນເອງຢຸດເຮັດວຽກແບບງຽບໆ
+
+**Impact:** ຫຼັງ `opencode upgrade` ເປັນ 2.0.26 graft-deep ບໍ່ແຊກ context ຫຍັງອີກ ແລະໂໝດຕອບສັ້ນຂອງ caveman ບໍ່ເປີດເລີຍ ໃນ TUI ບໍ່ມີ error ໃຫ້ເຫັນ
+
+**ສາເຫດ:** OpenCode 2 ມີ plugin API ໃໝ່ ແລະບໍ່ແລ່ນ plugin ແບບ V1 ເລີຍ ("Moving a file or renaming its config entry is not enough" — ຄູ່ມື migration ທາງການ) plugin ແບບ V1 export ຟັງຊັນທີ່ຄືນ hook ຕາມຊື່ (`'experimental.chat.system.transform'`, `'chat.message'`…) ສ່ວນ plugin ແບບ V2 default-export `{ id, setup(ctx) }` ແລ້ວລົງທະບຽນ hook ຜ່ານ `ctx` ຄຳສັ່ງ `opencode plugin list` ສະແດງ plugin V1 ແບບບໍ່ມີ ID ແລະລາຍການ plugin ຂອງ server ຂຶ້ນ `failed: Plugin must export a default definition with an id and an effect or setup function` superpowers (7.0.0) ກັບ ponytail (5.1.0) ອອກເວີຊັນ V2 ແລ້ວ ແຕ່ caveman (ແມ່ນແຕ່ v3.2.0) ແລະ graft-deep ທີ່ຂຽນເອງຍັງບໍ່ມີ
+
+> [!important] ວິທີແກ້
+> - **graft-deep** — ໃຊ້ເວີຊັນ V2 ໃນ [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js) ([[plugins]])
+> - **caveman** — ດາວໂຫຼດແລ້ວແລ່ນ [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs): ແທນສະເພາະຟັງຊັນ V1 ທີ່ export ດ້ວຍ definition ແບບ V2 (ເກັບຕົ້ນສະບັບໄວ້ເປັນ `plugin.v1.js`) ແລະຂຽນ shim ໂຕໂຫຼດຕາມຂໍ້ 21
+> - ກວດ: `opencode api GET /api/plugin` — plugin ທີ່ບໍ່ແມ່ນ builtin ທຸກໂຕຕ້ອງເປັນ `active`
+>
+> ການຈັບຄູ່ hook V1 → V2 ທີ່ໃຊ້: `experimental.chat.system.transform` → `ctx.session.hook("context")` (push ເຂົ້າ `event.system`), `chat.message` → `ctx.session.hook("prompt")`, `event` → `ctx.event.subscribe()`
+
+> [!warning] ຊື່ແພັກເກດ npm ປ່ຽນແລ້ວ
+> `npm install -g opencode-ai` ຍັງຕິດຕັ້ງສາຍ **1.x** (1.19.0 ຕອນທີ່ຂຽນ) OpenCode 2 ຄື `npm install -g @opencode/cli` ໃຫ້ຖອນແພັກເກດເກົ່າອອກກ່ອນ — V1 ແລະ V2 ຕິດຕັ້ງຄຳສັ່ງ `opencode` ທັງຄູ່ ແລະອ່ານ folder config ດຽວກັນ
+
+---
+
+## 21. plugin ໃນເຄື່ອງທີ່ໃສ່ໄວ້ໃນ config ບໍ່ຖືກໂຫຼດ
+
+**Impact:** ເຖິງ port ແລ້ວ caveman ກໍບໍ່ຂຶ້ນໃນ `opencode plugin list` ເລີຍ — ບໍ່ຂຶ້ນທັງແບບ active ແລະ failed
+
+**ສາເຫດ:** ກົດສອງຂໍ້ຂອງ OpenCode 2 ແລະຂໍ້ທີສອງງຽບ: (1) path ໃນເຄື່ອງທີ່ຢູ່ໃນ array `plugin` ຕ້ອງເປັນ **folder** — ຖ້າເປັນໄຟລ໌ຈະ log ວ່າ `configured plugin path must be a directory` ແລ້ວຂ້າມໄປ (2) ລາຍການທີ່ເປັນ folder ເຊັ່ນ `plugins/caveman` (folder ແພັກເກດທີ່ມີ `package.json` ຂອງຕົນເອງ) ຖືກຂ້າມເທິງ 2.0.26 ໂດຍບໍ່ມີ log ຈັກແຖວ graft-deep ຍັງເຮັດວຽກໄດ້ກໍເພາະ OpenCode 2 ໂຫຼດໄຟລ໌ `.js` ທຸກໄຟລ໌ໃນ `~/.config/opencode/plugin/` ເອງນຳ
+
+> [!important] ວິທີແກ້
+> ໃນ array `plugin` ໃຫ້ໃສ່ສະເພາະແພັກເກດ (superpowers, ponytail) plugin ໃນເຄື່ອງໃຫ້ວາງໃນ `~/.config/opencode/plugin/` ເປັນໄຟລ໌ `.js`: `graft-deep.js` ແລະ shim ແຖວດຽວ `caveman.js` ທີ່ໂຫຼດ plugin ໂຕແທ້ຈາກ `plugins/caveman/`:
+> ```js
+> export { default } from '../plugins/caveman/plugin.js';
+> ```
+> `port-caveman-opencode2.mjs` ຂຽນ shim ນີ້ໃຫ້ເອງ
+
+---
+
+## 22. ເປີດ MCP server ລາຍໂປຣເຈັກດ້ວຍ `{ "enabled": true }` ໃຊ້ບໍ່ໄດ້ແລ້ວ
+
+**Impact:** `opencode.json` ຂອງໂປຣເຈັກທີ່ໃສ່ `{ "mcp": { "playwright": { "enabled": true } } }` — ຮູບແບບທີ່ຄູ່ມືນີ້ໃຊ້ກັບ open-design, playwright ແລະຖານຂໍ້ມູນ — ເຮັດໃຫ້ server ຍັງເປັນ `disabled`
+
+**ສາເຫດ:** OpenCode 2 ຖິ້ມ "ລາຍການ MCP ແບບ V1 ທີ່ມີແຕ່ enabled ບໍ່ມີ type" (log ຂຶ້ນວ່າ `omitted enabled-only legacy MCP`) ຮູບສັ້ນແບບ V2 `{ "mcp": { "servers": { "playwright": { "disabled": false } } } }` ກໍຖືກປະຕິເສດວ່າ malformed ຄືກັນ
+
+> [!important] ວິທີແກ້
+> ສຳເນົາລາຍການຂອງ server ນັ້ນ **ທັງກ້ອນ** ຈາກ config global ມາໃສ່ໃນ config ຂອງໂປຣເຈັກແລ້ວເປີດຢູ່ບ່ອນນັ້ນ:
+> ```jsonc
+> // <project>/opencode.json
+> { "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }
+> ```
+> ທົດສອບແລ້ວທັງຮູບແບບ V1 (ຂ້າງເທິງ) ແລະຮູບແບບ V2 ເຕັມ (`mcp.servers.<name>` ທີ່ມີ `type`, `command`, `"disabled": false`) — ເຊື່ອມຕໍ່ໄດ້ທັງຄູ່
+
+> [!tip] `opencode mcp list` ໃນ folder ທີ່ OpenCode ຍັງບໍ່ເຄີຍເຫັນ
+> ເທື່ອທຳອິດໃນ folder ໃໝ່ອາດຕອບ `No MCP servers configured` ກ່ອນທີ່ config ຂອງ folder ນັ້ນຈະໂຫຼດແລ້ວ ໃຫ້ແລ່ນຊ້ຳກ່ອນສະຫຼຸບຫຍັງ
+
+---
+
+## 23. superpowers 7 ລົງມືຂຽນ code ທັນທີເມື່ອຄຳຂໍຊັດເຈນ — ບໍ່ມີການອອກແບບໃຫ້ອະນຸມັດ
+
+**Impact:** ໃນການທົດສອບຄົບວົງຈອນເທິງ OpenCode 2 ຄຳຂໍ *"please add a pause feature to the game: pressing P (or Esc) pauses and resumes gameplay"* ໄປຈາກ `brainstorming` ຮອດການແກ້ `GameScene.js` ເລີຍ ໂດຍບໍ່ສະແດງການອອກແບບ — ຂັ້ນທີ 3 ຂອງ [[USER-MANUAL]] (ອະນຸມັດການອອກແບບກ່ອນຂຽນ code) ຖືກຂ້າມ
+
+**ສາເຫດ:** ບໍ່ແມ່ນ OpenCode — superpowers ອັບເດດເປັນ 7.0.0 ພ້ອມກັນ ແລະ skill `brainstorming` ຖືກຂຽນໃໝ່ ຕອນນີ້ມັນແບ່ງວຽກຕາມຂະໜາດ: *"Everything that matters is in the request … a quick, clear task. Do it, and say what you did"* ມີແຕ່ "small change" ກັບ "project" ທີ່ລໍຖ້າອະນຸມັດ ແລະມັນຖາມຄຳຖາມປາຍເປີດ **ທີລະຂໍ້** ຕໍ່ຂໍ້ຄວາມ ຊຶ່ງຂັດກັບຮອບຄຳຖາມແບບຊຸດຂອງ `grilling` ໃນ setup ນີ້
+
+> [!important] ວິທີແກ້
+> ກົດໃນ global AGENTS.md ຊື່ "Approval before building" ([`config/AGENTS.md`](../config/AGENTS.md)): ວຽກທີ່ເພີ່ມ ຫຼືປ່ຽນພຶດຕິກຳຕ້ອງມີການອອກແບບສັ້ນໆກ່ອນແລ້ວລໍຖ້າອະນຸມັດ ເຖິງວ່າຄຳຂໍຈະລະບຸລາຍລະອຽດຄົບ ຄຳຖາມ ການອະທິບາຍ ແລະການແກ້ຄວາມຜິດພາດທີ່ເຫັນຊັດຍັງໄປກົງໄດ້ຄືເດີມ ແລະຄຳຂໍທີ່ບອກວ່າ "just do it" ກໍເຊັ່ນກັນ ກົດ grill-me ເດີມເຮັດໃຫ້ຄຳຖາມຍັງມາເປັນຊຸດ ຜົນຢູ່ໃນ [[tuning]] ຫົວຂໍ້ 9
+
+---
+
+## 24. OpenDesign ໃຊ້ OpenCode 2 ເປັນ engine ບໍ່ໄດ້
+
+**Impact:** OpenDesign Studio (0.24.1 ເວີຊັນຫຼ້າສຸດ) ລົ້ມເຫຼວເມື່ອເລືອກ agent ເປັນ OpenCode
+
+**ສາເຫດ:** OpenDesign ເອີ້ນ engine ດ້ວຍ flag ຂອງ OpenCode 1 — `opencode run --format json --dir <workspace> --dangerously-skip-permissions --variant …` ແລະ `opencode models --verbose` — ຊຶ່ງ OpenCode 2 ປະຕິເສດ (`Unrecognized flag: --verbose`) ແຈ້ງໄວ້ທີ່ຕົ້ນທາງແລ້ວ: [nexu-io/open-design#8313](https://github.com/nexu-io/open-design/issues/8313), [#8612](https://github.com/nexu-io/open-design/issues/8612)
+
+> [!important] ທາງລ່ຽງລະຫວ່າງລໍ OpenDesign ແກ້
+> ເລືອກ agent ອື່ນເປັນ engine ຂອງ OpenDesign ໃນຊ່ວງອອກແບບ ອີກເຄິ່ງຂອງ workflow ບໍ່ກະທົບ: ການດຶງໄຟລ໌ທີ່ generate ແລ້ວເຂົ້າໂປຣເຈັກຍັງເຮັດຜ່ານ **MCP server** `open-design` ໃນ OpenCode ໄດ້ ([[USER-MANUAL]] ຫົວຂໍ້ 5) ຢ່າຕິດຕັ້ງ OpenCode 1 ຄູ່ກັບ 2 ເພື່ອເລື່ອງນີ້ — ທັງຄູ່ອ່ານ `~/.config/opencode/` ແລະ OpenCode 1 ບໍ່ຮູ້ຈັກ setting ສະເພາະ V2 ທີ່ setup ນີ້ໃຊ້ແລ້ວ
+
+---
+
+## 25. (Windows, Git Bash) `opencode api GET /api/...` error ວ່າ "Expected an operation name"
+
+**Impact:** `opencode api get /api/skill` ໃນ Git Bash ພິມ `Error: Expected an operation name or an HTTP method and path`
+
+**ສາເຫດ:** Git Bash (MSYS) ແປງ argument ທີ່ໜ້າຕາຄື POSIX path — `/api/skill` ໄປຮອດ OpenCode ເປັນ `C:/Program Files/Git/api/skill`
+
+> [!important] ວິທີແກ້
+> ໃນ Git Bash ໃຫ້ນຳໜ້າຄຳສັ່ງດ້ວຍ `MSYS_NO_PATHCONV=1 opencode api GET /api/skill` ສ່ວນ PowerShell ແລະ cmd ບໍ່ຕ້ອງ
+
+---
+
+## 26. ເທິງ OpenCode 2 session ແລະ browser ຢູ່ຕໍ່ຫຼັງຄຳສັ່ງທີ່ເລີ່ມມັນຈົບໄປແລ້ວ
+
+**Impact:** ພົບ 2 ເລື່ອງໃນການທົດສອບຄົບວົງຈອນ: (1) ຢຸດ `opencode run` (Ctrl+C, timeout) ແລ້ວ session ຍັງເຮັດວຽກຕໍ່ໃນ background ອີກຫຼາຍນາທີ (2) ໃນ session ຖັດມາ agent ພົບໜ້າ browser ທີ່ session ກ່ອນເປີດຄ້າງໄວ້ ແລ້ວໃຊ້ 20 ນາທີໄລ່ຫາວ່າເປັນຫຍັງ "ເກມບໍ່ມີ scene ທີ່ active" — ໜ້າຂອງມັນເປັນ tab ເບື້ອງຫຼັງ ແລະ tab ເບື້ອງຫຼັງບໍ່ແລ່ນ animation frame ເກມ Phaser ຈຶ່ງບໍ່ເລີ່ມເລີຍ
+
+**ສາເຫດ:** OpenCode 2 ມີ background service `opencode run` ແລະ TUI ເປັນພຽງ client ຂອງມັນ session ແລະ MCP server ຢູ່ໃນ service ສະນັ້ນ chrome-devtools (ແລະ browser ຂອງມັນ) ຍັງເຮັດວຽກຢູ່ລະຫວ່າງ session ເທິງ OpenCode 1 ທຸກການແລ່ນຈະເປີດ MCP process ແລະ browser ໃໝ່ຂອງຕົນເອງ
+
+> [!important] ວິທີແກ້
+> - ຢຸດ session ດ້ວຍ `Esc` ໃນ TUI ຫຼື `opencode api session.interrupt --param sessionID=<id>` (`opencode session list` ສະແດງ id)
+> - ກົດ "Verifying UI changes" ໃນ [`config/AGENTS.md`](../config/AGENTS.md) ຕອນນີ້ກຳນົດວ່າ: ເປີດໜ້າຂອງຕົນເອງດ້ວຍ `new_page` ເຮັດວຽກກັບ page id ນັ້ນເທົ່ານັ້ນ ເອົາໜ້າຂຶ້ນມາດ້ານໜ້າກ່ອນຕັດສິນ ປິດເມື່ອແລ້ວ ແລະຢຸດຖ້າກວດ 2–3 ເທື່ອແລ້ວຍັງບໍ່ເປັນຢ່າງທີ່ຄວນ
+> - ຖ້າຢາກເລີ່ມດ້ວຍ browser ສະອາດ: `opencode service restart`

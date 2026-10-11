@@ -1,3 +1,20 @@
+## Approval before building — every new feature or behavior change
+
+`brainstorming` lets a "quick, clear task" go straight to code. In this
+setup that shortcut covers only questions, explanations, and fixes of an
+obvious mistake (a typo, a wrong value, a crash whose cause is already
+known). Anything that adds or changes behavior — even when the request
+names every detail — gets a short design first: what changes and where
+(files), how it behaves, and what you will deliberately leave out. Then
+stop and wait for approval before editing any file. If the user says to
+skip the questions or to just do it, skip this.
+
+The design is a few lines, not research. Base it on the project's own
+code — graft and the files you would change. Do not read library
+sources, minified bundles, or the web to write it; if a library's
+behavior matters, name it as an open question in the design and check it
+while implementing, after approval.
+
 ## Grill me — complements superpowers brainstorming, doesn't duplicate it
 
 This setup also runs the `superpowers` plugin. Its `brainstorming` skill is
@@ -33,12 +50,19 @@ if one is available and the lookup is heavy enough to warrant it.
 Skills such as `brainstorming` ("Explore project context — check files,
 docs, recent commits") tell you to look around the project. When the
 project has a `graft/` index, do that step through graft instead of
-listing directories and reading files one by one:
-`graft_graft_repo_map` for orientation, `graft_graft_find_code` for "where
-is X / how does Y work", `graft_graft_file_api` to skim a file, and
-`graft_graft_trace_calls` for callers. Then `read` only the files you are
-about to edit. Directory listings and whole-file reads are the fallback
-when there is no `graft/` index.
+listing directories and reading files one by one. MCP tools are called
+inside the `execute` tool (Code Mode), and the catalog shows only some of
+graft's tools, so use these exact paths rather than guessing:
+`tools.graft.graft_repo_map` for orientation, `tools.graft.graft_find_code`
+for "where is X / how does Y work", `tools.graft.graft_file_api` to skim a
+file, and `tools.graft.graft_trace_calls` for callers (check a signature
+with `search({ namespace: "graft" })` if a call is rejected). There is no
+`graft_ask` tool: `graft ask "<question>" --source` is the CLI, run
+through `shell`. Inside `execute`, `await` each tool call directly; a
+`new Promise(...)` that never calls `resolve` hangs the session, because
+`execute` has no overall timeout. Then
+`read` only the files you are about to edit. Directory listings and
+whole-file reads are the fallback when there is no `graft/` index.
 
 ## Verifying UI changes — once, in a real browser
 
@@ -46,8 +70,20 @@ Passing tests is not enough for a change someone will see in a browser (a
 web page, a game). Before reporting done, verify it once with
 chrome-devtools: load the page, do the one interaction the task is about,
 and check the console for errors. Keep it to a handful of calls — a single
-short wait for the page to settle, no polling loops. If the page cannot
+short wait for the page to settle, no polling loops. For a static site, serve
+it with `npx -y http-server -p 8765 -c-1` as a background shell job (pick
+another port if that one is taken) instead of writing a server; a 404 for
+`/favicon.ico` is harmless. If the page cannot
 load or throws, that is a failure to report or fix, not "done".
+
+The browser outlives your session: pages from earlier sessions may still
+be open. Open your own page with `new_page` (not in the background) and
+work only on that page id; close it when you are done. A background tab
+does not run animation frames, so a game or animation in one looks
+frozen — bring your page to the front before judging it. If the page
+still does not behave after two or three checks, take one screenshot,
+report what you saw, and stop; do not debug the framework from the
+browser console.
 
 ## Re-reading files after compaction or pruning
 
@@ -60,13 +96,15 @@ have not read since the last compaction.
 
 ## Memory — facts that must outlive this session (memory MCP)
 
+Call these inside the `execute` tool (Code Mode), like other MCP tools.
+
 - Before asking the user about a preference or a past decision, call
-  `memory_search_nodes` with the project's folder name (and "user") — the
-  answer may already be stored.
+  `tools.memory.search_nodes` with the project's folder name (and "user")
+  — the answer may already be stored.
 - When the user states a durable preference, or brainstorming/grilling
   settles a decision that later sessions will need, save it:
-  `memory_create_entities` for a new project/user entity, otherwise
-  `memory_add_observations` — one short sentence per fact, prefixed with
-  today's date (YYYY-MM-DD).
+  `tools.memory.create_entities` for a new project/user entity, otherwise
+  `tools.memory.add_observations` — one short sentence per fact, prefixed
+  with today's date (YYYY-MM-DD).
 - Never store secrets, code, or anything the repo already records
   (graft, git history, specs under `docs/`).

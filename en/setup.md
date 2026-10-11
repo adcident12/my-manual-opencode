@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: A detailed OpenCode install guide from a blank machine — Node.js, Git, the CLI, provider, MCP servers, plugins, Agent Skills open-standard skills, and AGENTS.md (global vs project), every step
 ---
 
@@ -82,7 +82,7 @@ OpenCode needs at least one "model" to talk to before it's actually usable. Ther
 ## Part 1 — Install the OpenCode CLI
 
 ```bash
-npm install -g opencode-ai
+npm install -g @opencode/cli
 ```
 
 Confirm it installed correctly:
@@ -91,7 +91,7 @@ Confirm it installed correctly:
 opencode --version
 ```
 
-Should print a version number like `1.18.18`.
+Should print a version number like `2.0.26`. This manual is written for **OpenCode 2** — `npm install -g opencode-ai` installs the old 1.x line ([[gotchas]] item 20). Coming from OpenCode 1? Follow [[updating]], "Upgrading from OpenCode 1 to OpenCode 2".
 
 ### Try it immediately (no extra setup)
 
@@ -227,10 +227,10 @@ opencode mcp list
 }
 ```
 
-Close and reopen OpenCode (plugins only load when a session starts) then check:
+Close and reopen OpenCode (or run `opencode service restart` — OpenCode 2 keeps a background service running) then check:
 
 ```bash
-opencode debug skill
+opencode plugin list     # superpowers should have an ID and a version
 ```
 
 > [!warning] If the network blocks GitHub
@@ -277,22 +277,27 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 Restart OpenCode and type `/i-have-adhd` in a session to turn it on — full toggle/always-on details in [[plugins]].
 
 > [!info] The setup actually in use now runs caveman instead of i-have-adhd (2026-10-03)
-> i-have-adhd is still a good example of "a plugin from a local clone", but what's installed is **caveman** — the same job (terse replies), installed in a similar way: you place the files yourself and point `plugin` at the path (never its installer). Full steps in [[plugins]], caveman — **install one or the other, not both**.
+> i-have-adhd is still a good example of "a plugin from a local clone", but what's installed is **caveman** — the same job (terse replies), installed in a similar way: you place the files yourself (never its installer). Full steps in [[plugins]], caveman — **install one or the other, not both**.
+
+> [!warning] OpenCode 2: a local plugin must be a V2 plugin, and a file path in the `plugin` array is rejected
+> Both i-have-adhd and caveman ship V1 plugins, which OpenCode 2 does not run ([[gotchas]] item 20). A local path in the `plugin` array must be a directory ([[gotchas]] item 21). This setup puts local plugins in `~/.config/opencode/plugin/` as `.js` files instead — OpenCode 2 loads those by itself — and ports caveman with [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs).
 
 ### A plugin you write yourself (custom .js)
 
-Put the `.js` file anywhere (`~/.config/opencode/plugin/<name>.js` is recommended for something used by every project), then add its path to the `plugin` array:
+Put the `.js` file in `~/.config/opencode/plugin/<name>.js` (every project) or `<project>/.opencode/plugins/<name>.js` (that project only). OpenCode 2 loads `.js` files there by itself, so the `plugin` array needs no entry. Don't list a file path there: OpenCode 2 rejects it ([[gotchas]] item 21).
 
-```jsonc
-{
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "C:/Users/<user>/.config/opencode/plugin/my-plugin.js"
-  ]
-}
+An OpenCode 2 plugin default-exports a definition with an `id` and a `setup(ctx)` function that registers hooks through `ctx`:
+
+```js
+export default {
+  id: 'my-plugin',
+  async setup(ctx) {
+    await ctx.session.hook('prompt', (event) => { /* edit event.prompt.text */ });
+  },
+};
 ```
 
-A plugin's structure must export an async function that takes `{ directory }` and returns an object of hooks — a full example is in [[plugins]] (graft-deep).
+A full example is in [[plugins]] (graft-deep); check it loaded with `opencode api GET /api/plugin` (status `active`).
 
 ### Standalone skills following the Agent Skills open standard (not a plugin)
 
@@ -307,7 +312,7 @@ OpenCode looks for skills in 3 places:
 | `<project>/.claude/skills/<name>/SKILL.md` | Claude Code compat (the same file works for both tools) |
 
 > [!warning] OpenCode also loads skills from `~/.claude/skills` and `~/.agents/skills` on its own
-> On a machine with Claude Code or other AI tools installed, their skills leak in (on the test machine: 86 skills instead of 25) — every one is sent every turn, and a small model picks the wrong one more easily. Set the user-level env var `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, then reopen terminals/editors. Details, and why not `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`, in [[gotchas]] item 15.
+> On a machine with Claude Code or other AI tools installed, their skills leak in (on the test machine: 90 skills instead of 27). Every one is listed every turn, and a small model picks the wrong one more easily. OpenCode 2 ignores the old `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` env var. Use a `permissions` allow-list in `opencode.jsonc` instead: deny every skill, then allow this setup's own by ID. The full list is in [`config/opencode.jsonc`](../config/opencode.jsonc), and the details are in [[gotchas]] item 15. **A skill you add later needs its own `allow` line.**
 
 Minimum file structure:
 
@@ -323,8 +328,8 @@ The full instruction content you want the agent to follow when this skill is inv
 > [!warning] Not an automatic slash command (unlike Claude Code)
 > A skill like this **does not become a `/my-skill`** command you can type directly in OpenCode — the model decides on its own which skill to call by matching what you typed against each skill's `description` field (through the native `skill` tool). So `description` needs to be written clearly enough for the model to match correctly. If you want the 100% certainty of a real slash command, build a separate custom command at `.opencode/commands/<name>.md` instead (see the [OpenCode Commands docs](https://opencode.ai/docs/commands/)).
 
-> [!note] Fields OpenCode doesn't recognize are silently ignored
-> Skills ported from Claude Code sometimes have Claude-Code-specific frontmatter fields, like `disable-model-invocation` — OpenCode only supports `name`, `description`, `license`, `compatibility`, and `metadata`. Any other field is quietly skipped, no error, no need to strip it out before use.
+> [!note] Frontmatter fields OpenCode doesn't recognize are silently ignored
+> OpenCode 2 reads `name`, `description`, `metadata.opencode/autoinvoke` and `disable-model-invocation` (both hide the skill from the model's list) and accepts but ignores portability fields such as `license` and `compatibility`. Anything else is skipped without an error. The skill **ID is the folder name**, not `name` — that ID is what goes in the `permissions` allow-list.
 
 A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, wired to superpowers) is in [[plugins]].
 
@@ -332,7 +337,7 @@ A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, 
 
 `AGENTS.md` is an instruction file OpenCode reads every session (like an extra system prompt). It has 2 levels:
 
-1. **Project** — walking up from the working directory looking for `AGENTS.md` (or `CLAUDE.md`) in that repo — this is the file `graft init --agents agents --no-global` writes automatically per repo (see [[mcp-servers]]).
+1. **Project** — walking up from the working directory looking for `AGENTS.md` in that repo (OpenCode 2 no longer falls back to `CLAUDE.md`) — this is the file `graft init --agents agents --no-global` writes automatically per repo (see [[mcp-servers]]).
 2. **Global** — `~/.config/opencode/AGENTS.md` — applies to **every project**. No installer creates this file automatically; you write it yourself.
 
 > [!info] Confirmed by a live test — the project and global files are used together, not one instead of the other
@@ -341,12 +346,13 @@ A real install example (the `grill-me`/`grilling` skill from mattpocock/skills, 
 > [!tip] When to write at global instead of project level
 > Write at global when a rule should apply "to every project, always" (e.g. how to reconcile two skills that might collide). Write at project level when it's context specific to that one repo (e.g. graft's context graph). A real example that had to be written at global level is in [[plugins]], the grill-me/grilling section.
 
-The global AGENTS.md in use after tuning has 5 sections (the whole file, ready to copy: [`config/AGENTS.md`](../config/AGENTS.md)):
+The global AGENTS.md in use after tuning has 6 sections (the whole file, ready to copy: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | Section | Why it's there | Full text |
 | --- | --- | --- |
+| Approval before building — every new feature or behavior change | superpowers 7's `brainstorming` goes straight to code for a "clear" request ([[gotchas]] item 23) | [[tuning]] |
 | Grill me — complements superpowers brainstorming | keeps two gates from colliding | [[plugins]] |
-| Exploring a codebase — graft first, even inside a skill | `brainstorming`'s first step made the agent skip graft ([[gotchas]] item 12) | [[tuning]] |
+| Exploring a codebase — graft first, even inside a skill | `brainstorming`'s first step made the agent skip graft ([[gotchas]] item 12); on OpenCode 2 it also gives the exact Code Mode tool paths | [[tuning]] |
 | Verifying UI changes — once, in a real browser | passing tests doesn't mean the screen works — stops the agent skipping the browser check ([[gotchas]] item 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% of repeated reads came right after a compaction ([[gotchas]] item 13) | [[tuning]] |
 | Memory — facts that must outlive this session | the memory MCP was never used without a rule ([[gotchas]] item 14) | [[tuning]] |
@@ -358,13 +364,17 @@ The global AGENTS.md in use after tuning has 5 sections (the whole file, ready t
 Some MCPs need credentials/state specific to a project (e.g. a database connection, that repo's own code graph). The safe way to do it:
 
 1. Set `enabled: false` at the **global config** level (`~/.config/opencode/opencode.jsonc`)
-2. Override it in a **project-level** config — create this file at that repo's root (OpenCode merges it over the global one automatically, nothing extra to configure):
+2. Turn it on in a **project-level** config by copying the **whole** server entry into that repo's root. On OpenCode 2 a short `{ "enabled": true }` override is ignored ([[gotchas]] item 22):
 
 ```jsonc
 // project-root/opencode.jsonc
 {
   "mcp": {
-    "postgres": { "enabled": true }
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
   }
 }
 ```
@@ -377,12 +387,14 @@ Some MCPs need credentials/state specific to a project (e.g. a database connecti
 
 ```bash
 opencode mcp list        # check all MCP servers
-opencode debug skill     # check which skills/plugins loaded successfully
+opencode plugin list     # superpowers + ponytail (packages), graft-deep + caveman (local)
+opencode api GET /api/plugin   # every plugin's status — local ones must say "active" (Git Bash: prefix MSYS_NO_PATHCONV=1, gotchas.md item 25)
+opencode run "list the skill IDs you can load, comma-separated"   # the skills the model is actually offered: 27
 opencode debug config    # view the fully resolved config
 ```
 
-> [!danger] `opencode debug config` shows API keys in plaintext
-> This command shows the actual resolved env var values (not the `{env:...}` placeholder) — if you're going to paste the output somewhere to share with someone, always strip/mask any `apiKey` value first.
+> [!danger] Check `opencode debug config` output before sharing it
+> OpenCode 2 masks header values and keys it recognizes as secrets (`***`), but it prints everything else as resolved, machine paths and server URLs included. Read it through before pasting it anywhere.
 
 ---
 
@@ -391,4 +403,4 @@ opencode debug config    # view the fully resolved config
 Setup done — read [[USER-MANUAL]] for real day-to-day usage, or [[gotchas]] if you hit a problem along the way.
 
 > [!tip] After some real use — measure, then tune
-> A complete config doesn't mean the agent uses everything as intended. [[tuning]] has scripts to measure the prompt size per turn, see which tools the agent really called from session history, and test the workflow end to end — plus the recommended settings (rarely used MCPs off by default, `compaction.prune`, extra global AGENTS.md rules).
+> A complete config doesn't mean the agent uses everything as intended. [[tuning]] has scripts to measure the prompt size per turn, see which tools the agent really called from session history, and test the workflow end to end — plus the recommended settings (rarely used MCPs off by default, `compaction.keep`/`buffer`, extra global AGENTS.md rules).

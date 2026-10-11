@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Home page for the OpenCode CLI setup and usage manual, covering MCP servers, Plugins, and Skills (Agent Skills open standard) for vibe coding
 ---
 
@@ -16,7 +16,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 
 | Component | Details |
 | --- | --- |
-| **OpenCode CLI** | v1.18.18+, installed via `npm install -g opencode-ai` (global) |
+| **OpenCode CLI** | **OpenCode 2** (tested on 2.0.26), installed via `npm install -g @opencode/cli` (global) — coming from 1.x: [[updating]] |
 | **Primary model provider** | `home-llamacpp` — a self-hosted llama.cpp server (URL specific to each machine), model `qwen3.8-27b` (Q4_K, 131k context) via an OpenAI-compatible endpoint |
 | **Fallback model (fast)** | `opencode/deepseek-v4-flash-free` — built into OpenCode itself, no extra API key needed, fast replies (~10s) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (context that persists across sessions — driven by a global AGENTS.md rule), sonarqube (code quality/security — self-hosted via Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **enabled per project:** open-design (pulls files from an OpenDesign project), playwright (browser automation), postgres/mysql · github (disabled until a PAT exists) |
@@ -34,7 +34,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 - [[mcp-servers]] — details on every MCP server: install steps, config, and how to test each one
 - [[plugins]] — superpowers, grill-me/grilling (a batch-interview skill that complements superpowers), the custom `graft-deep` plugin (full source + the OpenCode Plugin Hook API), ponytail (a code-minimization ruleset), and caveman (short, to-the-point replies — used instead of i-have-adhd, which remains an alternative)
 - [[USER-MANUAL]] — **start to finish** (open a session → ask → approve → check → commit) and real day-to-day usage: vibe coding, the graft workflow, the OpenDesign workflow
-- [[gotchas]] — 19 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, etc.)
+- [[gotchas]] — 26 real problems hit in practice with fixes (Windows PATH/env snapshotting, a slow model, native module ABI mismatches, reasoning-model output caps, a prompt bloated by MCP tools, a skill overriding AGENTS.md, upgrading to OpenCode 2, etc.)
 - [[updating]] — how to update/upgrade the OpenCode CLI, MCP servers, plugins, and OpenDesign, one at a time
 - [config/](../config/README.md) — the files this setup writes or edits by hand, ready to copy: the `opencode.jsonc` template, global `AGENTS.md`, `graft-deep.js` plugin
 - [AGENT-SETUP.md](../AGENT-SETUP.md) — setup instructions written for an AI agent to follow (tell your agent: `read AGENT-SETUP.md and set this up`)
@@ -46,7 +46,7 @@ This set of docs records a real, working setup — from installing the CLI on a 
 
 ```bash
 # 1. Install the CLI
-npm install -g opencode-ai
+npm install -g @opencode/cli
 
 # 2. Confirm it installed correctly
 opencode --version

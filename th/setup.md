@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: คู่มือติดตั้ง OpenCode แบบละเอียดตั้งแต่เครื่องเปล่า — Node.js, Git, CLI, provider, MCP servers, plugins, skill แบบ Agent Skills open standard และ AGENTS.md (global vs project) ครบทุกขั้นตอน
 ---
 
@@ -82,7 +82,7 @@ OpenCode ต้องมี "โมเดล" ให้คุยด้วยอ�
 ## Part 1 — ติดตั้ง OpenCode CLI
 
 ```bash
-npm install -g opencode-ai
+npm install -g @opencode/cli
 ```
 
 ตรวจสอบว่าติดตั้งสำเร็จ:
@@ -91,7 +91,7 @@ npm install -g opencode-ai
 opencode --version
 ```
 
-ควรขึ้นเลขเวอร์ชัน เช่น `1.18.18`
+ควรขึ้นเลขเวอร์ชัน เช่น `2.0.26` คู่มือนี้เขียนสำหรับ **OpenCode 2** — `npm install -g opencode-ai` จะติดตั้งสาย 1.x ตัวเก่า ([[gotchas]] ข้อ 20) ถ้าย้ายมาจาก OpenCode 1 ให้ทำตาม [[updating]] หัวข้อ "อัปเกรดจาก OpenCode 1 เป็น OpenCode 2"
 
 ### ทดสอบใช้งานทันที (ไม่ต้องตั้งค่าอะไรเพิ่ม)
 
@@ -227,10 +227,10 @@ opencode mcp list
 }
 ```
 
-ปิดแล้วเปิด OpenCode ใหม่ (plugin โหลดตอนเริ่ม session เท่านั้น) แล้วตรวจสอบ:
+ปิดแล้วเปิด OpenCode ใหม่ (หรือรัน `opencode service restart` — OpenCode 2 มี background service ทำงานค้างอยู่) แล้วตรวจสอบ:
 
 ```bash
-opencode debug skill
+opencode plugin list     # superpowers ต้องมี ID และเวอร์ชัน
 ```
 
 > [!warning] ถ้าเครือข่ายบล็อก GitHub
@@ -279,20 +279,25 @@ git clone https://github.com/ayghri/i-have-adhd ~/.config/opencode/vendor/i-have
 > [!info] setup ที่ใช้จริงตอนนี้ใช้ caveman แทน i-have-adhd (2026-10-03)
 > i-have-adhd ยังเป็นตัวอย่างที่ดีของ "plugin จาก local clone" แต่ตัวที่ติดตั้งอยู่จริงคือ **caveman** — ทำหน้าที่เดียวกัน (ตอบสั้น) และติดตั้งด้วยวิธีคล้ายกัน คือวางไฟล์เองแล้วชี้ `plugin` ไปที่ path (ห้ามใช้ installer ของมัน) ขั้นตอนเต็มที่ [[plugins]] หัวข้อ caveman — **ติดตั้งตัวใดตัวหนึ่งเท่านั้น**
 
+> [!warning] OpenCode 2: plugin ในเครื่องต้องเป็น plugin แบบ V2 และ path ที่เป็นไฟล์ใน array `plugin` จะถูกปฏิเสธ
+> ทั้ง i-have-adhd และ caveman มาเป็น plugin แบบ V1 ซึ่ง OpenCode 2 ไม่รัน ([[gotchas]] ข้อ 20) และ path ในเครื่องใน array `plugin` ต้องเป็นโฟลเดอร์ ([[gotchas]] ข้อ 21) setup นี้จึงวาง plugin ในเครื่องไว้ใน `~/.config/opencode/plugin/` เป็นไฟล์ `.js` แทน — OpenCode 2 โหลดเองให้ — และ port caveman ด้วย [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs)
+
 ### Plugin ที่เขียนเอง (custom .js)
 
-วางไฟล์ `.js` ที่ไหนก็ได้ (แนะนำ `~/.config/opencode/plugin/<name>.js` สำหรับใช้ทุกโปรเจกต์) แล้วเพิ่ม path ใน `plugin` array:
+วางไฟล์ `.js` ไว้ที่ `~/.config/opencode/plugin/<name>.js` (ทุกโปรเจกต์) หรือ `<project>/.opencode/plugins/<name>.js` (เฉพาะโปรเจกต์นั้น) OpenCode 2 โหลดไฟล์ `.js` ตรงนั้นเอง array `plugin` จึงไม่ต้องมีรายการ และอย่าใส่ path ที่เป็นไฟล์ลงไป เพราะ OpenCode 2 จะปฏิเสธ ([[gotchas]] ข้อ 21)
 
-```jsonc
-{
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "C:/Users/<user>/.config/opencode/plugin/my-plugin.js"
-  ]
-}
+plugin ของ OpenCode 2 default-export definition ที่มี `id` และฟังก์ชัน `setup(ctx)` ซึ่งลงทะเบียน hook ผ่าน `ctx`:
+
+```js
+export default {
+  id: 'my-plugin',
+  async setup(ctx) {
+    await ctx.session.hook('prompt', (event) => { /* แก้ event.prompt.text */ });
+  },
+};
 ```
 
-โครงสร้าง plugin ต้อง export ฟังก์ชัน async ที่รับ `{ directory }` แล้วคืน object ของ hooks — ตัวอย่างเต็มที่ [[plugins]] (graft-deep)
+ตัวอย่างเต็มอยู่ที่ [[plugins]] (graft-deep) ตรวจว่าโหลดแล้วด้วย `opencode api GET /api/plugin` (สถานะ `active`)
 
 ### Skill เดี่ยวๆ ตาม Agent Skills open standard (ไม่ใช่ plugin)
 
@@ -307,7 +312,7 @@ OpenCode มองหา skill จาก 3 ที่:
 | `<project>/.claude/skills/<name>/SKILL.md` | compat กับ Claude Code (ใช้ไฟล์เดียวกันได้ทั้งสองเครื่องมือ) |
 
 > [!warning] OpenCode ยังโหลด skill จาก `~/.claude/skills` และ `~/.agents/skills` ให้เองด้วย
-> บนเครื่องที่ติดตั้ง Claude Code หรือเครื่องมือ AI ตัวอื่นไว้ skill ของเครื่องมือพวกนั้นจะปนเข้ามา (บนเครื่องที่ทดสอบ: 86 skill แทน 25) ทุกตัวถูกส่งในทุก turn และโมเดลเล็กเลือกผิดง่าย — ตั้ง env var ระดับ user `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` แล้วเปิด terminal/editor ใหม่ รายละเอียดและเหตุผลที่ไม่ใช้ `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS` อยู่ที่ [[gotchas]] ข้อ 15
+> บนเครื่องที่ติดตั้ง Claude Code หรือเครื่องมือ AI ตัวอื่นไว้ skill ของเครื่องมือพวกนั้นจะปนเข้ามา (บนเครื่องที่ทดสอบ: 90 skill แทน 27) ทุกตัวถูกแสดงในทุก turn และโมเดลเล็กเลือกผิดง่าย OpenCode 2 ไม่สนใจ env var `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` แบบเดิมแล้ว ให้ใช้ allow-list ใน `permissions` ของ `opencode.jsonc` แทน: deny ทุก skill แล้ว allow ของ setup นี้ทีละ ID รายการเต็มอยู่ใน [`config/opencode.jsonc`](../config/opencode.jsonc) และรายละเอียดอยู่ที่ [[gotchas]] ข้อ 15 **skill ที่เพิ่มทีหลังต้องมีบรรทัด `allow` ของตัวเอง**
 
 โครงสร้างไฟล์ขั้นต่ำ:
 
@@ -323,8 +328,8 @@ description: อธิบายสั้นๆ ว่า skill นี้ใช�
 > [!warning] ไม่ใช่ slash command อัตโนมัติ (ต่างจาก Claude Code)
 > Skill แบบนี้ **ไม่กลายเป็น `/my-skill` ให้พิมพ์ตรงๆ** ใน OpenCode — โมเดลเป็นคนตัดสินใจเองว่าจะเรียก skill ไหน โดยเทียบข้อความที่คุณพิมพ์กับ field `description` ของแต่ละ skill (ผ่าน native `skill` tool) ดังนั้น `description` ต้องเขียนให้ชัดพอที่โมเดลจะจับคู่ถูก — ถ้าอยากได้ความชัวร์ 100% แบบ slash command จริง ต้องสร้างเป็น custom command แยกที่ `.opencode/commands/<name>.md` แทน (ดู [OpenCode Commands docs](https://opencode.ai/docs/commands/))
 
-> [!note] Field ที่ OpenCode ไม่รู้จักจะถูก ignore เฉยๆ
-> Skill ที่ port มาจาก Claude Code บางตัวมี frontmatter field เฉพาะของ Claude Code เช่น `disable-model-invocation` — OpenCode รองรับแค่ `name`, `description`, `license`, `compatibility`, `metadata` เท่านั้น field อื่นที่ไม่รู้จักจะถูกข้ามไปเงียบๆ ไม่ error ไม่ต้องลบออกเองก่อนใช้
+> [!note] field ใน frontmatter ที่ OpenCode ไม่รู้จักจะถูก ignore เฉยๆ
+> OpenCode 2 อ่าน `name`, `description`, `metadata.opencode/autoinvoke` และ `disable-model-invocation` (สองตัวหลังซ่อน skill จากรายการของโมเดล) และรับแต่ไม่ใช้ field ด้าน portability อย่าง `license` และ `compatibility` field อื่นถูกข้ามไปโดยไม่ error **ID ของ skill คือชื่อโฟลเดอร์** ไม่ใช่ `name` — ID นี้แหละที่ใส่ใน allow-list ของ `permissions`
 
 ตัวอย่างการติดตั้งจริง (skill `grill-me`/`grilling` จาก mattpocock/skills, ผูกกับ superpowers) ดูที่ [[plugins]]
 
@@ -332,7 +337,7 @@ description: อธิบายสั้นๆ ว่า skill นี้ใช�
 
 `AGENTS.md` คือไฟล์ instruction ที่ OpenCode อ่านทุก session (คล้าย system prompt เพิ่มเติม) มี 2 ระดับ:
 
-1. **Project** — ไล่จาก working directory ขึ้นไปหา `AGENTS.md` (หรือ `CLAUDE.md`) ในแต่ละ repo — ไฟล์นี้คือไฟล์ที่ `graft init --agents agents --no-global` เขียนให้อัตโนมัติต่อ repo (ดู [[mcp-servers#graft — code-graph / context retrieval (per-project)|mcp-servers]])
+1. **Project** — ไล่จาก working directory ขึ้นไปหา `AGENTS.md` (OpenCode 2 ไม่ fallback ไปหา `CLAUDE.md` แล้ว) ในแต่ละ repo — ไฟล์นี้คือไฟล์ที่ `graft init --agents agents --no-global` เขียนให้อัตโนมัติต่อ repo (ดู [[mcp-servers#graft — code-graph / context retrieval (per-project)|mcp-servers]])
 2. **Global** — `~/.config/opencode/AGENTS.md` — ใช้กับ**ทุกโปรเจกต์** ไม่มี installer ตัวไหนสร้างไฟล์นี้ให้อัตโนมัติ ต้องสร้างเอง
 
 > [!info] ยืนยันจากการทดสอบจริง — ไฟล์ project และ global ถูกใช้ร่วมกัน ไม่ใช่เลือกไฟล์เดียว
@@ -341,12 +346,13 @@ description: อธิบายสั้นๆ ว่า skill นี้ใช�
 > [!tip] เมื่อไหร่ควรเขียนที่ global แทน project
 > เขียนที่ global เมื่อกฎนั้นควร apply "ทุกโปรเจกต์เสมอ" (เช่น วิธี reconcile skill สองตัวที่อาจชนกัน) เขียนที่ project เมื่อเป็นบริบทเฉพาะ repo นั้น (เช่น context graph ของ graft) — ตัวอย่างจริงที่ต้องเขียนที่ global ดูที่ [[plugins]] หัวข้อ grill-me/grilling
 
-global AGENTS.md ที่ใช้จริงหลังปรับจูนมี 5 หัวข้อ (ไฟล์เต็มพร้อม copy: [`config/AGENTS.md`](../config/AGENTS.md)):
+global AGENTS.md ที่ใช้จริงหลังปรับจูนมี 6 หัวข้อ (ไฟล์เต็มพร้อม copy: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | หัวข้อ | ทำไมต้องมี | ข้อความเต็ม |
 | --- | --- | --- |
+| Approval before building — every new feature or behavior change | `brainstorming` ของ superpowers 7 ลงมือเขียนโค้ดทันทีเมื่อคำขอ "ชัด" ([[gotchas]] ข้อ 23) | [[tuning]] |
 | Grill me — complements superpowers brainstorming | กัน gate สองตัวชนกัน | [[plugins]] |
-| Exploring a codebase — graft first, even inside a skill | ขั้นแรกของ `brainstorming` ทำให้ agent ข้าม graft ([[gotchas]] ข้อ 12) | [[tuning]] |
+| Exploring a codebase — graft first, even inside a skill | ขั้นแรกของ `brainstorming` ทำให้ agent ข้าม graft ([[gotchas]] ข้อ 12) บน OpenCode 2 ยังบอก path ของ tool ใน Code Mode ให้ตรงตัวด้วย | [[tuning]] |
 | Verifying UI changes — once, in a real browser | เทสต์ผ่านไม่ได้แปลว่าหน้าจอใช้ได้ — กัน agent ข้ามการตรวจในเบราว์เซอร์ ([[gotchas]] ข้อ 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% ของการอ่านไฟล์ซ้ำเกิดหลัง compaction ([[gotchas]] ข้อ 13) | [[tuning]] |
 | Memory — facts that must outlive this session | memory MCP ไม่เคยถูกใช้ถ้าไม่มีกฎ ([[gotchas]] ข้อ 14) | [[tuning]] |
@@ -358,13 +364,17 @@ global AGENTS.md ที่ใช้จริงหลังปรับจูน
 MCP บางตัวต้องมี credential/state เฉพาะโปรเจกต์ (เช่น database connection, code-graph ของ repo นั้นๆ) วิธีที่ปลอดภัยคือ:
 
 1. ตั้ง `enabled: false` ไว้ที่ **global config** (`~/.config/opencode/opencode.jsonc`)
-2. เปิดทับใน config **ระดับโปรเจกต์** — สร้างไฟล์นี้ไว้ที่ root ของ repo นั้น (OpenCode จะ merge ทับ global อัตโนมัติ ไม่ต้องตั้งอะไรเพิ่ม):
+2. เปิดใน config **ระดับโปรเจกต์** โดยคัดลอกรายการของ server นั้น **ทั้งก้อน** ไปไว้ที่ root ของ repo บน OpenCode 2 การเขียนทับสั้นๆ `{ "enabled": true }` จะไม่มีผล ([[gotchas]] ข้อ 22):
 
 ```jsonc
 // project-root/opencode.jsonc
 {
   "mcp": {
-    "postgres": { "enabled": true }
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
   }
 }
 ```
@@ -377,12 +387,14 @@ MCP บางตัวต้องมี credential/state เฉพาะโป�
 
 ```bash
 opencode mcp list        # เช็ค MCP servers ทั้งหมด
-opencode debug skill     # เช็ค skill/plugin ที่โหลดสำเร็จ
+opencode plugin list     # superpowers + ponytail (แพ็กเกจ), graft-deep + caveman (ในเครื่อง)
+opencode api GET /api/plugin   # สถานะของทุก plugin — ตัวในเครื่องต้องเป็น "active" (Git Bash: นำหน้าด้วย MSYS_NO_PATHCONV=1, gotchas.md ข้อ 25)
+opencode run "list the skill IDs you can load, comma-separated"   # skill ที่โมเดลเห็นจริง: 27 ตัว
 opencode debug config    # ดู config ที่ resolve แล้วทั้งหมด
 ```
 
-> [!danger] `opencode debug config` โชว์ API key แบบ plaintext
-> คำสั่งนี้แสดงค่า env var ที่ resolve แล้วจริงๆ (ไม่ใช่ `{env:...}` placeholder) — ถ้าจะแปะผลลัพธ์แชร์ให้คนอื่นดู ต้องลบ/ปิดบังค่า `apiKey` ก่อนทุกครั้ง
+> [!danger] ตรวจผลของ `opencode debug config` ก่อนแชร์
+> OpenCode 2 ปิดค่า header และ key ที่รู้ว่าเป็นความลับเป็น `***` แต่ค่าอื่นยังพิมพ์ออกมาแบบ resolve แล้ว รวมถึง path ในเครื่องและ URL ของ server อ่านให้ครบก่อนแปะที่ไหน
 
 ---
 
@@ -391,4 +403,4 @@ opencode debug config    # ดู config ที่ resolve แล้วทั้
 ตั้งค่าเสร็จแล้ว ไปอ่าน [[USER-MANUAL]] สำหรับวิธีใช้งานจริงวันต่อวัน หรือ [[gotchas]] ถ้าเจอปัญหาระหว่างทาง
 
 > [!tip] หลังใช้งานไปสักพัก — วัดผลแล้วปรับจูน
-> config ครบไม่ได้แปลว่า agent ใช้ทุกอย่างตามที่ตั้งใจ [[tuning]] มีสคริปต์วัดขนาด prompt ต่อ turn, ดู tool ที่ agent เรียกจริงจากประวัติ session และทดสอบ workflow ครบวงจร พร้อมค่าที่แนะนำ (ปิด MCP ที่ใช้น้อยเป็นค่าเริ่มต้น, `compaction.prune`, กฎเพิ่มใน global AGENTS.md)
+> config ครบไม่ได้แปลว่า agent ใช้ทุกอย่างตามที่ตั้งใจ [[tuning]] มีสคริปต์วัดขนาด prompt ต่อ turn, ดู tool ที่ agent เรียกจริงจากประวัติ session และทดสอบ workflow ครบวงจร พร้อมค่าที่แนะนำ (ปิด MCP ที่ใช้น้อยเป็นค่าเริ่มต้น, `compaction.keep`/`buffer`, กฎเพิ่มใน global AGENTS.md)

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins, grill-me/grilling skill ແລະ OpenDesign ເທື່ອລະໂຕ
 ---
 
@@ -22,7 +22,7 @@ node scripts/update-opencode.mjs --dry-run   # ເບິ່ງວ່າຈະແ
 node scripts/update-opencode.mjs --recreate-sonarqube   # ເພີ່ມການ recreate sonarqube server container ນຳ
 ```
 
-ຄອບຄຸມ: OpenCode CLI, graft (ພ້ອມ fallback ອັດຕະໂນມັດຖ້າ `graft upgrade` ພັງຕາມ bug ທີ່ພົບໃນ [[gotchas]]), ລ້າງ cache ຂອງ superpowers/ponytail, `git pull` ຂອງ i-have-adhd, ທຽບ diff ຂອງ grill-me/grilling ກັບຕົ້ນສະບັບ (ບໍ່ overwrite ອັດຕະໂນມັດ), pull image ຂອງ sonarqube MCP wrapper, ອັບເດດ trivy CLI/plugin
+ຄອບຄຸມ: OpenCode CLI, graft (ພ້ອມ fallback ອັດຕະໂນມັດຖ້າ `graft upgrade` ພັງຕາມ bug ທີ່ພົບໃນ [[gotchas]]), ລ້າງ cache ຂອງ superpowers/ponytail, `git pull` ຂອງ i-have-adhd, ທຽບ diff ຂອງ grill-me/grilling ກັບຕົ້ນສະບັບ (ບໍ່ overwrite ອັດຕະໂນມັດ), pull image ຂອງ sonarqube MCP wrapper, ອັບເດດ trivy CLI/plugin ເທິງ OpenCode 2 ສ່ວນຂອງ superpowers/ponytail ໃຊ້ `opencode plugin update` ແທນການລຶບ cache ແລະ script ກວດນຳວ່າ caveman ຖືກ port ເປັນ OpenCode 2 ແລ້ວຫຼືຍັງ
 
 > [!warning] ຂັ້ນຕອນທີ່ **ບໍ່** ເຮັດໃຫ້ອັດຕະໂນມັດ (ຕ້ອງສັ່ງ flag/ເຮັດເອງ)
 > - **sonarqube Server container** — ຂ້າມເປັນ default ເພາະຕ້ອງ stop+rm+recreate container ທີ່ແລ່ນຢູ່ ຕ້ອງໃສ່ `--recreate-sonarqube` ຈຶ່ງຈະເຮັດ (ສະຄຣິບຈະ `docker inspect` container ເດີມກ່ອນເພື່ອໃຊ້ volume names ຈິງທີ່ມີຢູ່ ບໍ່ hardcode ທັບ)
@@ -35,6 +35,26 @@ node scripts/update-opencode.mjs --recreate-sonarqube   # ເພີ່ມກາ�
 > - `trivy plugin update` ທີ່ fail ເພາະ network (plugin index ຢູ່ເທິງ github.io ຊຶ່ງບາງ network ບລັອກ) ຕອນນີ້ເປັນ ⚠️ warning ຖ້າ `trivy plugin upgrade` ຍັງສຳເລັດ ບໍ່ແມ່ນ ❌ failure
 >
 > ຖ້າແລ່ນຈາກສຳເນົາໃນເຄື່ອງ (ເຊັ່ນ `~/.config/opencode/scripts/update-opencode.mjs`) ໃຫ້ແທນທີ່ດ້ວຍ [`scripts/update-opencode.mjs`](../scripts/update-opencode.mjs) ໂຕໃໝ່
+
+---
+
+## ອັບເກຣດຈາກ OpenCode 1 ເປັນ OpenCode 2 (ເຮັດເມື່ອ 2026-10-11, 1.18.34 → 2.0.26)
+
+OpenCode 2 ອ່ານ config, AGENTS.md, skills ແລະ commands ເດີມໄດ້ ແຕ່ມີ 3 ເລື່ອງທີ່ພັງ ແລະ setup ນີ້ໂດນຄົບ ບວກກັບພຶດຕິກຳທີ່ປ່ຽນອີກ 2 ເລື່ອງ ເຮັດຕາມລຳດັບນີ້:
+
+1. **ສຳຮອງ** `~/.config/opencode/` — V1 ແລະ V2 ໃຊ້ folder ດຽວກັນ
+2. **ຕິດຕັ້ງ V2**: ແພັກເກດ npm ຕອນນີ້ຄື `@opencode/cli` (`opencode-ai` ຍັງເປັນ 1.x) ຖອນໂຕເກົ່າກ່ອນ: `npm uninstall -g opencode-ai && npm install -g @opencode/cli` — [[gotchas]] ຂໍ້ 20
+3. **Plugins** — plugin ແບບ V1 ບໍ່ເຮັດວຽກເທິງ V2: ແທນ `plugin/graft-deep.js` ດ້ວຍ [`config/plugin/graft-deep.js`](../config/plugin/graft-deep.js), ແລ່ນ [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs) ແລະໃນ array `plugin` ໃຫ້ເຫຼືອແຕ່ແພັກເກດ — [[gotchas]] ຂໍ້ 20–21
+4. **Skills** — `OPENCODE_DISABLE_EXTERNAL_SKILLS` ບໍ່ມີຜົນແລ້ວ: ເພີ່ມ allow-list ໃນ `permissions` — [[gotchas]] ຂໍ້ 15
+5. **Compaction** — `compaction.prune` ບໍ່ມີຜົນແລ້ວ: ໃຊ້ `keep.tokens` ແລະ `buffer` — [[tuning]] ຫົວຂໍ້ 9
+6. **global AGENTS.md** — ຕອນນີ້ tool ຂອງ MCP ຖືກເອີ້ນໃນ `execute` (Code Mode) ຊື່ tool ຈຶ່ງປ່ຽນ (`graft_graft_find_code` → `tools.graft.graft_find_code`) ແລະ superpowers 7 ຕ້ອງມີກົດ "Approval before building" — ສຳເນົາ [`config/AGENTS.md`](../config/AGENTS.md) — [[gotchas]] ຂໍ້ 23
+7. **MCP ລາຍໂປຣເຈັກ** — `{ "enabled": true }` ໃຊ້ບໍ່ໄດ້ແລ້ວ ຕ້ອງໃສ່ລາຍການເຕັມ — [[gotchas]] ຂໍ້ 22
+8. `opencode service restart` ແລ້ວແລ່ນການກວດໃນ [[USER-MANUAL]] "ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ" ສ່ວນ A
+
+ຂັ້ນ 3–6 ມີໄຟລ໌ພ້ອມໃຊ້ໃນ [`config/`](../config/README.md) ແລ້ວ ສ່ວນຜົນທີ່ວັດກ່ອນ/ຫຼັງຢູ່ໃນ [[tuning]] ຫົວຂໍ້ 9
+
+> [!warning] ຝັ່ງເຮົາຍັງແກ້ບໍ່ໄດ້
+> OpenDesign 0.24.1 ໃຊ້ OpenCode 2 ເປັນ engine ບໍ່ໄດ້ — [[gotchas]] ຂໍ້ 24 ສ່ວນ `lsp` ຍັງຮັບຄ່າໄດ້ ແຕ່ OpenCode 2 ບໍ່ແລ່ນ language server
 
 ---
 
@@ -51,11 +71,11 @@ opencode upgrade 0.1.48
 ```
 
 > [!tip] ເລືອກ installation method ໃຫ້ຕົງກັບຕອນຕິດຕັ້ງຄັ້ງທຳອິດ
-> ຖ້າຕິດຕັ້ງຜ່ານ `npm install -g opencode-ai` (ຕາມທີ່ [[setup]] ແນະນຳ) ໃຊ້:
+> ຖ້າຕິດຕັ້ງຜ່ານ `npm install -g @opencode/cli` (ຕາມທີ່ [[setup]] ແນະນຳ) ໃຊ້:
 > ```bash
 > opencode upgrade -m npm
 > ```
-> `-m`/`--method` ຮອງຮັບ `curl`, `npm`, `pnpm`, `bun`, `brew`, `choco`, `scoop` — ເລືອກໃຫ້ຕົງກັບຕອນຕິດຕັ້ງຈະໄດ້ບໍ່ມີສອງ installation ປົນກັນ
+> `-m`/`--method` ຮອງຮັບ `curl`, `npm`, `pnpm`, `bun`, `yarn`, `vp`, `brew` — ເລືອກໃຫ້ຕົງກັບຕອນຕິດຕັ້ງຈະໄດ້ບໍ່ມີສອງ installation ປົນກັນ
 
 ກວດສອບເວີຊັນຫຼັງອັບເດດ:
 
@@ -94,6 +114,9 @@ graft upgrade    # ອັບເກຣດ global install ໃຫ້ເປັນເ
 ---
 
 ## superpowers plugin (ຕິດຕັ້ງຜ່ານ git)
+
+> [!tip] OpenCode 2: `opencode plugin update`
+> OpenCode 2 ຈັດການ plugin ແບບແພັກເກດເອງ — `opencode plugin check` ບອກວ່າ superpowers/ponytail ຕາມຫຼັງບໍ `opencode plugin update` ອັບເດດທັງຄູ່ ການລຶບ cache ຂ້າງລຸ່ມໃຊ້ກັບ OpenCode 1 ເທົ່ານັ້ນ superpowers 7.0.0 ປ່ຽນພຶດຕິກຳຂອງ `brainstorming` — [[gotchas]] ຂໍ້ 23
 
 **ວິທີບັງຄັບດຶງໃໝ່:**
 
@@ -134,6 +157,9 @@ rm -rf ~/.cache/opencode/packages/@dietrichgebert+ponytail@*
 
 > [!warning] ຢ່າອັບເດດດ້ວຍ installer
 > `bin/install.js` ຂຽນ `opencode.jsonc` ໃໝ່ເປັນ JSON ທຳມະດາແລະລຶບ comment ຖິ້ມ — [[gotchas]] ຂໍ້ 18 script `update-opencode.mjs` ບໍ່ແຕະ caveman (ເວີຊັນຫຼ້າສຸດທີ່ທົດສອບ: v3.1.0, 2026-10-03)
+
+> [!important] OpenCode 2: port ໃໝ່ທຸກເທື່ອຫຼັງດາວໂຫຼດ
+> ການດາວໂຫຼດຈະຂຽນທັບ `plugin.js` ດ້ວຍ plugin ແບບ V1 ຈາກຕົ້ນທາງ (v3.2.0 ກໍຍັງເປັນ V1) ຊຶ່ງ OpenCode 2 ຂ້າມໄປງຽບໆ ໃຫ້ແລ່ນ `node scripts/port-caveman-opencode2.mjs` ຫຼັງດາວໂຫຼດ — `update-opencode.mjs` ຈະເຕືອນເມື່ອຈຳເປັນ
 
 ---
 
@@ -265,9 +291,8 @@ trivy plugin upgrade
 | MCP ຜ່ານ npx | ❌ ອັດຕະໂນມັດ | — |
 | context7 (remote) | ❌ ອັດຕະໂນມັດ (ຝັ່ງເຊີບເວີ) | — |
 | graft | ✅ ຕ້ອງສັ່ງເອງ | `graft upgrade` |
-| superpowers | ⚠️ ຕ້ອງສັ່ງເອງ (ບັນຫາ cache) | ລົບ cache ແລ້ວ restart |
-| ponytail | ⚠️ ຕ້ອງສັ່ງເອງ (ຖ້າ lockfile pin ໄວ້) | ລົບ cache ແລ້ວ restart |
-| caveman | ✅ ຕ້ອງສັ່ງເອງ (ໄຟລ໌ລັອກ tag) | ປ່ຽນ tag ແລ້ວດາວໂຫຼດຊ້ຳ — ຫ້າມໃຊ້ installer |
+| superpowers + ponytail | ✅ ຕ້ອງສັ່ງເອງ | OpenCode 2: `opencode plugin update` · OpenCode 1: ລຶບ cache ແລ້ວ restart |
+| caveman | ✅ ຕ້ອງສັ່ງເອງ (ໄຟລ໌ລັອກ tag) | ປ່ຽນ tag, ດາວໂຫຼດຊ້ຳ ແລ້ວ `port-caveman-opencode2.mjs` — ຫ້າມໃຊ້ installer |
 | i-have-adhd (ຖ້າຍັງໃຊ້) | ✅ ຕ້ອງສັ່ງເອງ | `git pull` ແລ້ວ restart |
 | grill-me / grilling | ✅ ຕ້ອງເຊັກ diff ເອງ | curl raw URL ທຽບ ແລ້ວ merge ການແກ້ກັບ |
 | graft-deep.js | ➖ ບໍ່ມີຕົ້ນທາງ (ຂຽນເອງ) — ແຕ່ຕ້ອງທຽບກັບ hook ຂອງ graft ທຸກຄັ້ງທີ່ອັບເກຣດ graft | ແກ້ໄຟລ໌ໂດຍກົງ ເບິ່ງ [[plugins]] |

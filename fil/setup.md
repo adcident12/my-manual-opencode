@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, setup, opencode, beginner-friendly]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Detalyadong gabay sa pag-install ng OpenCode mula sa walang laman na makina — Node.js, Git, ang CLI, provider, MCP servers, plugins, Agent Skills open-standard skills, at AGENTS.md (global vs project), bawat hakbang
 ---
 
@@ -82,7 +82,7 @@ Kailangan ng OpenCode ng kahit isang "model" na kakausapin bago ito magamit tala
 ## Part 1 — I-install ang OpenCode CLI
 
 ```bash
-npm install -g opencode-ai
+npm install -g @opencode/cli
 ```
 
 Kumpirmahin na tama ang pag-install:
@@ -91,7 +91,7 @@ Kumpirmahin na tama ang pag-install:
 opencode --version
 ```
 
-Dapat magprint ito ng version number gaya ng `1.18.18`.
+Dapat magprint ito ng version number gaya ng `2.0.26`. Isinulat ang manual na ito para sa **OpenCode 2** — ang `npm install -g opencode-ai` ay nag-i-install ng lumang 1.x ([[gotchas]] item 20). Galing sa OpenCode 1? Sundin ang [[updating]], "Pag-upgrade mula OpenCode 1 papuntang OpenCode 2".
 
 ### Subukan agad (walang extra setup)
 
@@ -227,10 +227,10 @@ opencode mcp list
 }
 ```
 
-Isara at buksan ulit ang OpenCode (nag-lo-load ang mga plugin lang kapag nagsisimula ang session) pagkatapos tignan:
+Isara at buksan ulit ang OpenCode (o patakbuhin ang `opencode service restart` — may background service na tumatakbo ang OpenCode 2), saka tingnan:
 
 ```bash
-opencode debug skill
+opencode plugin list     # dapat may ID at version ang superpowers
 ```
 
 > [!warning] Kung na-block ng network ang GitHub
@@ -279,20 +279,25 @@ I-restart ang OpenCode at i-type ang `/i-have-adhd` sa isang session para i-on i
 > [!info] Caveman na ang pinapatakbo ng aktwal na setup sa halip na i-have-adhd (2026-10-03)
 > Mabuting halimbawa pa rin ang i-have-adhd ng "plugin mula sa lokal na clone", pero ang naka-install ay **caveman** — parehong trabaho (maikling sagot), in-install sa katulad na paraan: ikaw mismo ang naglalagay ng files at itinuturo ang `plugin` sa path (hindi kailanman ang installer nito). Buong hakbang sa [[plugins]], caveman — **isa lang ang i-install, hindi pareho**.
 
+> [!warning] OpenCode 2: dapat V2 plugin ang lokal na plugin, at tinatanggihan ang file path sa `plugin` array
+> Parehong V1 plugin ang i-have-adhd at caveman, na hindi pinapatakbo ng OpenCode 2 ([[gotchas]] item 20). Ang lokal na path sa `plugin` array ay dapat directory ([[gotchas]] item 21). Kaya inilalagay ng setup na ito ang mga lokal na plugin sa `~/.config/opencode/plugin/` bilang `.js` files — kusa itong nilo-load ng OpenCode 2 — at pino-port ang caveman gamit ang [`scripts/port-caveman-opencode2.mjs`](../scripts/port-caveman-opencode2.mjs).
+
 ### Plugin na sarili mong sinulat (custom .js)
 
-Ilagay ang `.js` file kahit saan (inirerekumenda ang `~/.config/opencode/plugin/<name>.js` para sa isang bagay na gagamitin ng bawat project), pagkatapos idagdag ang path nito sa `plugin` array:
+Ilagay ang `.js` file sa `~/.config/opencode/plugin/<name>.js` (bawat project) o sa `<project>/.opencode/plugins/<name>.js` (para sa project na iyon lang). Kusang nilo-load ng OpenCode 2 ang mga `.js` file doon, kaya walang kailangang entry sa `plugin` array. Huwag maglista ng file path doon: tinatanggihan ito ng OpenCode 2 ([[gotchas]] item 21).
 
-```jsonc
-{
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "C:/Users/<user>/.config/opencode/plugin/my-plugin.js"
-  ]
-}
+Ang OpenCode 2 plugin ay nagde-default-export ng definition na may `id` at `setup(ctx)` function na nagre-register ng hooks sa `ctx`:
+
+```js
+export default {
+  id: 'my-plugin',
+  async setup(ctx) {
+    await ctx.session.hook('prompt', (event) => { /* baguhin ang event.prompt.text */ });
+  },
+};
 ```
 
-Ang structure ng plugin ay dapat mag-export ng async function na tumatanggap ng `{ directory }` at nagbabalik ng object ng hooks — buong halimbawa nasa [[plugins]] (graft-deep).
+Nasa [[plugins]] (graft-deep) ang buong halimbawa; tiyaking na-load ito gamit ang `opencode api GET /api/plugin` (status `active`).
 
 ### Standalone na skills batay sa Agent Skills open standard (hindi plugin)
 
@@ -306,8 +311,8 @@ Naghahanap ang OpenCode ng skills sa 3 lugar:
 | `~/.config/opencode/skills/<name>/SKILL.md` | Bawat project (global) |
 | `<project>/.claude/skills/<name>/SKILL.md` | Compatible sa Claude Code (parehong file gumagana sa dalawang tool) |
 
-> [!warning] Kusa ring naglo-load ang OpenCode ng skills mula sa `~/.claude/skills` at `~/.agents/skills`
-> Sa makinang may Claude Code o ibang AI tools, pumapasok ang skills nila (sa test machine: 86 na skills sa halip na 25) — ipinapadala bawat turn ang bawat isa, at mas madaling magkamali ng pili ang maliit na model. I-set ang user-level env var na `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`, saka buksan ulit ang terminals/editors. Detalye, at kung bakit hindi `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`, sa [[gotchas]] item 15.
+> [!warning] Kusang nilo-load din ng OpenCode ang skills mula sa `~/.claude/skills` at `~/.agents/skills`
+> Sa makinang may Claude Code o ibang AI tools, pumapasok ang skills nila (sa test machine: 90 na skills sa halip na 27). Nakalista ang bawat isa sa bawat turn, at mas madaling magkamali ng pili ang maliit na model. Binabalewala na ng OpenCode 2 ang lumang env var na `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`. Gumamit ng `permissions` allow-list sa `opencode.jsonc` sa halip: i-deny ang lahat ng skill, saka i-allow ayon sa ID ang sariling skills ng setup na ito. Nasa [`config/opencode.jsonc`](../config/opencode.jsonc) ang buong listahan, at nasa [[gotchas]] item 15 ang mga detalye. **Ang skill na idaragdag mo sa ibang pagkakataon ay kailangan ng sariling `allow` na linya.**
 
 Pinakasimpleng structure ng file:
 
@@ -323,8 +328,8 @@ Buong nilalaman ng instruction na gusto mong sundin ng agent kapag tinawag ang s
 > [!warning] Hindi awtomatikong slash command (kaiba sa Claude Code)
 > Ang isang skill na ganito **ay hindi nagiging `/my-skill`** na maaaring direktang i-type sa OpenCode — ang model mismo ang nagdedesisyon kung aling skill ang tatawagin, sa pamamagitan ng pagtutugma ng in-type mo laban sa `description` field ng bawat skill (sa pamamagitan ng native `skill` tool). Kaya kailangang malinaw ang `description` para tama ang pagtutugma ng model. Kung gusto mo ng 100% katiyakan ng tunay na slash command, gumawa ng hiwalay na custom command sa `.opencode/commands/<name>.md` sa halip (tignan ang [OpenCode Commands docs](https://opencode.ai/docs/commands/)).
 
-> [!note] Tahimik na iniiwasan ang mga field na hindi kilala ng OpenCode
-> May mga skill na ginaling sa Claude Code na may mga Claude-Code-specific na frontmatter field, gaya ng `disable-model-invocation` — suportado lang ng OpenCode ang `name`, `description`, `license`, `compatibility`, at `metadata`. Anumang ibang field ay tahimik na nilalaktawan, walang error, hindi na kailangang alisin bago gamitin.
+> [!note] Tahimik na binabalewala ang mga frontmatter field na hindi kilala ng OpenCode
+> Binabasa ng OpenCode 2 ang `name`, `description`, `metadata.opencode/autoinvoke` at `disable-model-invocation` (itinatago ng huling dalawa ang skill mula sa listahan ng model), at tinatanggap pero binabalewala ang mga portability field gaya ng `license` at `compatibility`. Nilalaktawan ang iba nang walang error. Ang **ID ng skill ay ang pangalan ng folder**, hindi ang `name` — ang ID na iyon ang ilalagay sa `permissions` allow-list.
 
 Isang tunay na halimbawa ng pag-install (ang `grill-me`/`grilling` skill mula sa mattpocock/skills, naka-wire sa superpowers) ay nasa [[plugins]].
 
@@ -332,7 +337,7 @@ Isang tunay na halimbawa ng pag-install (ang `grill-me`/`grilling` skill mula sa
 
 Ang `AGENTS.md` ay isang instruction file na binabasa ng OpenCode sa bawat session (parang extra system prompt). May 2 level ito:
 
-1. **Project** — naglalakad paakyat mula sa working directory naghahanap ng `AGENTS.md` (o `CLAUDE.md`) sa repo na iyon — ito ang file na awtomatikong sinusulat ng `graft init --agents agents --no-global` bawat repo (tignan [[mcp-servers]]).
+1. **Project** — naglalakad paakyat mula sa working directory naghahanap ng `AGENTS.md` (hindi na bumabalik sa `CLAUDE.md` ang OpenCode 2) sa repo na iyon — ito ang file na awtomatikong sinusulat ng `graft init --agents agents --no-global` bawat repo (tignan [[mcp-servers]]).
 2. **Global** — `~/.config/opencode/AGENTS.md` — saklaw ang **bawat project**. Walang installer na gumagawa ng file na ito nang awtomatiko; ikaw mismo ang sumusulat nito.
 
 > [!info] Kumpirmado mula sa aktwal na test — magkasamang ginagamit ang project at global file, hindi pinipili lang ang isa
@@ -341,12 +346,13 @@ Ang `AGENTS.md` ay isang instruction file na binabasa ng OpenCode sa bawat sessi
 > [!tip] Kailan dapat sumulat sa global sa halip na project
 > Sumulat sa global kapag dapat "laging" mag-apply ang rule sa bawat project (hal. paraan ng pag-reconcile ng dalawang skill na maaaring magbanggaan). Sumulat sa project kapag specific ito sa context ng repo na iyon (hal. context graph ng graft) — tunay na halimbawa na kailangang isulat sa global ay nasa [[plugins]], seksyong grill-me/grilling.
 
-May 5 seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning (ang buong file, handang kopyahin: [`config/AGENTS.md`](../config/AGENTS.md)):
+May 6 na seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning (ang buong file, handang kopyahin: [`config/AGENTS.md`](../config/AGENTS.md)):
 
 | Seksyon | Bakit naroon | Buong teksto |
 | --- | --- | --- |
+| Approval before building — every new feature or behavior change | diretsong nagko-code ang `brainstorming` ng superpowers 7 kapag "malinaw" ang request ([[gotchas]] item 23) | [[tuning]] |
 | Grill me — complements superpowers brainstorming | pinipigilang magbanggaan ang dalawang gate | [[plugins]] |
-| Exploring a codebase — graft first, even inside a skill | dahil sa unang hakbang ng `brainstorming`, nilalaktawan ng agent ang graft ([[gotchas]] item 12) | [[tuning]] |
+| Exploring a codebase — graft first, even inside a skill | dahil sa unang hakbang ng `brainstorming`, nilalaktawan ng agent ang graft ([[gotchas]] item 12); sa OpenCode 2, ibinibigay din nito ang eksaktong Code Mode tool paths | [[tuning]] |
 | Verifying UI changes — once, in a real browser | ang pagpasa ng tests ay hindi nangangahulugang gumagana ang screen — pinipigilang laktawan ng agent ang browser check ([[gotchas]] item 19) | [[tuning]] |
 | Re-reading files after compaction or pruning | 76% ng paulit-ulit na reads ay agad pagkatapos ng compaction ([[gotchas]] item 13) | [[tuning]] |
 | Memory — facts that must outlive this session | hindi kailanman nagamit ang memory MCP nang walang rule ([[gotchas]] item 14) | [[tuning]] |
@@ -358,13 +364,17 @@ May 5 seksyon ang global AGENTS.md na ginagamit pagkatapos ng tuning (ang buong 
 May ilang MCP na kailangan ng credentials/state na specific sa isang project (hal. koneksyon sa database, sariling code graph ng repo na iyon). Ang ligtas na paraan:
 
 1. I-set ang `enabled: false` sa **global config** (`~/.config/opencode/opencode.jsonc`)
-2. I-override ito sa isang **project-level** na config — gumawa ng file na ito sa root ng repo na iyon (awtomatikong pinagsasama ito ng OpenCode sa ibabaw ng global, walang kailangan pang i-set):
+2. I-on ito sa **project-level** na config sa pamamagitan ng pagkopya ng **buong** entry ng server papunta sa root ng repo na iyon. Sa OpenCode 2, binabalewala ang maikling `{ "enabled": true }` na override ([[gotchas]] item 22):
 
 ```jsonc
 // project-root/opencode.jsonc
 {
   "mcp": {
-    "postgres": { "enabled": true }
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
   }
 }
 ```
@@ -377,12 +387,14 @@ May ilang MCP na kailangan ng credentials/state na specific sa isang project (ha
 
 ```bash
 opencode mcp list        # tignan ang lahat ng MCP servers
-opencode debug skill     # tignan kung anong skills/plugins ang matagumpay na na-load
+opencode plugin list     # superpowers + ponytail (packages), graft-deep + caveman (lokal)
+opencode api GET /api/plugin   # status ng bawat plugin — dapat "active" ang mga lokal (Git Bash: unahan ng MSYS_NO_PATHCONV=1, gotchas.md item 25)
+opencode run "list the skill IDs you can load, comma-separated"   # ang skills na talagang inaalok sa model: 27
 opencode debug config    # tignan ang buong na-resolve na config
 ```
 
-> [!danger] Ipinapakita ng `opencode debug config` ang API keys sa plaintext
-> Ipinapakita ng command na ito ang mga aktwal na na-resolve na env var value (hindi ang `{env:...}` placeholder) — kung ipapasta mo ang resulta kahit saan para ibahagi sa iba, palaging tanggalin/itago muna ang anumang `apiKey` value.
+> [!danger] Suriin ang output ng `opencode debug config` bago ito ibahagi
+> Tinatakpan ng OpenCode 2 ang mga header value at key na kilala nitong secret (`***`), pero ipinapakita nito ang lahat ng iba pa nang naka-resolve, pati mga path sa makina at URL ng server. Basahin muna bago i-paste kahit saan.
 
 ---
 
@@ -391,4 +403,4 @@ opencode debug config    # tignan ang buong na-resolve na config
 Tapos na ang setup — basahin ang [[USER-MANUAL]] para sa aktwal na araw-araw na paggamit, o [[gotchas]] kung may problemang naranasan sa daan.
 
 > [!tip] Pagkatapos ng ilang tunay na paggamit — sukatin, saka i-tune
-> Ang kumpletong config ay hindi nangangahulugang ginagamit ng agent ang lahat ayon sa layunin. May scripts ang [[tuning]] para sukatin ang laki ng prompt bawat turn, makita kung aling tools talaga ang tinawag ng agent mula sa session history, at i-test ang workflow nang end-to-end — kasama ang inirerekomendang settings (naka-off by default ang bihirang gamiting MCPs, `compaction.prune`, dagdag na global AGENTS.md rules).
+> Ang kumpletong config ay hindi nangangahulugang ginagamit ng agent ang lahat ayon sa layunin. May scripts ang [[tuning]] para sukatin ang laki ng prompt bawat turn, makita kung aling tools talaga ang tinawag ng agent mula sa session history, at i-test ang workflow nang end-to-end — kasama ang inirerekomendang settings (naka-off by default ang bihirang gamiting MCPs, `compaction.keep`/`buffer`, dagdag na global AGENTS.md rules).

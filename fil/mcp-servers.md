@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Detalye ng bawat MCP server na naka-setup sa OpenCode — hakbang sa pag-install, config, paano subukan, at mga gotchas
 ---
 
@@ -12,6 +12,11 @@ Bawat MCP sa ibaba ay idinadagdag sa `mcp` object sa `~/.config/opencode/opencod
 
 > [!note] Bago magsimula
 > Ipinapalagay ng pahinang ito na naka-install na ang Node.js/npm at ang OpenCode CLI. Kung hindi pa, bumalik muna sa [[setup]] Parts 0–1.
+
+> [!important] OpenCode 2: tinatawag ang MCP tools sa pamamagitan ng `execute` ("Code Mode")
+> Sa OpenCode 1, naka-namespace ang tools bilang `<pangalan ng server>_<pangalan ng tool>`, kaya nakikita mo ang `graft_graft_find_code`, `graft_graft_file_api` (dalawang beses ang "graft"). Sa OpenCode 2, tinatawag ang mga ito sa loob ng `execute` bilang `tools.graft.graft_find_code(...)`. 3 lang sa 6 na tool ng graft ang ipinapakita sa catalog, kaya tahasang pinangangalanan ng global AGENTS.md ang mga path.
+>
+> Ang **pag-on ng server per project** ay nangangailangan ng buong entry ng server sa config ng project — binabalewala ng OpenCode 2 ang maikling `{ "enabled": true }` na override ([[gotchas]] item 22). Buong entries ang ipinapakita ng mga halimbawa sa ibaba.
 
 ---
 
@@ -54,7 +59,7 @@ Isang remote MCP (walang patatakbuhin sa lokal, walang kailangang i-pre-install)
 Isang MCP server na nagpapatakbo ng tunay na browser sa pamamagitan ng Playwright — para sa automation, pagsagot ng forms, pag-click ng buttons, pagkuha ng screenshots, at end-to-end testing ng daloy ng isang website.
 
 > [!info] Naka-off by default pagkatapos ng tuning (2026-10-03)
-> Nasukat: ~4.5k tokens bawat turn ang gastos ng 25 tool definitions ng playwright, habang sa tunay na paggamit ay 33 beses lang tinawag ng agent ang playwright laban sa 541 para sa chrome-devtools para sa parehong uri ng trabaho. Kaya `"enabled": false` sa global config, at i-on per project sa `<project>/opencode.json`: `{ "mcp": { "playwright": { "enabled": true } } }` — tumatakbo pa rin gaya ng dati ang e2e test suites na gawa sa Playwright via bash (`npx playwright test`). Tingnan ang [[tuning]] at [[gotchas]] item 11.
+> Nasukat: ~4.5k tokens bawat turn ang gastos ng 25 tool definitions ng playwright, habang sa tunay na paggamit ay 33 beses lang tinawag ng agent ang playwright laban sa 541 para sa chrome-devtools para sa parehong uri ng trabaho. Kaya `"enabled": false` sa global config, at i-on per project sa `<project>/opencode.json`: `{ "mcp": { "playwright": { "type": "local", "command": ["npx", "-y", "@playwright/mcp@latest"], "enabled": true } } }` — tumatakbo pa rin gaya ng dati ang e2e test suites na gawa sa Playwright via bash (`npx playwright test`). Tingnan ang [[tuning]] at [[gotchas]] item 11.
 
 ### Hakbang sa pag-install
 
@@ -222,7 +227,7 @@ Ang [nexu-io/open-design](https://github.com/nexu-io/open-design) ay isang AI to
    ```
 
    > [!info] `"enabled": false` by default, saka i-on per project (2026-10-03)
-   > ~6.6k tokens bawat turn ang gastos ng 22 tools + instructions ng server na ito — pinakamalaki sa lahat ng MCP dito — pero ginagamit lang kapag kumukuha ng trabaho mula sa OpenDesign ([[USER-MANUAL]] seksyon 5). I-on ito sa project na gumagawa ng Phase 2 gamit ang `<project>/opencode.json`: `{ "mcp": { "open-design": { "enabled": true } } }`. Tingnan ang [[tuning]].
+   > ~6.6k tokens bawat turn ang gastos ng 22 tools + instructions ng server na ito — pinakamalaki sa lahat ng MCP dito — pero ginagamit lang kapag kumukuha ng trabaho mula sa OpenDesign ([[USER-MANUAL]] seksyon 5). I-on ito sa project na gumagawa ng Phase 2 gamit ang `<project>/opencode.json`: ang buong entry nito (kopyahin mula sa [`config/opencode.jsonc`](../config/opencode.jsonc) at itakda ang `"enabled": true`). Tingnan ang [[tuning]].
 
    > [!warning] Windows: kung napupunta ang `od` sa `od.exe` ng Git
    > Kapag nauuna ang `...\Git\usr\bin` sa folder na may `od.cmd` sa PATH, gamitin ang `"command": ["node", "C:/Users/<user>/.config/opencode/scripts/od.mjs", "mcp"]` — [[gotchas]] item 16
@@ -560,11 +565,15 @@ Parehong local MCP na kailangan ng tumatakbo nang database server (local o remot
 1. Gumawa (o i-edit) ang config file sa **root ng project na iyon** para i-override ang global:
 
    ```jsonc
-   // my-project/opencode.jsonc
+   // my-project/opencode.jsonc — ang buong entry, hindi lang "enabled" (gotchas.md item 22)
    {
      "mcp": {
-       "postgres": { "enabled": true }
-       // o "mysql": { "enabled": true }
+       "postgres": {
+         "type": "local",
+         "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+         "enabled": true
+       }
+       // mysql: kopyahin ang entry nito mula sa config/opencode.jsonc sa parehong paraan
      }
    }
    ```
@@ -626,4 +635,4 @@ Halimbawang output kapag kumpleto ang setup, pagkatapos ng tuning (6 naka-enable
 ```
 
 > [!tip] Ang `connected` ay hindi nangangahulugang sulit
-> Ipinapadala ng bawat naka-enable na server ang tool definitions nito bawat turn — sukatin ang tunay na gastos bawat server gamit ang `capture-server.mjs` + `analyze-prompt.mjs` ayon sa [[tuning]] seksyon 1
+> Sa OpenCode 2, maliit ang gastos bawat turn ng naka-enable na server (ilang linya sa catalog bawat isa), pero proseso pa rin ang bawat isa na kailangang simulan — ~14 s bago umakyat ang sonarqube sa Docker, kaya ang pinakaunang prompt ng bagong `--standalone` run ay puwedeng maipadala bago pa ito mapasama sa catalog. Sukatin gamit ang `capture-server.mjs` + `analyze-prompt.mjs` ayon sa [[tuning]] seksyon 1.

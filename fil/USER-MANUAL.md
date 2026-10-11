@@ -1,6 +1,6 @@
 ---
 tags: [user-manual, getting-started, opencode, vibe-coding]
-updated: 2026-10-03
+updated: 2026-10-11
 summary: Gabay sa paggamit ng OpenCode mula simula hanggang tapos (magbukas ng session, mag-request, mag-approve, suriin, commit) at araw-araw — vibe coding, ang graft workflow, grill-me/grilling, at ang OpenDesign workflow
 ---
 
@@ -58,16 +58,16 @@ graph TD
 Magbukas ng **bagong** terminal (hindi nakikita sa lumang terminal ang mga env var na kaka-set lang — [[gotchas]] item 2) at patakbuhin:
 
 ```bash
-opencode --version       # naka-install ang CLI
+opencode --version       # 2.x — para sa OpenCode 2 ang manual na ito
 opencode mcp list        # dapat connected ang mga naka-enable na MCP server
-opencode debug skill     # ang mga skill na nag-load
-opencode run "say hi"    # sumasagot ang model
+opencode plugin list     # ang package plugins (superpowers, ponytail) at ang mga lokal
+opencode run "list the skill IDs you can load, comma-separated"   # sumasagot ang model + ang skills na inaalok dito
 ```
 
 ✅ **Dapat makita mo:**
 - `mcp list`: `context7`, `chrome-devtools`, `graft`, `memory`, `sonarqube`, `trivy` bilang `connected` · `open-design`, `playwright`, `github`, `postgres`, `mysql` bilang `disabled` (normal — ino-on per project)
-- `debug skill`: 27 na skills — 15 mula sa superpowers, 6 mula sa ponytail, 3 mula sa caveman, `grill-me`, `grilling`, `customize-opencode`. Kung higit pa rito nang marami, pumapasok ang skills ng ibang tool ([[gotchas]] item 15)
-- `run "say hi"`: may sagot. Kung lampas 1–2 minuto, tingnan ang [[gotchas]] item 1
+- `plugin list`: `superpowers`, `ponytail`, `graft-deep`, `caveman`. Kung walang ID ang `graft-deep` o `caveman`, V1 plugin pa ito at walang ginagawa ([[gotchas]] items 20–21)
+- `run …`: isang sagot na naglilista ng 27 skills — `opencode` at `report` (built in), 15 mula sa superpowers, 6 mula sa ponytail, 3 mula sa caveman, `grilling` (nakatago ang `grill-me` mula sa model dahil sa sarili nitong `disable-model-invocation: true` — ipinapasa lang nito sa `grilling`; nilo-load pa rin ito ng `@grill-me`). Kung mas marami nang malaki, pumapasok ang skills ng ibang tool ([[gotchas]] item 15). Kung lampas 1–2 minuto ang sagot, tignan ang [[gotchas]] item 1
 
 ### B. Isang beses bawat project — ihanda ang repo
 
@@ -84,10 +84,10 @@ opencode            # bagong session
 opencode -c         # o: ituloy ang huling session
 ```
 
-Sa loob ng TUI: `/sessions` para pumili ng lumang session · `/new` para magsimula ng bago · `/models` para magpalit ng model · `/help` para sa lahat ng command
+Sa loob ng TUI: `/sessions` para pumili ng lumang session · `/new` para magsimula ng bago · `/models` para magpalit ng model · `Ctrl+P` para buksan ang command palette na may lahat ng command
 
 > [!tip] Isang trabaho = isang session
-> ~34k tokens na ng 131k context ang bigat ng base prompt ([[tuning]]) — laging `/new` para sa bagong trabaho. Ang session na sumasaklaw ng ilang task ay madalas mag-compact, at kailangang basahin ulit ng agent ang parehong files.
+> ~14k tokens ng 131k context ang bigat ng base prompt sa OpenCode 2 (~34k sa OpenCode 1 — [[tuning]] section 9), at lumalaki ito bawat step. Laging `/new` para sa bagong trabaho.
 
 **Hakbang 2 — Mag-request sa plain language**
 
@@ -97,10 +97,13 @@ Sabihin **kung ano ang gusto mong kalabasan**, hindi kung paano gagawin at hindi
 | --- | --- | --- |
 | `paano gumagana ang pagkolekta ng ring` (tanong / paliwanag) | hahanapin ang code gamit ang graft at sasagot na may `file:line` | basahin — tapos na sa hakbang na ito |
 | `ayusin ang typo sa menu screen` (maliit na ayos) | i-edit agad → patakbuhin ang tests | lumaktaw sa hakbang 5 |
-| `pakidagdag ng pause feature sa game` (bagong feature) | tatawagin ang `brainstorming` → mag-e-explore gamit ang graft → magtatanong o magmumungkahi ng disenyo → **hihinto at maghihintay** | pumunta sa hakbang 3 |
+| `pakidagdag ng pause feature sa game` (bagong feature) | tatawagin ang `brainstorming` → mag-e-explore gamit ang graft → magtatanong o magmumungkahi ng maikling disenyo → **hihinto at maghihintay** — kahit nakasaad na sa request mo ang bawat detalye | pumunta sa hakbang 3 (o sabihin ang `just do it` sa simula para laktawan ito) |
 | `nagfi-freeze ang game kapag tumalon` (bug) | tatawagin ang `systematic-debugging` — hahanapin muna ang sanhi bago ayusin | kumpirmahin ang sanhi, saka ipaayos |
 | `ilipat ang level system sa zones` (malaki, maraming file) | susulat ng spec sa `docs/superpowers/specs/` + plano (`writing-plans`) | basahin ang spec, saka i-approve |
 | `grill me about <ideya>` (hindi pa gagawin, pag-iisipan lang) | magtatanong nang paikot-ikot na `grilling` — walang spec, walang code | sagutin ang mga tanong |
+
+> [!info] Bakit kailangan ng rule ang "hihinto at maghihintay" mula superpowers 7
+> Itinuturing ng `brainstorming` ng superpowers 7.0.0 na mabilis na task ang request na "nagsasabi na ng lahat ng mahalaga" at dumidiretso sa code. Sa OpenCode 2, ganoon nga ang nangyari sa pause-feature test. Pinapanatili ng rule na "Approval before building" sa global AGENTS.md ang hakbang na ito: anumang nagdadagdag o nagbabago ng behavior ay may design muna ([[gotchas]] item 23). Diretso pa rin ang mga tanong, paliwanag at pag-ayos ng halatang mali.
 
 **Hakbang 3 — Sagutin ang mga tanong at i-approve ang disenyo** (bagong feature / malaking trabaho lang)
 
@@ -113,10 +116,12 @@ Basahing mabuti ang disenyo rito — ito ang pinakamurang punto para baguhin ang
 
 **Hakbang 4 — Gumagawa ang agent** (maghintay ka lang)
 
-Ang nangyayari, ayon sa pagkakasunod: sinusuri ng ponytail kung may magagamit nang umiiral bago sumulat ng bago → nag-e-edit na may todo list → nagpapatakbo ng tests → **para sa anumang makikita sa browser, binubuksan ang Chrome sa pamamagitan ng chrome-devtools at sinusuri nang isang beses** (isang rule sa global AGENTS.md — [[tuning]]) → nagbubuod.
+Ang nangyayari, ayon sa pagkakasunod: sinusuri ng ponytail kung may magagamit nang umiiral bago sumulat ng bago → nag-e-edit (para sa nakasulat na plan, sinusubaybayan ang progreso sa plan file — walang todo tool ang OpenCode 2) → nagpapatakbo ng tests → **para sa anumang makikita sa browser, binubuksan ang Chrome sa pamamagitan ng chrome-devtools at sinusuri nang isang beses** (isang rule sa global AGENTS.md — [[tuning]]) → nagbubuod.
 
-- `Esc` para ihinto sa gitna · `/undo` para ibalik ang huling mensahe kasama ang mga binago nitong file (dapat git repo ang project) · `/redo` para ulitin
-- **Ang browser check ang pinakamabagal na hakbang** — nasukat na ~30–36 minuto para sa maliit na feature sa lokal na model, pero ito ang hakbang na nakakahanap ng mga bug na hindi saklaw ng tests ([[tuning]] seksyon 4 at 8). Nilalaktawan ito ng trabahong walang UI
+Sa OpenCode 2, makikita mo ang MCP tools (graft, chrome-devtools, memory…) bilang mga tawag sa `execute`: sumusulat ang agent ng maikling script na tumatawag sa `tools.graft.graft_find_code(…)` at iba pa ("Code Mode").
+
+- Pinapahinto ito ng `Esc` sa gitna · ibinabalik ng `/undo` (`Ctrl+X U`) ang huling mensahe kasama ang mga pagbabago nito sa file at ibinabalik ang prompt mo sa kahon para i-edit · kinakansela ng `/redo` (`Ctrl+X R`) ang undo
+- **Ang browser check ang pinakamabagal na hakbang**, pero ito ang hakbang na nakakahanap ng mga bug na hindi saklaw ng tests. Sa OpenCode 2, nakita nito ang baligtad na "PAUSED" overlay na hindi nahuli ng lahat ng 5 test file ([[tuning]] section 9). Nilalaktawan ito ng trabahong walang UI
 - Kung tahimik na huminto ang agent nang walang buod, kadalasang naabot ng model ang output ceiling nito ([[gotchas]] item 8) — i-type ang `continue`
 
 **Hakbang 5 — Suriin ang resulta bago tanggapin**
@@ -154,9 +159,9 @@ Ikaw ang mag-push kapag handa na — walang awtomatikong tumatakbo sa CI sa setu
 
 **Hakbang 7 — Isara ang trabaho**
 
-- Susunod na trabaho → `/new` (o `/exit` at buksan ulit)
+- Susunod na trabaho → `/new` (`Ctrl+X N`), o umalis gamit ang `Ctrl+C` at buksan ulit
 - May kagustuhan o desisyong gustong matandaan sa mga susunod na session → i-type ang `tandaan na <bagay>` — ise-save ito ng agent sa memory, at hahanapin muna ng susunod na session ang memory bago magtanong ulit
-- Mahabang session na malapit na sa limit ng context pero hindi pa tapos ang trabaho → `/compact`
+- Mahabang session na malapit na sa limit ng context pero hindi pa tapos ang trabaho → `Ctrl+X C` (i-compact ang session)
 - Hindi mo kailangang i-rebuild ang graft — nire-refresh ng CLI ang graph bago ang bawat sagot
 
 ### Mga command na pinakamadalas gamitin
@@ -166,8 +171,9 @@ Ikaw ang mag-push kapag handa na — walang awtomatikong tumatakbo sa CI sa setu
 | Magbukas ng bagong session / ituloy ang huli | `opencode` / `opencode -c` |
 | Magsimula ng bagong trabaho sa parehong TUI | `/new` |
 | Bumalik sa lumang session | `/sessions` |
-| Ihinto ang agent / ibalik ang huling mensahe | `Esc` / `/undo` |
-| Paliitin ang context ng mahabang session | `/compact` |
+| Ihinto ang agent / ibalik ang huling mensahe | `Esc` / `/undo` (`Ctrl+X U`) |
+| Paliitin ang context ng mahabang session | `Ctrl+X C` |
+| Lahat ng command at shortcut | `Ctrl+P` (command palette) |
 | Buong sagot, hindi pinaikli / bumalik sa maikli | `/caveman off` (o `normal mode`) / `/caveman` |
 | Commit message / review ng diff | `/caveman-commit` / `/caveman-review` |
 | Hinaan o lakasan ang ponytail | `/ponytail lite\|full\|ultra\|off` |
@@ -295,18 +301,24 @@ graft map
 
 **Hakbang 4 — (kung kailangan lang) i-on ang isang project-specific na MCP**
 
-Kung kailangan ng project na ito ng database, gumawa ng config na specific sa repo na iyon (hindi maaapektuhan ang ibang project):
+Kung kailangan ng database ng project na ito, gumawa ng config na para lang sa repo na ito (hindi maaapektuhan ang ibang project). Kopyahin ang **buong** entry ng server mula sa global config at itakda ang `"enabled": true`. Sa OpenCode 2, binabalewala ang maikling `{ "postgres": { "enabled": true } }` ([[gotchas]] item 22):
 
 ```jsonc
 // my-new-project/opencode.jsonc
-{ "mcp": { "postgres": { "enabled": true } } }
+{
+  "mcp": {
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:POSTGRES_CONNECTION_STRING}"],
+      "enabled": true
+    }
+  }
+}
 ```
 
-Ganito rin para sa ibang servers na naka-off by default — `open-design` (kapag kumukuha ng trabaho mula sa OpenDesign, seksyon 5) at `playwright` (kung gusto mo ito sa halip na / kasabay ng chrome-devtools):
+Ganoon din para sa ibang server na naka-off by default — `open-design` (kapag hihila ng trabaho mula sa OpenDesign, section 5) at `playwright` (kung gusto mo ito sa halip na / kasabay ng chrome-devtools). Nasa [`config/opencode.jsonc`](../config/opencode.jsonc) ang mga entry na kokopyahin.
 
-```jsonc
-{ "mcp": { "open-design": { "enabled": true }, "playwright": { "enabled": true } } }
-```
+✅ **Dapat mong makita:** ipinapakita ng `opencode mcp list` (patakbuhin sa loob ng project) ang server na iyon bilang `connected`. Ang unang run sa bagong folder ay puwedeng mag-print ng `No MCP servers configured` — patakbuhin ulit.
 
 I-set ang env var **bago** buksan ang opencode sa tuwing gagamitin (i-set ito isang beses lang sa shell profile at hindi mo na kailangang i-type ito paulit-ulit):
 
@@ -327,10 +339,11 @@ Subukang magtanong ng isang bagay na kailangan ng tunay na reference sa code, ha
 **Hakbang 6 — (inirerekumenda) kumpirmahin na na-load nang buo ang skills/plugins**
 
 ```bash
-opencode debug skill
+opencode plugin list
+opencode run "list the skill IDs you can load, comma-separated"
 ```
 
-✅ **Dapat makita mo:** 15 skills ng `superpowers` (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), 6 na skill ng `ponytail` (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, at `grill-me`/`grilling` kung naka-install — 27 lahat kasama ang sariling `customize-opencode` ng OpenCode (tignan [[plugins]] kung ano ang bawat isa).
+✅ **Dapat mong makita:** apat na plugin (`superpowers`, `ponytail`, `graft-deep`, `caveman`), at 27 skills: ang sariling `opencode` at `report` ng OpenCode, 15 `superpowers` skills (`brainstorming`, `systematic-debugging`, `writing-plans`, ...), 6 ng `ponytail` (`ponytail`, `ponytail-review`, ...), `caveman`/`caveman-commit`/`caveman-review`, at `grilling` (nakatago ang `grill-me` mula sa model dahil sa sarili nitong `disable-model-invocation: true` — ipinapasa lang nito sa `grilling`; nilo-load pa rin ito ng `@grill-me`) (tignan ang [[plugins]] kung ano ang bawat isa). Wala nang `opencode debug skill` sa OpenCode 2.
 
 > [!tip] Natapos ang lahat ng 6 hakbang? Pumunta na sa seksyon 3
 > Hindi na kailangang ulitin ang checklist na ito para sa parehong project — buksan lang ang `opencode` at gamitin ayon sa seksyon 3. Ulitin lang ang checklist na ito kapag talagang bagong project.
@@ -360,13 +373,16 @@ Ang "per-request workflow" diagram sa seksyon 1 ay isang abstract na buod — an
 
 1. **I-type ang isang command:** `pakidagdag ang level 3 sa laro`
 2. **pumipili ang superpowers ng skill** — nakikilala nitong ito ay paggawa ng bagong feature → tinatawag ang `brainstorming` (makikita ito sa pag-uusap ng agent tungkol sa "pag-classify ng scope" bilang bounded/architectural muna)
-3. **naghahanap ang graft ng relevant na code** — mismong tinatawag ng agent ang graft (`graft_find_code`/`graft_file_api` via MCP) para malaman kung paano gumagana ang kasalukuyang sistema ng level, sa halip na buksan mismo ang bawat file — makikita ito sa buod ng facts na tumutukoy sa tunay na `file:line`
+3. **naghahanap ang graft ng relevant na code** — mismong tinatawag ng agent ang graft (`tools.graft.graft_find_code`/`graft_file_api` sa loob ng tawag sa `execute` sa OpenCode 2) para malaman kung paano gumagana ang kasalukuyang sistema, sa halip na buksan ang bawat file — makikita ito sa buod ng mga fact na may tunay na `file:line` na reference
 4. **nagtatanong ng clarifying questions bilang batch (grilling format)** — nagpapaputok ng ilang tanong sabay-sabay, may kasamang `➡️` na rekomendasyon (tignan ang susunod na seksyon kung saan galing ang format na ito)
 5. **sumagot sa mga tanong** — isang maikling sagot, hal. `sundin ang mga rekomendasyon mo`
 6. **sinusuri ng ponytail ang decision ladder** — bago sumulat ng bagong code, tinitignan kung may meron nang pwedeng i-reuse (makikita ito sa resultang code na kadalasang nag-e-edit ng meron nang file/nagdadagdag ng field sa isang meron nang data structure, sa halip na bumuo ng bagong parallel na sistema)
-7. **sumulat/nag-edit ng code**, kasama ang todo list na sumusubaybay sa progreso
+7. **sumulat/nag-edit ng code** (para sa nakasulat na plan, sinusubaybayan ang progreso sa plan file)
 8. **nagpatakbo ng tests + sinuri sa browser** (via chrome-devtools MCP, para sa trabahong makikita sa browser — ang rule na "Verifying UI changes" sa global AGENTS.md)
 9. **nag-commit** bilang isang scoped commit, may maikli, diretso-sa-punto na mensahe — sa muling pagsubok ay **hindi** kusang nag-commit ang agent; kailangan mong hilingin (`/caveman-commit` para sa message, o i-type ang `i-commit mo ito`). Tignan ang hakbang 6 ng "Mula simula hanggang tapos"
+
+> [!info] Sinubukan ulit sa OpenCode 2 (2026-10-11)
+> Parehong request, OpenCode 2.0.26 + superpowers 7.0.0: hakbang 2, 3 (graft sa pamamagitan ng `execute`), 6, 7 at 8 ✅ — may nakita at naayos na tunay na bug ang browser check. Kung wala ang bagong rule na "Approval before building", nilaktawan ang hakbang 4/5 (walang ipinakitang disenyo). Ang mga resulta na may rule ay nasa [[tuning]] section 9.
 
 > [!tip] Normal lang na hindi makita ang lahat ng hakbang
 > Ang maliliit na request (pag-aayos ng typo, isang pangkalahatang tanong) ay dumidiretso sa hakbang 7–9, nilalaktawan ang 2–6 — nangyayari lang ang buong hakbang na ito para sa trabahong talagang "paggawa ng bagong feature."
@@ -468,6 +484,9 @@ graft check
 
 ## 5. Paggawa ng website gamit ang OpenDesign, pagkatapos ay ikabit sa opencode
 
+> [!warning] Hindi magamit ng OpenDesign 0.24.1 ang OpenCode 2 bilang engine
+> Sinisimulan ng OpenDesign ang OpenCode gamit ang mga 1.x flag na tinatanggihan ng OpenCode 2 ([[gotchas]] item 24, upstream issue #8313). Hangga't hindi pa naaayos, pumili ng ibang agent bilang engine ng OpenDesign para sa Phase 1. Gumagana nang normal ang Phase 2 (ang `open-design` MCP sa loob ng OpenCode).
+
 ### Phase 1 — Design/prototype sa OpenDesign
 
 1. Buksan ang OpenDesign app → ang **Home** page
@@ -489,7 +508,7 @@ opencode
 ```
 
 > [!important] I-on muna ang `open-design` para sa project na ito
-> Naka-off by default ang `open-design` MCP (~6.6k tokens ang gastos nito bawat turn) — ilagay ang `{ "mcp": { "open-design": { "enabled": true } } }` sa `my-real-project/opencode.json`, buksan ulit ang opencode, at tiyaking ipinapakita ng `opencode mcp list` na `connected` ang `open-design`.
+> Naka-off by default ang `open-design` MCP — kopyahin ang **buong** entry nito mula sa [`config/opencode.jsonc`](../config/opencode.jsonc) papunta sa `my-real-project/opencode.json` na may `"enabled": true` (binabalewala ang maikling `{ "enabled": true }` sa OpenCode 2, [[gotchas]] item 22), buksan ulit ang opencode, at tiyaking ipinapakita ng `opencode mcp list` ang `open-design` bilang `connected`.
 
 ```
 Gamitin ang open-design tool na list_projects para makita kung anong mga project ang meron,
@@ -533,4 +552,7 @@ Buong listahan may kasamang ayos nasa [[gotchas]] — maikling bersyon:
 - **Lumalabas ang `command not found` sa `trivy` kahit sinabi ng winget na matagumpay ang pag-install** → i-restart ang terminal (kailangang buong isara ang VS Code) — parehong PATH staleness gaya ng item 2 (tignan [[mcp-servers]], seksyong trivy)
 - **Mabagal ang bawat turn / madalas ang compaction / paulit-ulit na binabasa ng agent ang parehong files** → sukatin ang laki ng prompt at ang tool-call history gamit ang scripts sa [[tuning]] (item 11 at 13)
 - **Hindi gumagamit ng graft ang agent kahit may `graft/` index** → kailangan ng global AGENTS.md ang rule na "graft first, even inside a skill" (item 12)
-- **Nakalista rin ang skills ng Claude Code sa `opencode debug skill`** → i-set ang `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` (item 15)
+- **Inaalok sa model ang skills ng Claude Code o ng `~/.agents`** → isang `permissions` allow-list sa `opencode.jsonc` (item 15 — binabalewala na ang lumang env var sa OpenCode 2)
+- **Pagkatapos mag-upgrade sa OpenCode 2, tumigil ang graft context / caveman** → hindi tumatakbo ang V1 plugins sa V2 (items 20–21)
+- **Hindi nao-on ng `{ "enabled": true }` ng project ang isang MCP server** → kopyahin ang buong entry (item 22)
+- **Nabuo ang bagong feature nang walang disenyong inaprubahan** → ang rule na "Approval before building" sa global AGENTS.md (item 23)
