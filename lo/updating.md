@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins, grill-me/grilling skill ແລະ OpenDesign ເທື່ອລະໂຕ
 ---
 
@@ -57,6 +57,27 @@ OpenCode 2 ອ່ານ config, AGENTS.md, skills ແລະ commands ເດີ�
 > OpenDesign 0.24.1 ໃຊ້ OpenCode 2 ເປັນ engine ບໍ່ໄດ້ — [[gotchas]] ຂໍ້ 24 ສ່ວນ `lsp` ຍັງຮັບຄ່າໄດ້ ແຕ່ OpenCode 2 ບໍ່ແລ່ນ language server
 
 ---
+
+## OpenCode 2.0.26 → 2.0.27 (2026-10-13)
+
+`npm install -g @opencode/cli@latest` ແລ້ວ `opencode service restart` ເທິງ setup ນີ້ບໍ່ຕ້ອງແກ້ຫຍັງເລີຍ config, plugin ທັງ 6 ໂຕ (superpowers, ponytail, graft-deep, caveman, execute-guard, compaction-keep) ແລະ MCP server ໂຫຼດໄດ້ຄືເກົ່າ ຫຼັງອັບເດດທຸກຄັ້ງໃຫ້ກວດ:
+
+```bash
+opencode --version
+grep 'cli starting' ~/.local/share/opencode/log/opencode.log | grep serve | tail -1   # service ແລ່ນເວີຊັນໃໝ່ແລ້ວ
+grep 'loading plugin' ~/.local/share/opencode/log/opencode.log | tail -6               # plugin ໂຫຼດຄົບທຸກໂຕ
+```
+
+## ລຶບສິ່ງທີ່ OpenCode 1 ປະໄວ້
+
+ຫຼັງຍ້າຍມາ OpenCode 2 ໃຫ້ກວດວ່າຍັງມີ binary 1.x ໂຕເກົ່າທີ່ອາດຖືກເອີ້ນແທນໂຕໃໝ່ຢູ່ຫຼືບໍ່:
+
+```powershell
+Get-Command opencode -All | Select-Object Source        # opencode ທຸກໂຕທີ່ຢູ່ເທິງ PATH
+npm ls -g --depth=0 | Select-String opencode            # ເຊັ່ນ opencode-windows-x64-baseline@1.x
+npm uninstall -g opencode-windows-x64-baseline          # package ຂອງ 1.x
+# ຖ້າມີໂຟນເດີຕິດຕັ້ງ 1.x ແຍກ (ເຊັ່ນ C:\opencode): ເອົາອອກຈາກ PATH ຂອງ user ແລ້ວລຶບໂຟນເດີ
+```
 
 ## OpenCode CLI
 

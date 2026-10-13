@@ -2,7 +2,7 @@
 
 You are an AI coding agent. A user asked you to set up OpenCode the way this repository documents it. Follow this file top to bottom. It is the executable summary of the human manual (`en/setup.md`, `en/mcp-servers.md`, `en/plugins.md`, `en/tuning.md`); when a step needs more detail, read the page it names.
 
-This file targets **OpenCode 2** (tested on 2.0.26). If `opencode --version` prints 1.x, follow `en/updating.md` → "Upgrading from OpenCode 1 to OpenCode 2" instead of installing from scratch.
+This file targets **OpenCode 2** (tested on 2.0.26 and 2.0.27). If `opencode --version` prints 1.x, follow `en/updating.md` → "Upgrading from OpenCode 1 to OpenCode 2" instead of installing from scratch.
 
 All paths are relative to the root of this repository unless they start with `~`. `~/.config/opencode/` is the OpenCode config directory on **every** OS (on Windows it is `%USERPROFILE%\.config\opencode`).
 

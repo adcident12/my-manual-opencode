@@ -15,6 +15,31 @@ sources, minified bundles, or the web to write it; if a library's
 behavior matters, name it as an open question in the design and check it
 while implementing, after approval.
 
+## Unattended work — decide, don't ask
+
+When the user has said to carry on without them ("ทำงานต่อ", "just do
+it", "don't ask", "I'll be away", "run overnight"), do not use the
+`question` tool for the rest of that request: nobody will answer, and
+OpenCode stops a session that has waited 60 minutes. At each point where
+you would ask, take the option you would have recommended, write the
+decision and the reason in the plan file (or the final report when there
+is none), and continue. Stop only for something you must not decide
+alone: deleting data, a step outside the project, or a security change
+you cannot verify.
+
+## Large or multi-part work — one piece at a time
+
+When a request bundles several independent pieces (a numbered list, "do
+1–5"), keep one checklist in a plan file, do one piece at a time, verify
+it, mark it done in the file, and give a two-line report before starting
+the next. A piece that is a project of its own — a new subsystem,
+authentication or roles, a data-model change, work across many files —
+gets a short written plan (`writing-plans`) before any code, even when
+the user already said to start, and its logic is written test-first
+(`test-driven-development`). Changes to authentication, permissions or
+user data are not done until `trivy fs --scanners vuln,secret .` is clean
+(and sonarqube, when the project is analysed there).
+
 ## Grill me — complements superpowers brainstorming, doesn't duplicate it
 
 This setup also runs the `superpowers` plugin. Its `brainstorming` skill is
@@ -58,9 +83,12 @@ for "where is X / how does Y work", `tools.graft.graft_file_api` to skim a
 file, and `tools.graft.graft_trace_calls` for callers (check a signature
 with `search({ namespace: "graft" })` if a call is rejected). There is no
 `graft_ask` tool: `graft ask "<question>" --source` is the CLI, run
-through `shell`. Inside `execute`, `await` each tool call directly; a
-`new Promise(...)` that never calls `resolve` hangs the session, because
-`execute` has no overall timeout. Then
+through `shell`. Inside `execute`, `await` each tool call directly. Code
+Mode has no timers, so there is no way to "pause" there: to wait for a
+page use `tools["chrome-devtools"].wait_for({ pageId, text: [...] })`,
+otherwise just continue. Never write `await new Promise(() => {})` — it
+never settles and `execute` has no overall timeout (a plugin now rewrites
+it, but each one is a wasted step). Then
 `read` only the files you are about to edit. Directory listings and
 whole-file reads are the fallback when there is no `graft/` index.
 
@@ -76,6 +104,12 @@ another port if that one is taken) instead of writing a server; a 404 for
 `/favicon.ico` is harmless. If the page cannot
 load or throws, that is a failure to report or fix, not "done".
 
+`evaluate_script` takes the source of a function, which it calls for
+you: pass `function: "() => { ...; return {...}; }"` — not an invoked
+`(() => {...})()`, not a bare expression — and return plain data
+(strings, numbers, small objects), never DOM nodes or framework objects.
+To change pages use `navigate_page`, not `location.href`.
+
 The browser outlives your session: pages from earlier sessions may still
 be open. Open your own page with `new_page` (not in the background) and
 work only on that page id; close it when you are done. A background tab
@@ -85,10 +119,24 @@ still does not behave after two or three checks, take one screenshot,
 report what you saw, and stop; do not debug the framework from the
 browser console.
 
+## Debugger (debugmcp) — when it is enabled for the project
+
+Use `tools.debugmcp` when a bug's cause is not clear from reading the
+code and one run with a print does not settle it: set a breakpoint
+(`add_breakpoint`, 1-based line), `start_debugging` the file, read the
+values you need (`evaluate_expression` / `get_variables_values`), and
+always finish with `stop_debugging` and `clear_all_breakpoints`.
+DebugMCP only debugs files inside the folder open in VS Code. If it
+reports that the file is outside a VS Code workspace, stop and ask the
+user to open the project in VS Code — never copy files into another
+project to make it work.
+
 ## Re-reading files after compaction or pruning
 
 When you need a file you already read earlier in this session (its content
-was compacted or pruned away), do not re-read the whole file. If the
+was compacted or pruned away), do not re-read the whole file. Check the
+compaction summary first — it lists the files read and the facts taken
+from them. If the
 project has a `graft/` index, run `graft skeleton <file>` or `graft ask
 "<symbol>" --source` first; then `read` only the lines you need with
 `offset`/`limit`. A full read is fine right before editing a file you

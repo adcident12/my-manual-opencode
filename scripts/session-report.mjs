@@ -135,7 +135,8 @@ if (cmd === 'usage') {
   const tools = parts.filter((p) => p.type === 'tool');
   const reads = tools.filter((p) => p.tool === 'read');
   const n = (f) => tools.filter(f).length;
-  console.log(`\ntools=${tools.length} graft=${n((p) => p.tool.startsWith('graft_'))} read=${reads.length} (ranged=${reads.filter((p) => p.state?.input?.offset || p.state?.input?.limit).length}, re-reads=${reads.length - new Set(reads.map(fileOf)).size}) edit/write=${n((p) => p.tool === 'edit' || p.tool === 'write')} memory=${n((p) => p.tool.startsWith('memory_'))} compactions=${parts.filter((p) => p.type === 'compaction').length}`);
+  const graftCli = (p) => p.tool === 'bash' && /\bgraft\s+(ask|skeleton|map|grep|callers)\b/.test(p.state?.input?.command ?? '');
+  console.log(`\ntools=${tools.length} graft=${n((p) => p.tool.startsWith('graft_') || graftCli(p))} read=${reads.length} (ranged=${reads.filter((p) => p.state?.input?.offset || p.state?.input?.limit).length}, re-reads=${reads.length - new Set(reads.map(fileOf)).size}) edit/write=${n((p) => p.tool === 'edit' || p.tool === 'write')} memory=${n((p) => p.tool.startsWith('memory_'))} compactions=${parts.filter((p) => p.type === 'compaction').length}`);
   console.log(`skills: ${tools.filter((p) => p.tool === 'skill').map((p) => p.state?.input?.name).join(', ') || 'none'}`);
 } else {
   console.log('usage: node session-report.mjs usage|rereads [--since YYYY-MM-DD] | session <title>');

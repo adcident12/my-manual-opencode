@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: วัดผลจริงว่า workflow ใน USER-MANUAL/architecture ทำงานครบไหม — ขนาด prompt ต่อ turn, tool ที่ agent เรียกจริง, สาเหตุการอ่านไฟล์ซ้ำ, ทดสอบครบวงจร — แล้วปรับจูนจากผลที่วัดได้ พร้อมสคริปต์ให้วัดซ้ำบนเครื่องตัวเอง
 ---
 
@@ -391,3 +391,47 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ใส่ใน sh
 - ตอนนี้ `session-report.mjs` อ่านได้ทั้ง session ของ OpenCode 1 (`session`/`part`) และ OpenCode 2 (`session_v2`/`session_message`) บน OpenCode 2 การเรียก MCP ทุกครั้งเกิดใน script ของ `execute` รายงานจะแยก script เหล่านั้นกลับเป็นการเรียก `<server>_<tool>` ทำให้ยังเทียบการใช้ graft และ chrome-devtools กับผลเดิมได้
 - `analyze-prompt.mjs` นับ `shell`/`subagent`/`execute` เป็น built-in tool และแยก Code Mode catalog เป็นของตัวเอง
 - วิธี capture ให้เพิ่ม `--standalone` (ข้อ 1)
+
+---
+
+## 10. ใช้งานจริง 3 วันบน OpenCode 2 (2026-10-11 → 13)
+
+วัดจาก session ยาวหนึ่งอันบนโปรเจกต์จริง (เว็บแอป Next.js + PostgreSQL) ที่ปล่อยให้ทำงานครั้งละหลายชั่วโมง เทียบก่อนและหลังแต่ละการเปลี่ยนแปลง ตัวเลขมาจากฐานข้อมูลของ OpenCode, log ของ OpenCode และ log ของ llama.cpp server
+
+### 10.1 สิ่งที่เปลี่ยน
+
+| การเปลี่ยนแปลง | เหตุผล (จากที่วัด) | อยู่ที่ |
+| --- | --- | --- |
+| plugin `execute-guard` | `execute` ค้าง 4 ครั้งในคืนเดียว ครั้งละ 265–849 วินาที | [[plugins]], gotcha 29 |
+| plugin `compaction-keep` | สรุปไม่เก็บข้อเท็จจริงที่ขั้นต่อไปต้องใช้ | [[plugins]] |
+| `compaction.keep.tokens` 24000 → **15000** (ค่าเริ่มต้น) | ตอนใช้ 24000 การอ่านไฟล์ครึ่งหนึ่งยังเป็นการอ่านซ้ำหลัง compaction และ compact ถี่ขึ้น (1.8 ครั้ง/ชม. ครั้งละ ~4.5 นาที) | `config/opencode.jsonc` |
+| `mcp.timeout.startup: 90000` | sonarqube/trivy timeout หลังรีสตาร์ททุกครั้ง | gotcha 27 |
+| ปิด MCP sonarqube และ trivy เป็นค่าเริ่มต้น | ไม่ถูกเรียกเลยใน 26 session ส่วน `trivy fs` รันผ่าน shell | `config/opencode.jsonc` |
+| rule อนุญาต `external_directory` (npx cache, temp, plugin cache) | โฟลเดอร์เดิมถูกถามซ้ำ 12 ครั้ง และมีคำขอหนึ่งค้างโดยไม่มีใครตอบ 9 ชั่วโมง | gotcha 28 |
+| AGENTS.md: "Unattended work — decide, don't ask" | OpenCode หยุด session ที่รอเกิน 60 นาที | gotcha 28 |
+| AGENTS.md: "Large or multi-part work — one piece at a time" | คำขอที่รวมหลายงานจะได้ plan file, เขียนเทสต์ก่อน และทำทีละชิ้น | `config/AGENTS.md` |
+| AGENTS.md: วิธีเรียก `evaluate_script` | ราวหนึ่งในสามของการเรียกล้มเหลว | gotcha 30 |
+| AGENTS.md: "Debugger (debugmcp)" | tool ใหม่ | [[mcp-servers]], gotcha 32 |
+| AGENTS.md: ลบ "delegate to the explore subagent" | 3 วันไม่เคยทำตามเลย เป็นแค่ต้นทุนใน prompt | — |
+| ลบ `"attachment"` ออกจากโมเดล | V2 ไม่ใช้ และเขียน warning ลง log | gotcha 31 |
+
+### 10.2 ก่อนและหลัง
+
+| | ก่อนเปลี่ยน (8 ชม.) | หลังเปลี่ยน คืนแรก (13.8 ชม.) | หลัง `keep.tokens` 15000 (9.4 ชม.) |
+| --- | --- | --- | --- |
+| compaction ต่อชั่วโมง | 1.2 | 1.8 | **0.6** |
+| `execute` นานเกิน 120 วินาที | 4 | 0 | 0 |
+| สแกน `trivy` / รันเทสต์ | 0 / 19 | 16 / 67 | 0 / 28 |
+| skill ที่ใช้ | brainstorming | writing-plans, TDD, systematic-debugging | brainstorming → writing-plans → executing-plans → TDD |
+| สรุป compaction ที่ระบุไฟล์ + ข้อเท็จจริง | — | 24/24 | 6/6 |
+
+หมายเหตุ:
+- ที่ลดเหลือ 0.6 ครั้งต่อชั่วโมง มีส่วนจากการเปลี่ยนไปใช้โมเดล MTP ที่เร็วกว่าและงานที่เบากว่าด้วย ไม่ได้มาจาก `keep.tokens` ทั้งหมด
+- การคิด (reasoning) ยังกินเวลาราว 64% ของเวลาทำงานของ agent ผลทดสอบ A/B ของ reasoning effort บน setup นี้ยังสรุปไม่ได้ จึงคงค่าเริ่มต้นไว้
+- explore subagent และ graft MCP แทบไม่ถูกใช้ graft เข้ามาในงานผ่านชุด `[graft]` ที่ graft-deep แนบไปกับทุก prompt
+
+### 10.3 นิสัยการใช้งานที่ช่วยได้
+
+- **เริ่ม session ใหม่ทุกครั้งที่เริ่มงานชิ้นใหญ่ชิ้นใหม่** มี session หนึ่งใช้ต่อกัน 3 วันผ่าน compaction 40 ครั้ง และทุกครั้งเสียรายละเอียดไปบ้าง plan file กับ memory MCP พาข้อมูลสำคัญไป session ถัดไปให้อยู่แล้ว
+- **ถ้าจะปล่อยให้ agent ทำงานเอง ให้บอกด้วย** ("ทำงานต่อ", "just do it") กฎ unattended จะได้ทำงาน
+- **เปลี่ยนโมเดลบน server แล้ว ให้แก้ `model` ใน `opencode.jsonc` ให้ตรงกันด้วย** server ตอบทุกชื่อโมเดลที่ส่งมา ถ้าชื่อผิดจะเห็นแค่ตอนที่สถิติบันทึกผิดชื่อ

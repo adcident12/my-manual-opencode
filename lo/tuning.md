@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: ວັດຜົນຈິງວ່າ workflow ໃນ USER-MANUAL/architecture ເຮັດວຽກຄົບບໍ — ຂະໜາດ prompt ຕໍ່ turn, tool ທີ່ agent ເອີ້ນແທ້, ສາເຫດທີ່ອ່ານໄຟລ໌ຊ້ຳ, ທົດສອບຄົບວົງຈອນ — ແລ້ວປັບຈູນຈາກຜົນທີ່ວັດໄດ້ ພ້ອມ script ໃຫ້ວັດຊ້ຳເທິງເຄື່ອງຕົນເອງ
 ---
 
@@ -391,3 +391,47 @@ export OPENCODE_DISABLE_EXTERNAL_SKILLS=1   # macOS/Linux — ໃສ່ໃນ sh
 - ຕອນນີ້ `session-report.mjs` ອ່ານໄດ້ທັງ session ຂອງ OpenCode 1 (`session`/`part`) ແລະ OpenCode 2 (`session_v2`/`session_message`) ເທິງ OpenCode 2 ການເອີ້ນ MCP ທຸກເທື່ອເກີດໃນ script ຂອງ `execute` ລາຍງານຈະແຍກ script ເຫຼົ່ານັ້ນກັບເປັນການເອີ້ນ `<server>_<tool>` ເຮັດໃຫ້ຍັງທຽບການໃຊ້ graft ແລະ chrome-devtools ກັບຜົນເດີມໄດ້
 - `analyze-prompt.mjs` ນັບ `shell`/`subagent`/`execute` ເປັນ built-in tool ແລະແຍກ Code Mode catalog ເປັນຂອງຕົນເອງ
 - ວິທີ capture ໃຫ້ເພີ່ມ `--standalone` (ຂໍ້ 1)
+
+---
+
+## 10. ໃຊ້ງານແທ້ 3 ມື້ເທິງ OpenCode 2 (2026-10-11 → 13)
+
+ວັດຈາກ session ຍາວໜຶ່ງອັນເທິງ project ແທ້ (ເວັບແອັບ Next.js + PostgreSQL) ທີ່ປ່ອຍໃຫ້ເຮັດວຽກຄັ້ງລະຫຼາຍຊົ່ວໂມງ ທຽບກ່ອນແລະຫຼັງແຕ່ລະການປ່ຽນແປງ ຕົວເລກມາຈາກຖານຂໍ້ມູນຂອງ OpenCode, log ຂອງ OpenCode ແລະ log ຂອງ llama.cpp server
+
+### 10.1 ສິ່ງທີ່ປ່ຽນ
+
+| ການປ່ຽນແປງ | ເຫດຜົນ (ຈາກທີ່ວັດ) | ຢູ່ທີ່ |
+| --- | --- | --- |
+| plugin `execute-guard` | `execute` ຄ້າງ 4 ຄັ້ງໃນຄືນດຽວ ຄັ້ງລະ 265–849 ວິນາທີ | [[plugins]], gotcha 29 |
+| plugin `compaction-keep` | ສະຫຼຸບບໍ່ເກັບຂໍ້ເທັດຈິງທີ່ຂັ້ນຕໍ່ໄປຕ້ອງໃຊ້ | [[plugins]] |
+| `compaction.keep.tokens` 24000 → **15000** (ຄ່າເລີ່ມຕົ້ນ) | ຕອນໃຊ້ 24000 ການອ່ານໄຟລ໌ເຄິ່ງໜຶ່ງຍັງເປັນການອ່ານຊ້ຳຫຼັງ compaction ແລະ compact ຖີ່ຂຶ້ນ (1.8 ຄັ້ງ/ຊມ. ຄັ້ງລະ ~4.5 ນາທີ) | `config/opencode.jsonc` |
+| `mcp.timeout.startup: 90000` | sonarqube/trivy timeout ຫຼັງຣີສະຕາດທຸກຄັ້ງ | gotcha 27 |
+| ປິດ MCP sonarqube ແລະ trivy ເປັນຄ່າເລີ່ມຕົ້ນ | ບໍ່ຖືກເອີ້ນເລີຍໃນ 26 session ສ່ວນ `trivy fs` ແລ່ນຜ່ານ shell | `config/opencode.jsonc` |
+| rule ອະນຸຍາດ `external_directory` (npx cache, temp, plugin cache) | ໂຟນເດີເດີມຖືກຖາມຊ້ຳ 12 ຄັ້ງ ແລະມີຄຳຂໍໜຶ່ງຄ້າງໂດຍບໍ່ມີໃຜຕອບ 9 ຊົ່ວໂມງ | gotcha 28 |
+| AGENTS.md: "Unattended work — decide, don't ask" | OpenCode ຢຸດ session ທີ່ລໍເກີນ 60 ນາທີ | gotcha 28 |
+| AGENTS.md: "Large or multi-part work — one piece at a time" | ຄຳຂໍທີ່ລວມຫຼາຍວຽກຈະໄດ້ plan file, ຂຽນເທສກ່ອນ ແລະເຮັດເທື່ອລະຊິ້ນ | `config/AGENTS.md` |
+| AGENTS.md: ວິທີເອີ້ນ `evaluate_script` | ປະມານໜຶ່ງສ່ວນສາມຂອງການເອີ້ນລົ້ມເຫຼວ | gotcha 30 |
+| AGENTS.md: "Debugger (debugmcp)" | tool ໃໝ່ | [[mcp-servers]], gotcha 32 |
+| AGENTS.md: ລຶບ "delegate to the explore subagent" | 3 ມື້ບໍ່ເຄີຍເຮັດຕາມເລີຍ ເປັນພຽງຕົ້ນທຶນໃນ prompt | — |
+| ລຶບ `"attachment"` ອອກຈາກໂມເດວ | V2 ບໍ່ໃຊ້ ແລະຂຽນ warning ລົງ log | gotcha 31 |
+
+### 10.2 ກ່ອນແລະຫຼັງ
+
+| | ກ່ອນປ່ຽນ (8 ຊມ.) | ຫຼັງປ່ຽນ ຄືນທຳອິດ (13.8 ຊມ.) | ຫຼັງ `keep.tokens` 15000 (9.4 ຊມ.) |
+| --- | --- | --- | --- |
+| compaction ຕໍ່ຊົ່ວໂມງ | 1.2 | 1.8 | **0.6** |
+| `execute` ດົນເກີນ 120 ວິນາທີ | 4 | 0 | 0 |
+| ສະແກນ `trivy` / ແລ່ນເທສ | 0 / 19 | 16 / 67 | 0 / 28 |
+| skill ທີ່ໃຊ້ | brainstorming | writing-plans, TDD, systematic-debugging | brainstorming → writing-plans → executing-plans → TDD |
+| ສະຫຼຸບ compaction ທີ່ລະບຸໄຟລ໌ + ຂໍ້ເທັດຈິງ | — | 24/24 | 6/6 |
+
+ໝາຍເຫດ:
+- ທີ່ຫຼຸດລົງເຫຼືອ 0.6 ຄັ້ງຕໍ່ຊົ່ວໂມງ ມີສ່ວນຈາກການປ່ຽນໄປໃຊ້ໂມເດວ MTP ທີ່ໄວກວ່າ ແລະວຽກທີ່ເບົາກວ່າດ້ວຍ ບໍ່ໄດ້ມາຈາກ `keep.tokens` ທັງໝົດ
+- ການຄິດ (reasoning) ຍັງກິນເວລາປະມານ 64% ຂອງເວລາເຮັດວຽກຂອງ agent ຜົນທົດສອບ A/B ຂອງ reasoning effort ເທິງ setup ນີ້ຍັງສະຫຼຸບບໍ່ໄດ້ ຈຶ່ງຄົງຄ່າເລີ່ມຕົ້ນໄວ້
+- explore subagent ແລະ graft MCP ແທບບໍ່ຖືກໃຊ້ graft ເຂົ້າມາໃນວຽກຜ່ານຊຸດ `[graft]` ທີ່ graft-deep ແນບໄປກັບທຸກ prompt
+
+### 10.3 ນິໄສການໃຊ້ງານທີ່ຊ່ວຍໄດ້
+
+- **ເລີ່ມ session ໃໝ່ທຸກຄັ້ງທີ່ເລີ່ມວຽກຊິ້ນໃຫຍ່ຊິ້ນໃໝ່** ມີ session ໜຶ່ງໃຊ້ຕໍ່ກັນ 3 ມື້ຜ່ານ compaction 40 ຄັ້ງ ແລະທຸກຄັ້ງເສຍລາຍລະອຽດໄປບ້າງ plan file ກັບ memory MCP ພາຂໍ້ມູນສຳຄັນໄປ session ຖັດໄປໃຫ້ຢູ່ແລ້ວ
+- **ຖ້າຈະປ່ອຍໃຫ້ agent ເຮັດວຽກເອງ ໃຫ້ບອກນຳ** ("ເຮັດວຽກຕໍ່", "just do it") ກົດ unattended ຈະໄດ້ເຮັດວຽກ
+- **ປ່ຽນໂມເດວເທິງ server ແລ້ວ ໃຫ້ແກ້ `model` ໃນ `opencode.jsonc` ໃຫ້ກົງກັນນຳ** server ຕອບທຸກຊື່ໂມເດວທີ່ສົ່ງມາ ຖ້າຊື່ຜິດຈະເຫັນພຽງຕອນທີ່ສະຖິຕິບັນທຶກຜິດຊື່

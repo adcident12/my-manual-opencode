@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: superpowers (skill library), grill-me/grilling (batch-interview skill ເສີມ superpowers), graft-deep (custom plugin ທີ່ຂຽນເອງ), ponytail (code-minimization ruleset) ແລະ caveman (ຕອບສັ້ນ ໃຊ້ແທນ i-have-adhd) — ວິທີຕິດຕັ້ງແຕ່ລະໂຕເທິງ OpenCode 2 ແລະ plugin API ຂອງ OpenCode 2
 ---
 
@@ -448,6 +448,31 @@ for (const text of ["where is drawTrack defined", "where is drawTrack defined"])
 ເທິງ Windows ໃຫ້ແລ່ນພ້ອມ `NODE_PATH` ທີ່ຊີ້ໄປ folder ທີ່ມີ `cross-spawn` (ເຊັ່ນ `NODE_PATH=~/.config/opencode/node_modules`)
 
 ---
+
+## execute-guard — ຢຸດສະຄຣິບ Code Mode ທີ່ບໍ່ມີວັນຈົບ (custom, OpenCode 2)
+
+Code Mode ບໍ່ມີໂຕຈັບເວລາ ແລະ `execute` ບໍ່ມີ timeout ລວມ ເວລາໂມເດວຢາກ "ລໍຖ້າ" ມັກຂຽນ `await new Promise(() => {})` ເຊິ່ງບໍ່ມີວັນຈົບ session ຈຶ່ງຄ້າງຢູ່ບ່ອນນັ້ນຈົນກວ່າຈະມີຄົນກົດຢຸດ ([[gotchas]] ຂໍ້ 29)
+
+ກ່ອນ `execute` ທຸກຄັ້ງ plugin ນີ້ຈະຊອກ `new Promise(` ທີ່ executor ບໍ່ຮັບພາຣາມິເຕີ (ເຊິ່ງຈົບເອງບໍ່ໄດ້) ແລ້ວແລ່ນ executor ໂຕເດີມ ແລະໃຫ້ promise ຈົບດ້ວຍຄ່າທີ່ executor return ພ້ອມພິມໜຶ່ງແຖວບອກໂມເດວໃຫ້ໃຊ້ `tools["chrome-devtools"].wait_for` ແທນ promise ທີ່ executor ຮັບ `resolve` ຈະບໍ່ຖືກແຕະ ແລະສ່ວນອື່ນຂອງສະຄຣິບບໍ່ປ່ຽນ
+
+- **ໄຟລ໌:** [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) → `~/.config/opencode/plugin/execute-guard.js` ບໍ່ຕ້ອງໃສ່ໃນ config ເພາະ OpenCode 2 ໂຫຼດໄຟລ໌ `.js` ໃນໂຟນເດີນັ້ນເອງ ແລະໂຫຼດໃໝ່ເມື່ອໄຟລ໌ປ່ຽນ
+- **API ທີ່ໃຊ້:** `ctx.tool.hook("execute.before", event => { event.input.code = ... })` OpenCode 2 ໃຫ້ hook `before` ປ່ຽນ input ຂອງ tool ໄດ້
+- **ຜົນທີ່ວັດໄດ້:** ກ່ອນມີ plugin ເກີດ `execute` ດົນເກີນ 120 ວິນາທີ 4 ຄັ້ງໃນຄືນດຽວ (265–849 ວິນາທີ) ຫຼັງໃສ່ 3 ມື້ບໍ່ເກີດເລີຍ plugin ແກ້ສະຄຣິບໄປ 2 ຄັ້ງ ແລະທັງສອງຄັ້ງເຮັດວຽກຕໍ່ໄດ້ຕາມປົກກະຕິ
+
+## compaction-keep — ໃຫ້ສະຫຼຸບຕອນ compaction ເກັບສະຖານະວຽກໄວ້ (custom, OpenCode 2)
+
+ສະຫຼຸບແບບຄ່າເລີ່ມຕົ້ນເກັບໃຈຄວາມຂອງບົດສົນທະນາ ແຕ່ບໍ່ເກັບຂໍ້ເທັດຈິງທີ່ຂັ້ນຕໍ່ໄປຕ້ອງໃຊ້ agent ຈຶ່ງອ່ານໄຟລ໌ເດີມຊ້ຳຫຼັງ compaction ທຸກຄັ້ງ plugin ນີ້ເພີ່ມຄຳສັ່ງເຂົ້າໄປໃນ prompt ຂອງການສະຫຼຸບເທົ່ານັ້ນ (hook `compaction` ບໍ່ເຮັດວຽກໃນ turn ປົກກະຕິ) ໃຫ້ສະຫຼຸບຕ້ອງເກັບ:
+
+1. ຄຳຂໍແລະການອະນຸມັດທຸກຄັ້ງ ແບບຄຳຕໍ່ຄຳ
+2. plan file ແລະສະຖານະຂອງແຕ່ລະຂໍ້
+3. ໄຟລ໌ທີ່ແກ້
+4. ຂໍ້ເທັດຈິງຈາກໄຟລ໌ທີ່ອ່ານ (ຊື່, signature, ຊ່ວງແຖວ)
+5. ຄຳສັ່ງກວດວຽກ ລວມເຖິງ dev server ແລະພອດທີ່ຍັງແລ່ນຢູ່
+6. ບັນຫາທີ່ຍັງຄ້າງ
+
+- **ໄຟລ໌:** [`config/plugin/compaction-keep.js`](../config/plugin/compaction-keep.js) → `~/.config/opencode/plugin/compaction-keep.js`
+- **API ທີ່ໃຊ້:** `ctx.session.hook("compaction", event => event.system.push({ type: "text", text: KEEP }))`
+- **ຜົນທີ່ວັດໄດ້:** ຫຼັງຈາກນັ້ນທຸກສະຫຼຸບລະບຸໄຟລ໌ແລະຂໍ້ເທັດຈິງ (ຍາວປະມານ 7,000 ໂຕອັກສອນຕໍ່ຄັ້ງ) ແຕ່ການອ່ານຊ້ຳຫຼັງ compaction ບໍ່ໄດ້ຫຼຸດລົງເພາະ plugin ນີ້ຢ່າງດຽວ ທີ່ຊ່ວຍຄືຄືນ `keep.tokens` ເປັນ 15000 ເຮັດໃຫ້ compact ໜ້ອຍລົງ ([[tuning]] ຂໍ້ 10)
 
 ## ponytail — code-minimization ruleset
 

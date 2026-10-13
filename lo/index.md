@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, overview, opencode, ai-agent]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ້ງແລະນຳໃຊ້ OpenCode CLI ພ້ອມ MCP servers, Plugins, ແລະ Skills (Agent Skills open standard) ສຳລັບ vibe coding
 ---
 
@@ -8,7 +8,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 
 **OpenCode** ແມ່ນ AI coding agent ແບບ CLI (ແນວດຽວກັບ Claude Code) ທີ່ຮອງຮັບການຕໍ່ model provider ເອງໄດ້ອິດສະຫຼະ — ລວມທັງ self-hosted model ເທິງເຊີບເວີຂອງຕົນເອງ — ແລະມີລະບົບ **MCP (Model Context Protocol)** ກັບ **Plugin** ແບບເປີດໃຫ້ຂະຫຍາຍໄດ້ເຕັມຮູບແບບ
 
-ຊຸດເອກະສານນີ້ບັນທຶກການຕັ້ງຄ່າຈິງທີ່ໃຊ້ງານຢູ່ — ຕັ້ງແຕ່ຕິດຕັ້ງ CLI ເທິງເຄື່ອງເປົ່າ ຈົນເຖິງຕໍ່ໂມເດວບ້ານ (self-hosted llama.cpp) + MCP servers 11 ໂຕ (6 ເປີດໃຊ້ງານ, 5 ເປີດຕໍ່ project/ລໍ token) + Plugin 4 ໂຕ ພ້ອມບັນທຶກບັນຫາທີ່ພົບຈິງລະຫວ່າງທາງ, ວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ ແລະຜົນການວັດ/ປັບຈູນວ່າ workflow ເຮັດວຽກຄົບແທ້ ([[tuning]])
+ຊຸດເອກະສານນີ້ບັນທຶກການຕັ້ງຄ່າຈິງທີ່ໃຊ້ງານຢູ່ — ຕັ້ງແຕ່ຕິດຕັ້ງ CLI ເທິງເຄື່ອງເປົ່າ ຈົນເຖິງຕໍ່ໂມເດວບ້ານ (self-hosted llama.cpp) + MCP servers 12 ໂຕ (4 ເປີດໃຊ້ງານ, 8 ເປີດຕໍ່ project/ລໍ token) + Plugin 4 ໂຕ ພ້ອມບັນທຶກບັນຫາທີ່ພົບຈິງລະຫວ່າງທາງ, ວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ ແລະຜົນການວັດ/ປັບຈູນວ່າ workflow ເຮັດວຽກຄົບແທ້ ([[tuning]])
 
 ---
 
@@ -16,7 +16,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 
 | ສ່ວນປະກອບ | ລາຍລະອຽດ |
 | --- | --- |
-| **OpenCode CLI** | **OpenCode 2** (ທົດສອບເທິງ 2.0.26) ຕິດຕັ້ງຜ່ານ `npm install -g @opencode/cli` (global) — ຍ້າຍຈາກ 1.x: [[updating]] |
+| **OpenCode CLI** | **OpenCode 2** (ທົດສອບເທິງ 2.0.26, 2.0.27) ຕິດຕັ້ງຜ່ານ `npm install -g @opencode/cli` (global) — ຍ້າຍຈາກ 1.x: [[updating]] |
 | **Model provider ຫຼັກ** | `home-llamacpp` — self-hosted llama.cpp server (URL ສະເພາະຂອງແຕ່ລະຄົນ), ໂມເດວ `qwen3.8-27b` (Q4_K, context 131k) ຜ່ານ OpenAI-compatible endpoint |
 | **Model ສຳຮອງ (ໄວ)** | `opencode/deepseek-v4-flash-free` — built-in ຂອງ OpenCode ເອງ ບໍ່ຕ້ອງຕັ້ງ API key ເພີ່ມ ຕອບໄວ (~10 ວິນາທີ) |
 | **MCP servers** | context7 (docs), chrome-devtools (browser debug/test), graft (code-graph/context — per-project), memory (ຈື່ context ຂ້າມ session — ໃຊ້ງານດ້ວຍກົດໃນ global AGENTS.md), sonarqube (code quality/security — self-hosted ຜ່ານ Docker), trivy (vulnerability/secret/misconfig scan — standalone CLI) · **ເປີດຕໍ່ project:** open-design (ດຶງໄຟລ໌ຈາກ project OpenDesign), playwright (browser automation), postgres/mysql · github (ປິດໄວ້ຈົນກວ່າຈະມີ PAT) |
@@ -34,7 +34,7 @@ summary: ໜ້າຫຼັກຂອງຄູ່ມືການຕິດຕັ�
 - [[mcp-servers]] — ລາຍລະອຽດ MCP server ແຕ່ລະໂຕ ຂັ້ນຕອນຕິດຕັ້ງ config ແລະວິທີທົດສອບ
 - [[plugins]] — superpowers, grill-me/grilling (batch-interview skill ເສີມ superpowers), custom plugin graft-deep (ໂຄ້ດເຕັມ + Plugin Hook API), ponytail (code-minimization ruleset) ແລະ caveman (ຕອບສັ້ນ ກົງປະເດັນ — ໃຊ້ແທນ i-have-adhd ຊຶ່ງຍັງເປັນທາງເລືອກ)
 - [[USER-MANUAL]] — **ເລີ່ມໃຊ້ງານຕັ້ງແຕ່ຕົ້ນຈົນຈົບ** (ເປີດ session → ສັ່ງ → ອະນຸມັດ → ກວດ → commit) ແລະວິທີໃຊ້ງານຈິງປະຈຳວັນ: vibe coding, graft workflow, OpenDesign workflow
-- [[gotchas]] — ບັນຫາທີ່ພົບຈິງ 26 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshot, ໂມເດວຊ້າ, native module ABI mismatch, reasoning-model output cap, prompt ພອງຈາກ MCP, skill ຂັດກັບ AGENTS.md, ຯລຯ)
+- [[gotchas]] — ບັນຫາທີ່ພົບຈິງ 32 ເລື່ອງພ້ອມວິທີແກ້ (Windows PATH/env snapshot, ໂມເດວຊ້າ, native module ABI mismatch, reasoning-model output cap, prompt ພອງຈາກ MCP, skill ຂັດກັບ AGENTS.md, ຯລຯ)
 - [[updating]] — ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins ແລະ OpenDesign ເທື່ອລະໂຕ
 - [config/](../config/README.md) — ໄຟລ໌ທີ່ setup ນີ້ຂຽນ/ແກ້ເອງ ພ້ອມ copy: template `opencode.jsonc`, global `AGENTS.md`, plugin `graft-deep.js`
 - [AGENT-SETUP.md](../AGENT-SETUP.md) — ຂັ້ນຕອນຕິດຕັ້ງສຳລັບໃຫ້ AI agent ອ່ານແລ້ວເຮັດຕາມ (ສັ່ງ agent ວ່າ `ອ່ານ AGENT-SETUP.md ແລ້ວຕິດຕັ້ງຕາມ`)

@@ -17,7 +17,7 @@
 | [mcp-servers.md](mcp-servers.md) | รายละเอียด MCP server แต่ละตัว (context7, playwright, chrome-devtools, graft, open-design, memory, sonarqube, trivy, github, postgres/mysql) พร้อมขั้นตอนติดตั้งเฉพาะตัว |
 | [plugins.md](plugins.md) | superpowers, `grill-me`/`grilling` (batch-interview skill เสริม superpowers), custom plugin `graft-deep`, `ponytail` (โค้ดเต็ม + Plugin Hook API ของ OpenCode) และ `caveman` (ตอบสั้น ตรงประเด็น — ใช้แทน `i-have-adhd`) |
 | [USER-MANUAL.md](USER-MANUAL.md) | **เริ่มใช้งานตั้งแต่ต้นจนจบ** (เปิด session → สั่ง → อนุมัติ → ตรวจ → commit) และวิธีใช้งานจริงวันต่อวัน — vibe coding, graft workflow, OpenDesign → OpenCode workflow |
-| [gotchas.md](gotchas.md) | ปัญหาที่เจอจริง 26 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, native module ABI mismatch, reasoning model output cap, prompt บวมจาก MCP, skill ชนกับ AGENTS.md, ฯลฯ) |
+| [gotchas.md](gotchas.md) | ปัญหาที่เจอจริง 32 เรื่องพร้อมวิธีแก้ (Windows PATH/env snapshot, native module ABI mismatch, reasoning model output cap, prompt บวมจาก MCP, skill ชนกับ AGENTS.md, ฯลฯ) |
 | [updating.md](updating.md) | วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins และ OpenDesign แต่ละตัว |
 | [tuning.md](tuning.md) | **วัดผลจริงแล้วปรับจูน** — ขนาด prompt ต่อ turn, tool ที่ agent เรียกจริง, ทดสอบ workflow ครบวงจร (พร้อมภาพผลและสคริปต์ใน `scripts/`) |
 | [../config/](../config/README.md) | **ไฟล์พร้อม copy** — template `opencode.jsonc`, global `AGENTS.md`, plugin `graft-deep.js` ที่ setup นี้ใช้จริง |

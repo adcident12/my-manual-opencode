@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: รายละเอียด MCP server แต่ละตัวที่ตั้งไว้ใน OpenCode — ขั้นตอนติดตั้ง, config, วิธีทดสอบ, ข้อควรระวัง
 ---
 
@@ -524,6 +524,29 @@ MCP server นี้ expose tool สำหรับ: analyze code, list issues, 
 | `trivy repository <url>` | สแกน remote git repository โดยไม่ต้อง clone เอง |
 
 ---
+
+## debugmcp — debugger ตัวจริง: breakpoint, เดินโค้ดทีละบรรทัด, ดูค่าตัวแปร (ปิดไว้ก่อน, เปิดต่อโปรเจกต์)
+
+[microsoft/DebugMCP](https://github.com/microsoft/DebugMCP) ให้ agent สั่ง debugger ของ VS Code ได้ เช่น `add_breakpoint`, `start_debugging`, `step_over`/`step_into`, `evaluate_expression`, `get_variables_values`, `stop_debugging` (รวม 17 tool) ใช้ได้กับภาษาที่ VS Code debug ได้ (JS/TS มีในตัว ส่วน Python, Java, Go, C# และอื่น ๆ ต้องลง extension ของภาษานั้น)
+
+### ขั้นตอนติดตั้ง
+
+1. ติดตั้ง extension ของ VS Code: `code --install-extension ozzafar.debugmcpextension` ตัว extension จะเปิด MCP แบบ HTTP ที่ `http://localhost:3001/mcp` (ตั้งค่า `debugmcp.serverPort`)
+2. ถ้า VS Code ขึ้นหน้าต่าง "DebugMCP Setup — Choose AI Agent to Configure" ให้เอาเครื่องหมายถูกออกทั้งหมดแล้วปิด เพราะไม่มี OpenCode ในรายการ และเราตั้งค่าเองในขั้นถัดไป
+3. ใส่ใน `opencode.jsonc` ระดับ global โดยปิดไว้ก่อน:
+   ```jsonc
+   "debugmcp": { "type": "remote", "url": "http://localhost:3001/mcp", "enabled": false }
+   ```
+4. จะใช้ในโปรเจกต์ไหน ให้ใส่ entry ทั้งก้อนใน `<project>/opencode.json` พร้อม `"enabled": true` ([[gotchas]] ข้อ 22) แล้วเปิดโปรเจกต์นั้นใน VS Code
+
+### ข้อจำกัด
+
+- debug ได้เฉพาะไฟล์ในโฟลเดอร์ที่เปิดอยู่ใน VS Code ถ้าเปิดหลายหน้าต่าง หน้าต่างแรกจะเป็นเจ้าของพอร์ต 3001 ([[gotchas]] ข้อ 32)
+- แต่ละขั้นของ debugger รอได้นานถึง 180 วินาที (`debugmcp.timeoutInSeconds`) และ Code Mode ไม่มี timeout รวม
+- endpoint ไม่มีการยืนยันตัวตนและฟังเฉพาะ localhost อย่าผูกกับ `0.0.0.0`
+- บรรทัด `SSE stream disconnected: TimeoutError` ใน `opencode.log` เป็นการเชื่อมต่อใหม่ตามปกติตอนที่ไม่มีการใช้งาน
+
+**ทดสอบแล้ว:** ใช้ไฟล์ที่มีบั๊ก loop เริ่มผิดตำแหน่ง โมเดล local ขนาด 27B ตั้ง breakpoint, เดินโค้ด, อ่านค่า `i` และ `total`, บอกสาเหตุได้ถูก จากนั้นปิด debugger และล้าง breakpoint เอง ใช้เวลา 228 วินาที กฎว่าเมื่อไหร่ควรใช้อยู่ในหัวข้อ "Debugger (debugmcp)" ของ [`config/AGENTS.md`](../config/AGENTS.md)
 
 ## postgres / mysql — query database (ปิดไว้ก่อน, เปิดต่อโปรเจกต์)
 

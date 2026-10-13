@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: วิธีอัปเดต/อัปเกรด OpenCode CLI, MCP servers, plugins, grill-me/grilling skill และ OpenDesign แต่ละตัว
 ---
 
@@ -57,6 +57,27 @@ OpenCode 2 อ่าน config, AGENTS.md, skills และ commands เดิ�
 > OpenDesign 0.24.1 ใช้ OpenCode 2 เป็น engine ไม่ได้ — [[gotchas]] ข้อ 24 ส่วน `lsp` ยังรับค่าได้ แต่ OpenCode 2 ไม่รัน language server
 
 ---
+
+## OpenCode 2.0.26 → 2.0.27 (2026-10-13)
+
+`npm install -g @opencode/cli@latest` แล้ว `opencode service restart` บน setup นี้ไม่ต้องแก้อะไรเลย config, plugin ทั้ง 6 ตัว (superpowers, ponytail, graft-deep, caveman, execute-guard, compaction-keep) และ MCP server โหลดได้เหมือนเดิม หลังอัปเดตทุกครั้งให้เช็ค:
+
+```bash
+opencode --version
+grep 'cli starting' ~/.local/share/opencode/log/opencode.log | grep serve | tail -1   # service รันเวอร์ชันใหม่แล้ว
+grep 'loading plugin' ~/.local/share/opencode/log/opencode.log | tail -6               # plugin โหลดครบทุกตัว
+```
+
+## ลบสิ่งที่ OpenCode 1 ทิ้งไว้
+
+หลังย้ายมา OpenCode 2 ให้เช็คว่ายังมี binary 1.x ตัวเก่าที่อาจถูกเรียกแทนตัวใหม่อยู่หรือเปล่า:
+
+```powershell
+Get-Command opencode -All | Select-Object Source        # opencode ทุกตัวที่อยู่บน PATH
+npm ls -g --depth=0 | Select-String opencode            # เช่น opencode-windows-x64-baseline@1.x
+npm uninstall -g opencode-windows-x64-baseline          # package ของ 1.x
+# ถ้ามีโฟลเดอร์ติดตั้ง 1.x แยก (เช่น C:\opencode): เอาออกจาก PATH ของ user แล้วลบโฟลเดอร์
+```
 
 ## OpenCode CLI
 

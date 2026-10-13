@@ -4,18 +4,18 @@
 //   <your-server>   your model server's URL          <your-model-id>  the model id it reports at /v1/models
 // Secrets never go in this file — only {env:NAME} references. Set the variables in your OS, then reopen the terminal.
 // Details per block: setup.md, mcp-servers.md, plugins.md, tuning.md.
-// Written for OpenCode 2 (tested on 2.0.26) in the V1 config syntax, which OpenCode 2 still reads.
+// Written for OpenCode 2 (tested on 2.0.26 and 2.0.27) in the V1 config syntax, which OpenCode 2 still reads.
 // Inside one "mcp" entry, provider, agent or command, keep a single syntax (tuning.md section 9).
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "home-llamacpp/<your-model-id>",
-  // tuning.md 9 — OpenCode 2 has no "prune"; it keeps a token budget of recent conversation beside
-  // the compaction summary (default 15000). 24000 keeps more of the files just read; not measured yet.
+  // tuning.md 9–10 — OpenCode 2 has no "prune"; it keeps a token budget of recent conversation beside
+  // the compaction summary (default 15000). 24000 was measured for a night and did not cut re-reads, so keep the default.
   // buffer = tokens kept free below the context limit (default 10%). Set it to the model's output limit so prompt +
   // a full reply always fit in the server's context (llama.cpp ctx-size). Compaction then starts near 98k of 131k.
   "compaction": {
     "auto": true,
-    "keep": { "tokens": 24000 },
+    "keep": { "tokens": 15000 },
     "buffer": 32768
   },
 
@@ -43,11 +43,16 @@
     { "action": "skill", "resource": "ponytail*", "effect": "allow" },
     { "action": "skill", "resource": "caveman*", "effect": "allow" },
     { "action": "skill", "resource": "grill-me", "effect": "allow" },
-    { "action": "skill", "resource": "grilling", "effect": "allow" }
+    { "action": "skill", "resource": "grilling", "effect": "allow" },
+    // tuning.md 10 — folders outside the project the agent reaches by itself. An unanswered ask stalls an unattended
+    // run, and OpenCode 2 stops a session that waits 60 minutes (gotchas.md item 28). Windows paths use backslashes.
+    { "action": "external_directory", "resource": "C:\\Users\\<user>\\AppData\\Local\\npm-cache\\_npx\\*", "effect": "allow" },
+    { "action": "external_directory", "resource": "C:\\Users\\<user>\\AppData\\Local\\Temp\\*", "effect": "allow" },
+    { "action": "external_directory", "resource": "C:\\Users\\<user>\\.cache\\opencode\\packages\\*", "effect": "allow" }
   ],
 
   // Packages only. Local plugins need no entry: OpenCode 2 loads every .js file in ~/.config/opencode/plugin/
-  // by itself — graft-deep.js (config/plugin/) and caveman.js (the shim made by scripts/port-caveman-opencode2.mjs).
+  // by itself — graft-deep.js, execute-guard.js, compaction-keep.js (config/plugin/) and caveman.js (the shim made by scripts/port-caveman-opencode2.mjs).
   // A local path listed here must be a directory; a file path is rejected (gotchas.md item 21).
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
@@ -73,6 +78,10 @@
   },
 
   "mcp": {
+    // OpenCode 2 starts every server once per loaded folder, all at once after a restart; slow starters
+    // (sonarqube in Docker, trivy) miss the default 30 s (gotchas.md item 27).
+    "timeout": { "startup": 90000 },
+
     // API key is optional (rate limits); delete "headers" if you have none.
     "context7": {
       "type": "remote",
@@ -98,6 +107,14 @@
       "type": "local",
       "command": ["npx", "-y", "@playwright/mcp@latest"],
       "timeout": 30000,
+      "enabled": false
+    },
+
+    // tuning.md 10 — real debugger served by the VS Code extension ozzafar.debugmcpextension (mcp-servers.md).
+    // Needs VS Code open on the project. Off by default; enable per project with this whole entry and "enabled": true.
+    "debugmcp": {
+      "type": "remote",
+      "url": "http://localhost:3001/mcp",
       "enabled": false
     },
 
@@ -144,7 +161,8 @@
         "SONARQUBE_URL": "http://host.docker.internal:9001"
       },
       "timeout": 30000,
-      "enabled": true
+      // Off by default (0 calls in 26 sessions); enable per project when it is analysed in SonarQube.
+      "enabled": false
     },
 
     // If `trivy` is not on OpenCode's PATH, put the full path to trivy(.exe) here.
@@ -152,7 +170,8 @@
       "type": "local",
       "command": ["trivy", "mcp"],
       "timeout": 30000,
-      "enabled": true
+      // Off by default: the agent runs `trivy fs` through the shell (AGENTS.md), so the MCP tools only cost tokens.
+      "enabled": false
     },
 
     // Disabled until a PAT exists in GITHUB_PERSONAL_ACCESS_TOKEN.

@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: ปัญหาที่เจอจริงระหว่างตั้งค่า OpenCode + MCP + Plugin บน Windows และวิธีแก้ที่ยืนยันแล้วว่าใช้ได้ (ข้อ 6 resolved โดยตัดสาเหตุทิ้ง หลังพบว่า graft CLI auto-refresh ในตัวทำให้ hook เดิมซ้ำซ้อน)
 ---
 
@@ -485,3 +485,78 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 > - หยุด session ด้วย `Esc` ใน TUI หรือ `opencode api session.interrupt --param sessionID=<id>` (`opencode session list` แสดง id)
 > - กฎ "Verifying UI changes" ใน [`config/AGENTS.md`](../config/AGENTS.md) ตอนนี้กำหนดว่า: เปิดหน้าของตัวเองด้วย `new_page` ทำงานกับ page id นั้นเท่านั้น เอาหน้าขึ้นมาด้านหน้าก่อนตัดสิน ปิดเมื่อเสร็จ และหยุดถ้าตรวจ 2–3 ครั้งแล้วยังไม่เป็นอย่างที่ควร
 > - ถ้าอยากเริ่มด้วยเบราว์เซอร์สะอาด: `opencode service restart`
+
+---
+
+## 27. หลังรีสตาร์ท service แล้ว sonarqube กับ trivy ขึ้น "Request timed out"
+
+**ผลกระทบ:** หลัง `opencode service restart` การเรียก tool ของ sonarqube และ trivy ล้มเหลวด้วย `Request timed out` และ tool ของทั้งสองตัวหายไปจากรายการที่ agent เห็น
+
+**สาเหตุ:** OpenCode 2 เปิด MCP server แยกชุดให้ทุกโฟลเดอร์ (location) ที่โหลดไว้ และหลังรีสตาร์ทจะเปิดทุกชุดพร้อมกัน container ของ Docker (sonarqube) หรือ binary ขนาดใหญ่ (trivy) จึงใช้เวลาเปิดนานกว่าค่าเริ่มต้น 30 วินาที
+
+> [!important] วิธีแก้
+> เพิ่มเวลาเปิดของทุก server ไว้บนสุดของบล็อก `mcp`:
+> ```jsonc
+> "mcp": {
+>   "timeout": { "startup": 90000 },
+>   ...
+> }
+> ```
+> server ที่แทบไม่ได้ใช้ควรปิดไว้เป็นค่าเริ่มต้น (ตอนนี้ setup นี้ปิด sonarqube และ trivy แล้ว — [[tuning]] ข้อ 10)
+
+---
+
+## 28. session ที่รอคำตอบอยู่ถูกหยุดหลังผ่านไป 60 นาที
+
+**ผลกระทบ:** ปล่อยให้ agent ทำงานแล้วเดินออกไป กลับมาพบว่า turn จบแบบ `interrupted` ทั้งที่ไม่มีใครกด Esc tool ตัวสุดท้ายเป็น `question` (หรือการขอ permission) ที่ขึ้น error `Tool execution interrupted` ประมาณ 3,600 วินาทีหลังจากถาม
+
+**สาเหตุ:** OpenCode 2 ปิดบริการของโปรเจกต์ (`location services evicted` ใน `~/.local/share/opencode/log/opencode.log`) เมื่อไม่มีความเคลื่อนไหว 60 นาที และ session ที่แค่รอคุณตอบถือว่าไม่มีความเคลื่อนไหว ค่านี้กำหนดตายตัวใน source ตั้งใน config ไม่ได้ ส่วนฐานข้อมูลบันทึกไว้แค่ `interrupted` ไม่มีเหตุผล
+
+> [!important] วิธีแก้
+> - กฎ "Unattended work — decide, don't ask" ใน [`config/AGENTS.md`](../config/AGENTS.md): เมื่อสั่ง "ทำงานต่อ" / "just do it" / "ปล่อยทิ้งไว้" agent จะเลือกตัวเลือกที่ตัวเองจะแนะนำ จดการตัดสินใจและเหตุผลไว้ใน plan file แล้วทำต่อ แต่ยังหยุดถามถ้าจะลบข้อมูล ทำอะไรนอกโปรเจกต์ หรือแก้เรื่องความปลอดภัยที่ตรวจสอบไม่ได้
+> - อนุญาตโฟลเดอร์นอกโปรเจกต์ที่ agent เข้าเองล่วงหน้า จะได้ไม่ค้างรอ permission (rule `external_directory` ใน [`config/opencode.jsonc`](../config/opencode.jsonc); บนเครื่องนี้เคยมีคำขอค้างโดยไม่มีใครตอบ 9 ชั่วโมง)
+
+---
+
+## 29. `execute` ค้างไม่จบเพราะ `await new Promise(() => {})`
+
+**ผลกระทบ:** agent ค้างอยู่ที่ `execute` ครั้งเดียว 4–14 นาที จนกว่าจะมีคนกดหยุด (บนเครื่องนี้เกิด 4 ครั้งในคืนเดียว)
+
+**สาเหตุ:** Code Mode ไม่มีตัวจับเวลา (ไม่มี `setTimeout`) และ `execute` ไม่มี timeout รวม เมื่อโมเดลอยาก "รอสักครู่" มันจะเขียน Promise ที่ไม่รับ `resolve` จึงไม่มีวันจบ กฎใน AGENTS.md อย่างเดียวหยุดไม่ได้
+
+> [!important] วิธีแก้
+> plugin [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) แก้ Promise แบบนี้ก่อนสคริปต์รัน และพิมพ์คำแนะนำหนึ่งบรรทัด ([[plugins]] หัวข้อ execute-guard) ส่วน AGENTS.md ก็บอกวิธีรอหน้าเว็บที่ถูกต้องไว้แล้ว คือ `tools["chrome-devtools"].wait_for` หลังแก้แล้ว 3 วันไม่มี `execute` ไหนนานเกิน 120 วินาทีเลย
+
+---
+
+## 30. `evaluate_script` ล้มเหลวบ่อย: `fn is not a function`, `circular structure`
+
+**ผลกระทบ:** ราวหนึ่งในสามของการเรียก `evaluate_script` ของ chrome-devtools ได้ error กลับมาและต้องลองใหม่
+
+**สาเหตุ:** tool นี้รับ *source ของฟังก์ชัน* แล้วเรียกฟังก์ชันนั้นเอง แต่โมเดลมักส่งฟังก์ชันที่เรียกไปแล้ว `(() => {...})()` หรือส่ง expression เปล่า ๆ บางครั้ง return DOM node หรือ object ของ framework ที่แปลงเป็น JSON ไม่ได้ หรือเปลี่ยนหน้าด้วย `location.href`
+
+> [!important] วิธีแก้
+> เพิ่มย่อหน้าสั้น ๆ ในหัวข้อ "Verifying UI changes" ของ [`config/AGENTS.md`](../config/AGENTS.md): ให้ส่ง `function: "() => { ...; return {...}; }"`, return เฉพาะข้อมูลธรรมดา และเปลี่ยนหน้าด้วย `navigate_page`
+
+---
+
+## 31. log เต็มไปด้วย "omitted unsupported legacy setting" ของ `attachment`
+
+**ผลกระทบ:** `opencode.log` มีบรรทัด `configuration normalization diagnostic … models.<id>.attachment … omitted unsupported legacy setting` ซ้ำทุกโมเดล ทุกครั้งที่โหลดโปรเจกต์ (เกิน 100 บรรทัดในไม่กี่ชั่วโมง)
+
+**สาเหตุ:** OpenCode 2 ไม่ใช้ฟิลด์ `attachment` ของ V1 แล้ว การรับรูปภาพดูจาก `modalities` อย่างเดียว
+
+> [!important] วิธีแก้
+> ลบ `"attachment": true` ออกจากทุกโมเดล แล้วเช็คว่ายังรับรูปได้ด้วย `opencode debug config` โมเดลต้องแสดง `"capabilities": { "input": ["text", "image"], ... }`
+
+---
+
+## 32. DebugMCP: "ไฟล์อยู่นอก VS Code workspace" — แล้ว agent ไป copy ไฟล์ใส่โปรเจกต์อื่น
+
+**ผลกระทบ:** ในการทดสอบครั้งแรก agent ตั้ง breakpoint ไม่ได้ จึง copy ไฟล์ไปไว้ในโปรเจกต์ที่เปิดอยู่ใน VS Code, debug ที่นั่น แล้วลบทิ้ง งานสำเร็จก็จริง แต่ไปแตะ repository ที่ไม่เกี่ยวข้อง
+
+**สาเหตุ:** DebugMCP ทำงานอยู่ใน VS Code และ debug ได้เฉพาะไฟล์ในโฟลเดอร์ที่เปิดอยู่ ถ้าเปิด VS Code หลายหน้าต่าง พอร์ต 3001 จะเป็นของหน้าต่างที่เปิดก่อน
+
+> [!important] วิธีแก้
+> - เปิดโปรเจกต์ที่จะ debug ใน VS Code (เป็นหน้าต่างแรก หรือหน้าต่างเดียว)
+> - กฎ "Debugger (debugmcp)" ใน [`config/AGENTS.md`](../config/AGENTS.md): ถ้าไฟล์อยู่นอก workspace ให้หยุดแล้วขอให้ผู้ใช้เปิดโปรเจกต์ ห้าม copy ไฟล์ไปโปรเจกต์อื่น

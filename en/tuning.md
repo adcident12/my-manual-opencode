@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Measuring whether the USER-MANUAL/architecture workflow actually happens — prompt size per turn, which tools the agent really calls, why files get re-read, an end-to-end test — then tuning from what was measured, with scripts to repeat it on your own machine
 ---
 
@@ -391,3 +391,47 @@ What the numbers say:
 - `session-report.mjs` now reads both OpenCode 1 sessions (`session`/`part`) and OpenCode 2 sessions (`session_v2`/`session_message`). On OpenCode 2 every MCP call happens inside an `execute` script; the report splits those scripts back into `<server>_<tool>` calls, so graft and chrome-devtools usage stays comparable with the older results.
 - `analyze-prompt.mjs` counts `shell`/`subagent`/`execute` as built-in tools and reports the Code Mode catalog as its own bucket.
 - For the capture method, add `--standalone` (section 1).
+
+---
+
+## 10. Three days of real use on OpenCode 2 (2026-10-11 → 13)
+
+One long session on a real project (a Next.js + PostgreSQL web app), left to work for many hours at a time, was measured before and after each change. The figures come from the OpenCode database, the OpenCode log, and the llama.cpp server log.
+
+### 10.1 What changed
+
+| Change | Why (measured) | Where |
+| --- | --- | --- |
+| `execute-guard` plugin | 4 `execute` calls hung 265–849 s in one night | [[plugins]], gotcha 29 |
+| `compaction-keep` plugin | summaries did not keep the facts needed next | [[plugins]] |
+| `compaction.keep.tokens` 24000 → **15000** (default) | with 24000, half of all reads were still re-reads after a compaction, and compactions came more often (1.8/h, ~4.5 min each) | `config/opencode.jsonc` |
+| `mcp.timeout.startup: 90000` | sonarqube/trivy timed out after each restart | gotcha 27 |
+| sonarqube and trivy MCP **off** by default | 0 calls in 26 sessions; `trivy fs` runs through the shell | `config/opencode.jsonc` |
+| `external_directory` allow rules (npx cache, temp, plugin cache) | the same folder asked 12 times; one ask waited 9 h unanswered | gotcha 28 |
+| AGENTS.md: "Unattended work — decide, don't ask" | OpenCode stops a session that waits 60 min | gotcha 28 |
+| AGENTS.md: "Large or multi-part work — one piece at a time" | a bundled request gets a plan file, tests first, and one piece at a time | `config/AGENTS.md` |
+| AGENTS.md: how to call `evaluate_script` | about a third of the calls failed | gotcha 30 |
+| AGENTS.md: "Debugger (debugmcp)" | new tool | [[mcp-servers]], gotcha 32 |
+| AGENTS.md: removed "delegate to the explore subagent" | never followed in 3 days, so it was only prompt cost | — |
+| `"attachment"` removed from models | V2 ignores it and logs a warning | gotcha 31 |
+
+### 10.2 Before and after
+
+| | before the changes (8 h) | after, first night (13.8 h) | after `keep.tokens` 15000 (9.4 h) |
+| --- | --- | --- | --- |
+| Compactions per hour | 1.2 | 1.8 | **0.6** |
+| `execute` over 120 s | 4 | 0 | 0 |
+| `trivy` scans / test runs | 0 / 19 | 16 / 67 | 0 / 28 |
+| Skills used | brainstorming | writing-plans, TDD, systematic-debugging | brainstorming → writing-plans → executing-plans → TDD |
+| Compaction summaries naming files + facts | — | 24/24 | 6/6 |
+
+Notes:
+- The drop to 0.6 compactions per hour also includes a model change (to a faster MTP model) and lighter work, so it is not all from `keep.tokens`.
+- Thinking (reasoning) is still about 64% of the agent's time. A reasoning-effort A/B test on this setup was inconclusive, so it was left at the default.
+- The explore subagent and graft MCP were rarely used. The `[graft]` pack that graft-deep adds to each prompt is what carries graft into the work.
+
+### 10.3 Habits that helped
+
+- **Start a new session for each new big piece of work.** One session ran for 3 days through 40 compactions, and each one loses a little detail. The plan file and the memory MCP carry what matters into the next session.
+- **When you leave the agent alone, say so** ("carry on", "just do it"), so the unattended rule applies.
+- **When you switch models on the server, change `model` in `opencode.jsonc` to match.** The server answers whatever model name it is sent, so a wrong name only shows up as wrong labels in the statistics.

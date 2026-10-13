@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP + Plugins sa Windows, may kumpirmadong ayos (naresolba na ang item 6 sa pamamagitan ng pagtanggal ng dahilan nito, matapos matuklasan na ang built-in na auto-refresh ng graft CLI ang gumawang redundant sa lumang hook)
 ---
 
@@ -485,3 +485,78 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 > - Ihinto ang session gamit ang `Esc` sa TUI, o ang `opencode api session.interrupt --param sessionID=<id>` (ipinapakita ng `opencode session list` ang mga id).
 > - Sinasabi na ngayon ng rule na "Verifying UI changes" sa [`config/AGENTS.md`](../config/AGENTS.md): magbukas ng sariling page gamit ang `new_page`, gumawa lang sa page id na iyon, dalhin ito sa harap bago husgahan, isara kapag tapos, at huminto pagkatapos ng dalawa o tatlong check na hindi gumagana nang tama.
 > - Para magsimula sa malinis na browser: `opencode service restart`.
+
+---
+
+## 27. Pagkatapos i-restart ang service, nag-"Request timed out" ang sonarqube at trivy
+
+**Epekto:** Pagkatapos ng `opencode service restart`, pumapalya ang mga tawag sa sonarqube at trivy MCP tools na may `Request timed out`, at nawawala ang mga tool sa catalog ng agent.
+
+**Sanhi:** Nagsisimula ang OpenCode 2 ng hiwalay na set ng MCP servers para sa bawat folder (location) na naka-load, at sabay-sabay nitong sinisimulan lahat pagkatapos ng restart. Ang Docker container (sonarqube) o malaking binary (trivy) ay nangangailangan ng mas mahaba sa default na 30 segundong startup limit.
+
+> [!important] Ayos
+> Taasan ang startup limit ng lahat ng server, sa itaas ng `mcp` block:
+> ```jsonc
+> "mcp": {
+>   "timeout": { "startup": 90000 },
+>   ...
+> }
+> ```
+> Mas mabuting naka-off by default ang mga server na bihirang gamitin (naka-off na ngayon ang sonarqube at trivy sa setup na ito — [[tuning]] seksyon 10).
+
+---
+
+## 28. Ang session na naghihintay ng sagot ay pinapahinto pagkalipas ng 60 minuto
+
+**Epekto:** Iniwan mong nagtatrabaho ang agent. Pagbalik mo, natapos ang turn bilang `interrupted` kahit walang pumindot ng Esc. Ang huling tool call ay `question` (o permission prompt) na may error na `Tool execution interrupted`, mga 3,600 segundo pagkatapos itanong.
+
+**Sanhi:** Isinasara ng OpenCode 2 ang services ng isang project (`location services evicted` sa `~/.local/share/opencode/log/opencode.log`) pagkalipas ng 60 minutong walang aktibidad, at ang session na naghihintay lang sa iyo ay itinuturing na walang aktibidad. Nakapirmi ang limit sa source at hindi maitatakda sa config. `interrupted` lang ang naitatala sa database, walang dahilan.
+
+> [!important] Ayos
+> - Rule na "Unattended work — decide, don't ask" sa [`config/AGENTS.md`](../config/AGENTS.md): pagkatapos ng "ituloy mo" / "just do it" / "patakbuhin magdamag", pinipili ng agent ang opsyong irerekomenda nito, isinusulat ang desisyon at dahilan sa plan file, at nagpapatuloy. Humihinto pa rin ito para sa pagbura ng data, mga hakbang sa labas ng project, o pagbabago sa seguridad na hindi nito ma-verify.
+> - Payagan nang maaga ang mga folder sa labas ng project na kusang inaabot ng agent, para hindi ito maghintay sa permission prompt (mga `external_directory` rule sa [`config/opencode.jsonc`](../config/opencode.jsonc); sa makinang ito, may isang prompt na 9 na oras na walang sumagot).
+
+---
+
+## 29. Hindi na natatapos ang `execute` dahil sa `await new Promise(() => {})`
+
+**Epekto:** Nakatigil ang agent sa isang `execute` call nang 4 hanggang 14 na minuto hanggang may mag-interrupt (apat na beses sa isang gabi sa makinang ito).
+
+**Sanhi:** Walang timers ang Code Mode (wala ritong `setTimeout`) at walang overall timeout ang `execute`. Kapag gustong "maghintay sandali" ng model, sumusulat ito ng Promise na ang executor ay hindi tumatanggap ng `resolve`, kaya hindi ito kailanman natatapos. Hindi ito napigilan ng rule sa AGENTS.md lang.
+
+> [!important] Ayos
+> Binabago ng plugin na [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) ang ganitong Promise bago tumakbo ang script at nagpi-print ng isang linyang paalala ([[plugins]], execute-guard). Sinasabi rin ng AGENTS.md kung paano maghintay ng page: `tools["chrome-devtools"].wait_for`. Pagkatapos ng ayos: walang `execute` na lumampas sa 120 segundo sa loob ng 3 araw.
+
+---
+
+## 30. Madalas pumalya ang `evaluate_script`: `fn is not a function`, `circular structure`
+
+**Epekto:** Mga isang-katlo ng mga `evaluate_script` call ng agent sa chrome-devtools ang nagbalik ng error at inulit.
+
+**Sanhi:** Tumatanggap ang tool ng *source ng isang function* at ito mismo ang tumatawag dito. Madalas magpasa ang model ng function na natawag na `(() => {...})()` o ng hubad na expression. Minsan nagbabalik ito ng DOM nodes o framework objects na hindi magagawang JSON, o nagpapalit ng page gamit ang `location.href`.
+
+> [!important] Ayos
+> Maikling talata sa "Verifying UI changes" sa [`config/AGENTS.md`](../config/AGENTS.md): ipasa ang `function: "() => { ...; return {...}; }"`, simpleng data lang ang ibalik, at magpalit ng page gamit ang `navigate_page`.
+
+---
+
+## 31. Napupuno ang log ng "omitted unsupported legacy setting" para sa `attachment`
+
+**Epekto:** Inuulit ng `opencode.log` ang `configuration normalization diagnostic … models.<id>.attachment … omitted unsupported legacy setting` para sa bawat model, tuwing may naglo-load na project (mahigit 100 linya sa ilang oras).
+
+**Sanhi:** Hindi na ginagamit ng OpenCode 2 ang V1 na `attachment` field sa model. Galing na lang sa `modalities` ang image input.
+
+> [!important] Ayos
+> Burahin ang `"attachment": true` sa bawat model. Tingnan kung gumagana pa ang images gamit ang `opencode debug config`: dapat ipakita ng model ang `"capabilities": { "input": ["text", "image"], ... }`.
+
+---
+
+## 32. DebugMCP: "the file is outside a VS Code workspace" — at kumopya ang agent ng file sa ibang project
+
+**Epekto:** Sa unang test, hindi makapaglagay ng breakpoint ang agent, kaya kinopya nito ang file sa project na bukas sa VS Code, doon nag-debug, at binura pagkatapos. Gumana ito, pero ginalaw nito ang repository na walang kinalaman.
+
+**Sanhi:** Tumatakbo ang DebugMCP sa loob ng VS Code at file lang ng folder na bukas doon ang kaya nitong i-debug. Kapag maraming VS Code window, pag-aari ng window na unang nagsimula ang port 3001.
+
+> [!important] Ayos
+> - Buksan sa VS Code ang project na ide-debug (bilang una, o tanging, window).
+> - Rule na "Debugger (debugmcp)" sa [`config/AGENTS.md`](../config/AGENTS.md): kung nasa labas ng workspace ang file, huminto at hilingin sa user na buksan ang project — huwag kailanman kumopya ng file sa ibang project.

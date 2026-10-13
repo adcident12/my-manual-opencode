@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Details on each MCP server set up in OpenCode — install steps, config, how to test, and gotchas
 ---
 
@@ -524,6 +524,29 @@ This MCP server exposes tools for: analyzing code, listing issues, checking qual
 | `trivy repository <url>` | Scan a remote git repository without cloning it yourself |
 
 ---
+
+## debugmcp — a real debugger: breakpoints, stepping, variables (off by default, on per project)
+
+[microsoft/DebugMCP](https://github.com/microsoft/DebugMCP) lets the agent drive the VS Code debugger: `add_breakpoint`, `start_debugging`, `step_over`/`step_into`, `evaluate_expression`, `get_variables_values`, `stop_debugging`, and more (17 tools). It works with the languages VS Code can debug (JS/TS built in; Python, Java, Go, C#, … with their extensions).
+
+### Install steps
+
+1. Install the VS Code extension: `code --install-extension ozzafar.debugmcpextension`. It serves MCP over HTTP at `http://localhost:3001/mcp` (setting `debugmcp.serverPort`).
+2. When VS Code shows "DebugMCP Setup — Choose AI Agent to Configure", untick everything and close it. OpenCode is not in that list, and it is configured by hand below.
+3. Global `opencode.jsonc`, off by default:
+   ```jsonc
+   "debugmcp": { "type": "remote", "url": "http://localhost:3001/mcp", "enabled": false }
+   ```
+4. To use it in a project, put the whole entry in `<project>/opencode.json` with `"enabled": true` ([[gotchas]] item 22), and open that project in VS Code.
+
+### Limits
+
+- It only debugs files in the folder open in VS Code. With several windows, the first one owns port 3001 ([[gotchas]] item 32).
+- Each debugger step can wait up to 180 s (`debugmcp.timeoutInSeconds`), and Code Mode has no overall timeout.
+- The endpoint has no authentication and listens on localhost only. Do not bind it to `0.0.0.0`.
+- `SSE stream disconnected: TimeoutError` lines in `opencode.log` are normal reconnects while it is idle.
+
+**Tested:** on a file with an off-by-one loop, a 27B local model set a breakpoint, stepped through, read `i` and `total`, named the cause, then stopped the debugger and cleared the breakpoints. That took 228 s. The rule for when to use it is "Debugger (debugmcp)" in [`config/AGENTS.md`](../config/AGENTS.md).
 
 ## postgres / mysql — query a database (disabled by default, enabled per project)
 

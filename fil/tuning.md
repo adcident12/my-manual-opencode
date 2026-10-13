@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, tuning, opencode, measurement, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Pagsukat kung talagang nangyayari ang workflow ng USER-MANUAL/architecture — laki ng prompt bawat turn, aling tools ang talagang tinatawag ng agent, bakit paulit-ulit binabasa ang files, at isang end-to-end test — saka pag-tune batay sa nasukat, kasama ang scripts para ulitin ito sa sariling makina
 ---
 
@@ -391,3 +391,47 @@ Ang sinasabi ng mga numero:
 - Binabasa na ngayon ng `session-report.mjs` ang mga session ng OpenCode 1 (`session`/`part`) at OpenCode 2 (`session_v2`/`session_message`). Sa OpenCode 2, nangyayari ang bawat tawag sa MCP sa loob ng `execute` script; hinahati ulit ng report ang mga script na iyon pabalik sa mga tawag na `<server>_<tool>`, kaya maihahambing pa rin ang paggamit ng graft at chrome-devtools sa mga lumang resulta.
 - Binibilang ng `analyze-prompt.mjs` ang `shell`/`subagent`/`execute` bilang built-in tools at iniuulat ang Code Mode catalog bilang hiwalay na bahagi.
 - Para sa capture method, idagdag ang `--standalone` (section 1).
+
+---
+
+## 10. Tatlong araw ng totoong paggamit sa OpenCode 2 (2026-10-11 → 13)
+
+Sinukat ang isang mahabang session sa totoong project (Next.js + PostgreSQL na web app), na iniwang nagtatrabaho nang maraming oras bawat pagkakataon, bago at pagkatapos ng bawat pagbabago. Galing ang mga numero sa OpenCode database, OpenCode log, at llama.cpp server log.
+
+### 10.1 Ano ang binago
+
+| Pagbabago | Bakit (nasukat) | Saan |
+| --- | --- | --- |
+| `execute-guard` plugin | 4 na `execute` call ang na-hang nang 265–849 s sa isang gabi | [[plugins]], gotcha 29 |
+| `compaction-keep` plugin | hindi itinatago ng summaries ang mga katotohanang kailangan sa susunod | [[plugins]] |
+| `compaction.keep.tokens` 24000 → **15000** (default) | sa 24000, kalahati ng lahat ng reads ay re-read pa rin pagkatapos ng compaction, at mas dumalas ang compaction (1.8/h, ~4.5 min bawat isa) | `config/opencode.jsonc` |
+| `mcp.timeout.startup: 90000` | nagta-timeout ang sonarqube/trivy pagkatapos ng bawat restart | gotcha 27 |
+| sonarqube at trivy MCP **off** by default | 0 tawag sa 26 na session; tumatakbo ang `trivy fs` sa shell | `config/opencode.jsonc` |
+| mga `external_directory` allow rule (npx cache, temp, plugin cache) | 12 beses itinanong ang parehong folder; isang tanong ang naghintay nang 9 h na walang sagot | gotcha 28 |
+| AGENTS.md: "Unattended work — decide, don't ask" | pinapahinto ng OpenCode ang session na naghintay nang 60 min | gotcha 28 |
+| AGENTS.md: "Large or multi-part work — one piece at a time" | ang pinagsamang request ay nagkakaroon ng plan file, tests muna, at isang piraso bawat pagkakataon | `config/AGENTS.md` |
+| AGENTS.md: paano tawagin ang `evaluate_script` | mga isang-katlo ng mga tawag ang pumalya | gotcha 30 |
+| AGENTS.md: "Debugger (debugmcp)" | bagong tool | [[mcp-servers]], gotcha 32 |
+| AGENTS.md: inalis ang "delegate to the explore subagent" | hindi kailanman sinunod sa loob ng 3 araw, kaya gastos lang sa prompt | — |
+| inalis ang `"attachment"` sa mga model | hindi na ito ginagamit ng V2 at nagla-log ng warning | gotcha 31 |
+
+### 10.2 Bago at pagkatapos
+
+| | bago ang mga pagbabago (8 h) | pagkatapos, unang gabi (13.8 h) | pagkatapos ng `keep.tokens` 15000 (9.4 h) |
+| --- | --- | --- | --- |
+| Compaction bawat oras | 1.2 | 1.8 | **0.6** |
+| `execute` na lampas 120 s | 4 | 0 | 0 |
+| `trivy` scans / test runs | 0 / 19 | 16 / 67 | 0 / 28 |
+| Mga skill na ginamit | brainstorming | writing-plans, TDD, systematic-debugging | brainstorming → writing-plans → executing-plans → TDD |
+| Compaction summaries na nagbabanggit ng files + facts | — | 24/24 | 6/6 |
+
+Mga tala:
+- Kasama rin sa pagbaba sa 0.6 compaction bawat oras ang pagpapalit ng model (sa mas mabilis na MTP model) at mas magaan na trabaho, kaya hindi lahat galing sa `keep.tokens`.
+- Mga 64% pa rin ng oras ng agent ang pag-iisip (reasoning). Hindi naging tiyak ang resulta ng A/B test sa reasoning effort sa setup na ito, kaya iniwan ito sa default.
+- Bihirang ginamit ang explore subagent at graft MCP. Ang `[graft]` pack na idinadagdag ng graft-deep sa bawat prompt ang nagdadala ng graft sa trabaho.
+
+### 10.3 Mga gawing nakatulong
+
+- **Magsimula ng bagong session para sa bawat bagong malaking trabaho.** May isang session na tumakbo nang 3 araw sa 40 compaction, at bawat isa ay nawawalan ng kaunting detalye. Dinadala ng plan file at ng memory MCP ang mahalaga sa susunod na session.
+- **Kapag iiwan mong mag-isa ang agent, sabihin mo** ("ituloy mo", "just do it"), para gumana ang unattended rule.
+- **Kapag nagpalit ka ng model sa server, palitan din ang `model` sa `opencode.jsonc` para tumugma.** Sinasagot ng server ang anumang pangalan ng model na ipadala, kaya ang maling pangalan ay lalabas lang bilang maling label sa statistics.

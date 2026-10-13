@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: ລາຍລະອຽດ MCP server ແຕ່ລະໂຕທີ່ຕັ້ງໄວ້ໃນ OpenCode — ຂັ້ນຕອນຕິດຕັ້ງ, config, ວິທີທົດສອບ, ຂໍ້ຄວນລະວັງ
 ---
 
@@ -515,6 +515,29 @@ MCP server ນີ້ expose tool ສຳລັບ: analyze code, list issues, che
 | `trivy repository <url>` | ສະແກນ remote git repository ໂດຍບໍ່ຕ້ອງ clone ເອງ |
 
 ---
+
+## debugmcp — debugger ໂຕແທ້: breakpoint, ເດີນໂຄ້ດເທື່ອລະແຖວ, ເບິ່ງຄ່າຕົວແປ (ປິດໄວ້ກ່ອນ, ເປີດຕໍ່ project)
+
+[microsoft/DebugMCP](https://github.com/microsoft/DebugMCP) ໃຫ້ agent ສັ່ງ debugger ຂອງ VS Code ໄດ້ ເຊັ່ນ `add_breakpoint`, `start_debugging`, `step_over`/`step_into`, `evaluate_expression`, `get_variables_values`, `stop_debugging` (ລວມ 17 tool) ໃຊ້ໄດ້ກັບພາສາທີ່ VS Code debug ໄດ້ (JS/TS ມີໃນໂຕ ສ່ວນ Python, Java, Go, C# ແລະອື່ນໆ ຕ້ອງລົງ extension ຂອງພາສານັ້ນ)
+
+### ຂັ້ນຕອນຕິດຕັ້ງ
+
+1. ຕິດຕັ້ງ extension ຂອງ VS Code: `code --install-extension ozzafar.debugmcpextension` ໂຕ extension ຈະເປີດ MCP ແບບ HTTP ທີ່ `http://localhost:3001/mcp` (ຕັ້ງຄ່າ `debugmcp.serverPort`)
+2. ຖ້າ VS Code ຂຶ້ນໜ້າຕ່າງ "DebugMCP Setup — Choose AI Agent to Configure" ໃຫ້ເອົາເຄື່ອງໝາຍຖືກອອກທັງໝົດແລ້ວປິດ ເພາະບໍ່ມີ OpenCode ໃນລາຍການ ແລະເຮົາຕັ້ງຄ່າເອງໃນຂັ້ນຖັດໄປ
+3. ໃສ່ໃນ `opencode.jsonc` ລະດັບ global ໂດຍປິດໄວ້ກ່ອນ:
+   ```jsonc
+   "debugmcp": { "type": "remote", "url": "http://localhost:3001/mcp", "enabled": false }
+   ```
+4. ຈະໃຊ້ໃນ project ໃດ ໃຫ້ໃສ່ entry ທັງກ້ອນໃນ `<project>/opencode.json` ພ້ອມ `"enabled": true` ([[gotchas]] ຂໍ້ 22) ແລ້ວເປີດ project ນັ້ນໃນ VS Code
+
+### ຂໍ້ຈຳກັດ
+
+- debug ໄດ້ສະເພາະໄຟລ໌ໃນໂຟນເດີທີ່ເປີດຢູ່ໃນ VS Code ຖ້າເປີດຫຼາຍໜ້າຕ່າງ ໜ້າຕ່າງທຳອິດຈະເປັນເຈົ້າຂອງພອດ 3001 ([[gotchas]] ຂໍ້ 32)
+- ແຕ່ລະຂັ້ນຂອງ debugger ລໍໄດ້ດົນເຖິງ 180 ວິນາທີ (`debugmcp.timeoutInSeconds`) ແລະ Code Mode ບໍ່ມີ timeout ລວມ
+- endpoint ບໍ່ມີການຢືນຢັນຕົວຕົນ ແລະຟັງສະເພາະ localhost ຢ່າຜູກກັບ `0.0.0.0`
+- ແຖວ `SSE stream disconnected: TimeoutError` ໃນ `opencode.log` ເປັນການເຊື່ອມຕໍ່ໃໝ່ຕາມປົກກະຕິຕອນທີ່ບໍ່ມີການໃຊ້ງານ
+
+**ທົດສອບແລ້ວ:** ໃຊ້ໄຟລ໌ທີ່ມີບັກ loop ເລີ່ມຜິດຕຳແໜ່ງ ໂມເດວ local ຂະໜາດ 27B ຕັ້ງ breakpoint, ເດີນໂຄ້ດ, ອ່ານຄ່າ `i` ແລະ `total`, ບອກສາເຫດໄດ້ຖືກ ຈາກນັ້ນປິດ debugger ແລະລ້າງ breakpoint ເອງ ໃຊ້ເວລາ 228 ວິນາທີ ກົດວ່າເມື່ອໃດຄວນໃຊ້ຢູ່ໃນຫົວຂໍ້ "Debugger (debugmcp)" ຂອງ [`config/AGENTS.md`](../config/AGENTS.md)
 
 ## postgres / mysql — query database (ປິດໄວ້ກ່ອນ, ເປີດຕໍ່ project)
 

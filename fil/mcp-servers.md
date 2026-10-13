@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, mcp, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Detalye ng bawat MCP server na naka-setup sa OpenCode — hakbang sa pag-install, config, paano subukan, at mga gotchas
 ---
 
@@ -524,6 +524,29 @@ Ang [aquasecurity/trivy](https://github.com/aquasecurity/trivy) ay isang scanner
 | `trivy repository <url>` | I-scan ang remote git repository nang hindi mo ito kailangang i-clone mismo |
 
 ---
+
+## debugmcp — totoong debugger: breakpoints, stepping, variables (naka-off by default, on per project)
+
+Hinahayaan ng [microsoft/DebugMCP](https://github.com/microsoft/DebugMCP) ang agent na patakbuhin ang VS Code debugger: `add_breakpoint`, `start_debugging`, `step_over`/`step_into`, `evaluate_expression`, `get_variables_values`, `stop_debugging`, at iba pa (17 tools). Gumagana ito sa mga wikang kayang i-debug ng VS Code (built in ang JS/TS; Python, Java, Go, C#, … gamit ang kanilang extensions).
+
+### Mga hakbang sa pag-install
+
+1. I-install ang VS Code extension: `code --install-extension ozzafar.debugmcpextension`. Nagse-serve ito ng MCP sa HTTP sa `http://localhost:3001/mcp` (setting na `debugmcp.serverPort`).
+2. Kapag lumabas sa VS Code ang "DebugMCP Setup — Choose AI Agent to Configure", alisin ang lahat ng tsek at isara ito. Wala ang OpenCode sa listahang iyon, at mano-mano itong kino-configure sa ibaba.
+3. Global na `opencode.jsonc`, naka-off by default:
+   ```jsonc
+   "debugmcp": { "type": "remote", "url": "http://localhost:3001/mcp", "enabled": false }
+   ```
+4. Para gamitin sa isang project, ilagay ang buong entry sa `<project>/opencode.json` na may `"enabled": true` ([[gotchas]] item 22), at buksan ang project na iyon sa VS Code.
+
+### Mga limitasyon
+
+- File lang sa folder na bukas sa VS Code ang kaya nitong i-debug. Kapag maraming window, ang una ang may-ari ng port 3001 ([[gotchas]] item 32).
+- Bawat hakbang ng debugger ay maaaring maghintay hanggang 180 s (`debugmcp.timeoutInSeconds`), at walang overall timeout ang Code Mode.
+- Walang authentication ang endpoint at sa localhost lang nakikinig. Huwag itong i-bind sa `0.0.0.0`.
+- Normal na reconnect habang idle ang mga linyang `SSE stream disconnected: TimeoutError` sa `opencode.log`.
+
+**Nasubukan:** sa isang file na may off-by-one na loop, naglagay ng breakpoint ang isang 27B na local model, nag-step, binasa ang `i` at `total`, at tinukoy ang sanhi. Pagkatapos ay pinahinto nito ang debugger at nilinis ang breakpoints. Tumagal ito ng 228 s. Ang rule kung kailan ito gagamitin ay "Debugger (debugmcp)" sa [`config/AGENTS.md`](../config/AGENTS.md).
 
 ## postgres / mysql — mag-query ng database (naka-disable by default, ine-enable per project)
 

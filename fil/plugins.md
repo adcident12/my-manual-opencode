@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: superpowers (skill library), grill-me/grilling (batch-interview skill na dagdag sa superpowers), graft-deep (sariling-gawang custom plugin), ponytail (code-minimization ruleset), at caveman (maikling sagot, ginagamit sa halip na i-have-adhd) — paano i-install ang bawat isa sa OpenCode 2, at ang plugin API ng OpenCode 2
 ---
 
@@ -448,6 +448,31 @@ for (const text of ["where is drawTrack defined", "where is drawTrack defined"])
 Sa Windows, patakbuhin ito na may `NODE_PATH` na nakaturo sa folder na may `cross-spawn` (hal. `NODE_PATH=~/.config/opencode/node_modules`).
 
 ---
+
+## execute-guard — pigilan ang mga Code Mode script na hindi kailanman matatapos (custom, OpenCode 2)
+
+Walang timers ang Code Mode at walang overall timeout ang `execute`. Kapag gustong "maghintay" ng model, madalas itong sumulat ng `await new Promise(() => {})`. Hindi ito natatapos, kaya nakatigil doon ang session hanggang may mag-interrupt ([[gotchas]] item 29).
+
+Bago ang bawat `execute`, hinahanap ng plugin na ito ang bawat `new Promise(` na ang executor ay walang parameters (kaya hindi kailanman magre-resolve). Pinapatakbo nito ang parehong executor at pinapatapos ang promise gamit ang ibinalik na value. Nagpi-print din ito ng isang linyang nagsasabi sa model na gamitin na lang ang `tools["chrome-devtools"].wait_for`. Hindi ginagalaw ang promise na tumatanggap ng `resolve`, at walang ibang nagbabago sa script.
+
+- **File:** [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) → `~/.config/opencode/plugin/execute-guard.js`. Hindi na kailangan ng entry sa config: kusang nilo-load ng OpenCode 2 ang mga `.js` file sa folder na iyon at nire-reload kapag nagbago.
+- **API na ginamit:** `ctx.tool.hook("execute.before", event => { event.input.code = ... })`. Pinapayagan ng OpenCode 2 ang `before` hook na palitan ang input ng tool.
+- **Nasukat:** bago ito, 4 na `execute` call na lumampas sa 120 s sa isang gabi (265–849 s). Pagkatapos, 0 sa loob ng 3 araw. Dalawang script ang binago nito, at parehong normal na nagpatuloy ang dalawang run.
+
+## compaction-keep — ipatago sa compaction summary ang estado ng trabaho (custom, OpenCode 2)
+
+Ang default na summary ay nagtatago ng diwa ng usapan pero hindi ng mga katotohanang kailangan sa susunod na hakbang, kaya binabasa ulit ng agent ang parehong mga file pagkatapos ng bawat compaction. Nagdadagdag ang plugin na ito ng mga tagubilin sa summary prompt lang (hindi tumatakbo ang `compaction` hook sa normal na turns). Dapat itago ng summary ang:
+
+1. Ang request at bawat approval, eksaktong sinipi.
+2. Ang plan file at status ng bawat item.
+3. Ang mga file na in-edit.
+4. Ang mga katotohanang nakuha sa mga nabasang file (mga pangalan, signatures, line ranges).
+5. Ang mga check command, kasama ang dev servers at ports na tumatakbo pa.
+6. Mga bukas na problema.
+
+- **File:** [`config/plugin/compaction-keep.js`](../config/plugin/compaction-keep.js) → `~/.config/opencode/plugin/compaction-keep.js`
+- **API na ginamit:** `ctx.session.hook("compaction", event => event.system.push({ type: "text", text: KEEP }))`
+- **Nasukat:** mula noon, bawat summary ay nagbabanggit ng mga file at katotohanan (mga 7,000 character bawat isa). Pero hindi bumaba nang mag-isa ang re-reads pagkatapos ng compaction. Ang nakatulong ay ibalik ang `keep.tokens` sa 15000, kaya mas kaunti ang compaction ([[tuning]] seksyon 10).
 
 ## ponytail — code-minimization ruleset
 

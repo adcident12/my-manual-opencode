@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows, with confirmed fixes (item 6 resolved by removing its cause, after discovering graft CLI's own built-in auto-refresh made the old hook redundant)
 ---
 
@@ -485,3 +485,78 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 > - Stop a session with `Esc` in the TUI, or `opencode api session.interrupt --param sessionID=<id>` (`opencode session list` shows the ids).
 > - The "Verifying UI changes" rule in [`config/AGENTS.md`](../config/AGENTS.md) now says: open your own page with `new_page`, work only on that page id, bring it to the front before judging it, close it when done, and stop after two or three checks that don't behave.
 > - To start from a clean browser: `opencode service restart`.
+
+---
+
+## 27. After a service restart, sonarqube and trivy fail with "Request timed out"
+
+**Impact:** Right after `opencode service restart`, calls to the sonarqube and trivy MCP tools fail with `Request timed out`, and the tools are missing from the agent's catalog.
+
+**Cause:** OpenCode 2 starts a separate set of MCP servers for every folder (location) it has loaded, and starts them all at once after a restart. A Docker container (sonarqube) or a large binary (trivy) then needs longer than the default 30-second startup limit.
+
+> [!important] Fix
+> Raise the startup limit for every server, at the top of the `mcp` block:
+> ```jsonc
+> "mcp": {
+>   "timeout": { "startup": 90000 },
+>   ...
+> }
+> ```
+> Servers you rarely use are better turned off by default (this setup now has sonarqube and trivy off — [[tuning]] section 10).
+
+---
+
+## 28. A session waiting for an answer is stopped after 60 minutes
+
+**Impact:** You leave the agent working and go away. When you come back the turn has ended as `interrupted`, and nobody pressed Esc. The last tool call is a `question` (or a permission prompt) with the error `Tool execution interrupted`, about 3,600 seconds after it was asked.
+
+**Cause:** OpenCode 2 shuts down a project's services (`location services evicted` in `~/.local/share/opencode/log/opencode.log`) after 60 minutes without activity, and a session that is only waiting for you counts as inactive. The limit is fixed in the source and cannot be set in the config. The database records only `interrupted`, with no reason.
+
+> [!important] Fix
+> - Rule "Unattended work — decide, don't ask" in [`config/AGENTS.md`](../config/AGENTS.md): after "carry on" / "just do it" / "run overnight", the agent takes the option it would have recommended, writes the decision and the reason in the plan file, and continues. It still stops for deleting data, steps outside the project, or a security change it cannot verify.
+> - Allow ahead of time the folders outside the project that the agent reaches by itself, so it never waits on a permission prompt (`external_directory` rules in [`config/opencode.jsonc`](../config/opencode.jsonc); one such prompt sat unanswered for 9 hours on this machine).
+
+---
+
+## 29. `execute` hangs for good on `await new Promise(() => {})`
+
+**Impact:** The agent sits on one `execute` call for 4 to 14 minutes until you interrupt it (four times in one night on this machine).
+
+**Cause:** Code Mode has no timers (`setTimeout` does not exist there) and `execute` has no overall timeout. When the model wants to "wait a moment" it writes a Promise whose executor takes no `resolve`, so it can never settle. A rule in AGENTS.md alone did not stop it.
+
+> [!important] Fix
+> The plugin [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) rewrites such a Promise before the script runs and prints a one-line hint ([[plugins]], execute-guard). AGENTS.md also says how to wait for a page instead: `tools["chrome-devtools"].wait_for`. After the fix: no `execute` call over 120 seconds in 3 days.
+
+---
+
+## 30. `evaluate_script` fails half the time: `fn is not a function`, `circular structure`
+
+**Impact:** About a third of the agent's chrome-devtools `evaluate_script` calls returned an error and were retried.
+
+**Cause:** The tool takes the *source of a function* and calls it itself. The model often passed an already-invoked function `(() => {...})()`, a bare expression, returned DOM nodes or framework objects (which cannot be turned into JSON), or changed pages with `location.href`.
+
+> [!important] Fix
+> A short paragraph in "Verifying UI changes" in [`config/AGENTS.md`](../config/AGENTS.md): pass `function: "() => { ...; return {...}; }"`, return plain data only, and change pages with `navigate_page`.
+
+---
+
+## 31. The log fills with "omitted unsupported legacy setting" for `attachment`
+
+**Impact:** `opencode.log` repeats `configuration normalization diagnostic … models.<id>.attachment … omitted unsupported legacy setting` for every model, every time a project loads (over 100 lines in a few hours).
+
+**Cause:** OpenCode 2 no longer uses the V1 `attachment` field on a model. Image input now comes from `modalities` alone.
+
+> [!important] Fix
+> Delete `"attachment": true` from every model. Check that images still work with `opencode debug config`: the model shows `"capabilities": { "input": ["text", "image"], ... }`.
+
+---
+
+## 32. DebugMCP: "the file is outside a VS Code workspace" — and the agent copied files into another project
+
+**Impact:** In the first test the agent could not set a breakpoint, so it copied the file into the project that *was* open in VS Code, debugged it there, and deleted it afterwards — it worked, but it touched an unrelated repository.
+
+**Cause:** DebugMCP runs inside VS Code and only debugs files of the folder open there. With several VS Code windows open, port 3001 belongs to the window that started first.
+
+> [!important] Fix
+> - Open the project you want to debug in VS Code (as the first, or only, window).
+> - Rule "Debugger (debugmcp)" in [`config/AGENTS.md`](../config/AGENTS.md): if the file is outside the workspace, stop and ask the user to open the project — never copy files into another project.

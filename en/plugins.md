@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, plugins, opencode, reference]
-updated: 2026-10-11
+updated: 2026-10-13
 summary: superpowers (skill library), grill-me/grilling (a batch-interview skill complementing superpowers), graft-deep (a hand-written custom plugin), ponytail (a code-minimization ruleset), caveman (terse replies, used instead of i-have-adhd) — how to install each on OpenCode 2, and the OpenCode 2 plugin API
 ---
 
@@ -448,6 +448,31 @@ for (const text of ["where is drawTrack defined", "where is drawTrack defined"])
 On Windows, run it with `NODE_PATH` pointing at the folder that has `cross-spawn` (e.g. `NODE_PATH=~/.config/opencode/node_modules`).
 
 ---
+
+## execute-guard — stop Code Mode scripts that can never finish (custom, OpenCode 2)
+
+Code Mode has no timers and `execute` has no overall timeout. When the model wants to "wait", it often writes `await new Promise(() => {})`. That promise never settles, so the session sits on it until someone interrupts it ([[gotchas]] item 29).
+
+Before every `execute`, this plugin finds each `new Promise(` whose executor takes no parameters (so it can never resolve), runs the same executor, and lets the promise settle with its return value. It also prints one line telling the model to use `tools["chrome-devtools"].wait_for` instead. A promise whose executor takes `resolve` is left alone. Nothing else in the script changes.
+
+- **File:** [`config/plugin/execute-guard.js`](../config/plugin/execute-guard.js) → `~/.config/opencode/plugin/execute-guard.js`. It needs no config entry: OpenCode 2 loads `.js` files in that folder by itself and reloads them when they change.
+- **API used:** `ctx.tool.hook("execute.before", event => { event.input.code = ... })`. OpenCode 2 lets a `before` hook replace the tool's input.
+- **Measured:** before it, 4 `execute` calls over 120 s in one night (265–849 s). After it, 0 in 3 days; it rewrote 2 scripts, and both runs carried on normally.
+
+## compaction-keep — make compaction summaries keep the working state (custom, OpenCode 2)
+
+The default summary keeps the gist of the conversation but not the facts the next step needs, so the agent re-read the same files after every compaction. This plugin adds instructions to the summary prompt only (the `compaction` hook does not run on normal turns). The summary must keep:
+
+1. The request and every approval, quoted exactly.
+2. The plan file and each item's status.
+3. The files edited.
+4. The facts taken from files read (names, signatures, line ranges).
+5. The check commands, plus dev servers and ports still running.
+6. Open problems.
+
+- **File:** [`config/plugin/compaction-keep.js`](../config/plugin/compaction-keep.js) → `~/.config/opencode/plugin/compaction-keep.js`
+- **API used:** `ctx.session.hook("compaction", event => event.system.push({ type: "text", text: KEEP }))`
+- **Measured:** every summary since names files and facts (about 7,000 characters each). Re-reads after a compaction did not drop by themselves, though. What helped was `keep.tokens` back to 15000, which means fewer compactions ([[tuning]] section 10).
 
 ## ponytail — code-minimization ruleset
 
