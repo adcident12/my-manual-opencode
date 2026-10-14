@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: ບັນຫາທີ່ພົບຈິງລະຫວ່າງຕັ້ງຄ່າ OpenCode + MCP + Plugins ເທິງ Windows ພ້ອມວິທີແກ້ທີ່ຢືນຢັນແລ້ວວ່າໃຊ້ໄດ້ (ຂໍ້ 6 ໄດ້ຮັບການແກ້ໄຂແລ້ວໂດຍການຕັດສາເຫດຖິ້ມ ຫຼັງພົບວ່າ auto-refresh ໃນຕົວຂອງ graft CLI ເຮັດໃຫ້ hook ເດີມຊ້ຳຊ້ອນ)
 ---
 
@@ -560,3 +560,18 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # launch spec 
 > [!important] ວິທີແກ້
 > - ເປີດ project ທີ່ຈະ debug ໃນ VS Code (ເປັນໜ້າຕ່າງທຳອິດ ຫຼືໜ້າຕ່າງດຽວ)
 > - ກົດ "Debugger (debugmcp)" ໃນ [`config/AGENTS.md`](../config/AGENTS.md): ຖ້າໄຟລ໌ຢູ່ນອກ workspace ໃຫ້ຢຸດແລ້ວຂໍໃຫ້ຜູ້ໃຊ້ເປີດ project ຫ້າມ copy ໄຟລ໌ໄປ project ອື່ນ
+
+---
+
+## 33. `npm install -g @opencode/cli` ລົ້ມເຫຼວດ້ວຍ "Failed to install OpenCode"
+
+**ຜົນກະທົບ:** ອັບເດດເປັນ 2.0.28 ແລ້ວຢຸດທີ່ `npm error command … node ./postinstall.mjs` ແລະ `Failed to install OpenCode. Try manually installing "@opencode/cli-windows-x64" or "@opencode/cli-windows-x64-baseline"` ເວີຊັນເດີມຍັງຕິດຕັ້ງຢູ່
+
+**ສາເຫດ:** debug log ຂອງ npm ສະແດງພຽງ `reify failed optional dependency` ຂອງ package Windows ທັງສອງໂຕ ຕ້ອງລອງຕິດຕັ້ງໂຕໃດໂຕໜຶ່ງແຍກຈຶ່ງເຫັນ error ແທ້ ຄື `npm error code ECONNRESET` ການເຊື່ອມຕໍ່ຂາດລະຫວ່າງທີ່ npm ໂຫຼດ package binary ຂະໜາດ ~100 MB ຂັ້ນ postinstall ຈຶ່ງຫາ binary ບໍ່ພົບ ໂຕ package ເອງບໍ່ມີບັນຫາ: ໂຫຼດໄຟລ໌ດຽວກັນດ້ວຍ curl ໄດ້ໃນບໍ່ເຖິງ 2 ວິນາທີ, sha512 ກົງກັບ registry ແລະແລ່ນໄດ້
+
+> [!important] ວິທີແກ້
+> ```powershell
+> npm cache verify
+> npm install -g @opencode/cli@<version> --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+> ```
+> ຖ້າຍັງບໍ່ໄດ້ ອີກທາງໜຶ່ງຄື WinGet package ([[updating]] ຫົວຂໍ້ 2.0.27 → 2.0.28)

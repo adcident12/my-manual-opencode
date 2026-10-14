@@ -4,7 +4,7 @@
 //   <your-server>   your model server's URL          <your-model-id>  the model id it reports at /v1/models
 // Secrets never go in this file — only {env:NAME} references. Set the variables in your OS, then reopen the terminal.
 // Details per block: setup.md, mcp-servers.md, plugins.md, tuning.md.
-// Written for OpenCode 2 (tested on 2.0.26 and 2.0.27) in the V1 config syntax, which OpenCode 2 still reads.
+// Written for OpenCode 2 (tested on 2.0.26–2.0.28) in the V1 config syntax, which OpenCode 2 still reads.
 // Inside one "mcp" entry, provider, agent or command, keep a single syntax (tuning.md section 9).
 {
   "$schema": "https://opencode.ai/config.json",

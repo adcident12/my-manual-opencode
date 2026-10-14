@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: ວິທີອັບເດດ/ອັບເກຣດ OpenCode CLI, MCP servers, plugins, grill-me/grilling skill ແລະ OpenDesign ເທື່ອລະໂຕ
 ---
 
@@ -57,6 +57,19 @@ OpenCode 2 ອ່ານ config, AGENTS.md, skills ແລະ commands ເດີ�
 > OpenDesign 0.24.1 ໃຊ້ OpenCode 2 ເປັນ engine ບໍ່ໄດ້ — [[gotchas]] ຂໍ້ 24 ສ່ວນ `lsp` ຍັງຮັບຄ່າໄດ້ ແຕ່ OpenCode 2 ບໍ່ແລ່ນ language server
 
 ---
+
+## OpenCode 2.0.27 → 2.0.28 (2026-10-14)
+
+ອັບເດດແບບເດີມ: `opencode service stop`, `npm install -g @opencode/cli@2.0.28`, `opencode service start` ຖ້າ npm ຢຸດພ້ອມຂໍ້ຄວາມ `Failed to install OpenCode` ເບິ່ງ [[gotchas]] ຂໍ້ 33 config ແລະ plugin ທັງ 6 ໂຕໂຫຼດໄດ້ຄືເກົ່າ ບໍ່ມີ warning
+
+ຂອງໃໝ່ ແລະສິ່ງທີ່ setup ນີ້ເຮັດກັບມັນ:
+
+| ຂອງໃໝ່ໃນ 2.0.28 | ເທິງ setup ນີ້ |
+| --- | --- |
+| **Auto-accept permissions ແຍກຕໍ່ project** (Settings → Projects ຫຼືກົດ `mod+shift+a` ໃນ session) | ບໍ່ເປີດ ເພາະມັນອະນຸຍາດ*ທຸກ* permission ລວມເຖິງການອ່ານໄຟລ໌ `.env` ແລະໂຟນເດີນອກ project ເຊິ່ງ config ນີ້ຕັ້ງໃຈໃຫ້ຖາມໄວ້ rule `external_directory` ໃນ [`config/opencode.jsonc`](../config/opencode.jsonc) ແກ້ການຄ້າງລໍທີ່ພົບແທ້ໄປແລ້ວ ([[gotchas]] ຂໍ້ 28) ຖ້າຈະປ່ອຍວຽກຍາວໂດຍບໍ່ມີຄົນເຝົ້າ ແລະຍອມຮັບຄວາມສ່ຽງໄດ້ ໃຫ້ກົດ `mod+shift+a` ສະເພາະໃນ session ນັ້ນ |
+| **Release highlights** ເທິງໜ້າທຳອິດໜຶ່ງຄັ້ງຫຼັງອັບເດດ | ປິດແລ້ວ: `"highlights": false` ໃນ `~/.config/opencode/cli.json` (ເປີດເບິ່ງໄດ້ຕະຫຼອດດ້ວຍ `/highlights`) |
+| **WinGet package ຢ່າງເປັນທາງການ** (`winget install --id Anomaly.OpenCode -e`) | ຍັງບໍ່ໃຊ້ setup ນີ້ຕິດຕັ້ງຜ່ານ npm ແລະ `scripts/update-opencode.mjs` ຖ້າ npm ໂຫຼດລົ້ມເຫຼວຊ້ຳໆ ໃຫ້ຍ້າຍໄປໃຊ້ WinGet ໂດຍ `npm uninstall -g @opencode/cli` ກ່ອນ ແລ້ວຈຶ່ງຕິດຕັ້ງດ້ວຍ WinGet ຈາກນັ້ນກວດ `Get-Command opencode -All` ເພາະຖ້າມີສອງໂຕເທິງ PATH ຈະສັບສົນແບບດຽວກັບຂອງທີ່ OpenCode 1 ປະໄວ້ (ຫົວຂໍ້ດ້ານລຸ່ມ) |
+| build ARM64 ຂອງ Windows, ຄຳຕອບ Gemini ຕໍ່ເນື່ອງ | ບໍ່ກ່ຽວກັບ setup ນີ້ (ເຄື່ອງ x64 ແລະໃຊ້ໂມເດວ local) |
 
 ## OpenCode 2.0.26 → 2.0.27 (2026-10-13)
 

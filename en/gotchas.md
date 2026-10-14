@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: Real problems hit while setting up OpenCode + MCP + Plugins on Windows, with confirmed fixes (item 6 resolved by removing its cause, after discovering graft CLI's own built-in auto-refresh made the old hook redundant)
 ---
 
@@ -560,3 +560,18 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # the app's ow
 > [!important] Fix
 > - Open the project you want to debug in VS Code (as the first, or only, window).
 > - Rule "Debugger (debugmcp)" in [`config/AGENTS.md`](../config/AGENTS.md): if the file is outside the workspace, stop and ask the user to open the project — never copy files into another project.
+
+---
+
+## 33. `npm install -g @opencode/cli` fails with "Failed to install OpenCode"
+
+**Impact:** The update to 2.0.28 stops with `npm error command … node ./postinstall.mjs` and `Failed to install OpenCode. Try manually installing "@opencode/cli-windows-x64" or "@opencode/cli-windows-x64-baseline"`. The previous version stays installed.
+
+**Cause:** The npm debug log only shows `reify failed optional dependency` for both Windows packages. Installing one of them on its own shows the real error: `npm error code ECONNRESET`. The connection dropped while npm downloaded the ~100 MB binary package, so the postinstall step found no binary. The package itself was fine: the same file downloaded with curl in under 2 seconds, its sha512 matched the registry, and it ran.
+
+> [!important] Fix
+> ```powershell
+> npm cache verify
+> npm install -g @opencode/cli@<version> --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+> ```
+> If it still fails, the WinGet package is the other route ([[updating]], 2.0.27 → 2.0.28).

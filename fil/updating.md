@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: Paano i-update/i-upgrade ang OpenCode CLI, MCP servers, plugins, ang grill-me/grilling skill, at OpenDesign, isa-isa
 ---
 
@@ -57,6 +57,19 @@ Nasa [`config/`](../config/README.md) na ang mga hakbang 3–6; nasa [[tuning]] 
 > Hindi magamit ng OpenDesign 0.24.1 ang OpenCode 2 bilang engine — [[gotchas]] item 24. Tinatanggap ang `lsp` pero hindi nagpapatakbo ng language servers ang OpenCode 2.
 
 ---
+
+## OpenCode 2.0.27 → 2.0.28 (2026-10-14)
+
+Pareho ang paraan ng pag-update: `opencode service stop`, `npm install -g @opencode/cli@2.0.28`, `opencode service start`. Kung huminto ang npm sa `Failed to install OpenCode`, tingnan ang [[gotchas]] item 33. Nag-load nang walang pagbabago ang config at lahat ng 6 na plugin, walang warning.
+
+Ano ang bago, at ano ang ginagawa ng setup na ito rito:
+
+| Bago sa 2.0.28 | Sa setup na ito |
+| --- | --- |
+| **Auto-accept permissions per project** (Settings → Projects, o `mod+shift+a` sa isang session) | Naka-off. Tinatanggap nito ang *lahat* ng permission, kasama ang pagbasa ng `.env` files at mga folder sa labas ng project, na sadyang itinatanong ng config na ito. Napigilan na ng mga `external_directory` rule sa [`config/opencode.jsonc`](../config/opencode.jsonc) ang mga paghihintay na nakita sa praktika ([[gotchas]] item 28). Para sa isang mahabang unattended run na tanggap mo ang panganib, pindutin ang `mod+shift+a` sa session na iyon lang. |
+| **Release highlights** sa home screen nang isang beses pagkatapos ng update | Naka-off: `"highlights": false` sa `~/.config/opencode/cli.json` (mabubuksan ulit anumang oras gamit ang `/highlights`). |
+| **Opisyal na WinGet packages** (`winget install --id Anomaly.OpenCode -e`) | Hindi pa ginagamit; nag-i-install ang setup na ito sa npm at `scripts/update-opencode.mjs`. Kung patuloy na pumapalya ang npm downloads, lumipat: `npm uninstall -g @opencode/cli` muna, tapos i-install gamit ang WinGet. Pagkatapos ay tingnan ang `Get-Command opencode -All`, dahil ang dalawang install sa PATH ay nagdudulot ng parehong kalituhan gaya ng mga naiwan ng OpenCode 1 sa ibaba. |
+| Native Windows ARM64 builds; tuloy-tuloy na Gemini responses | Hindi kaugnay dito (x64 na makina, local na model). |
 
 ## OpenCode 2.0.26 → 2.0.27 (2026-10-13)
 

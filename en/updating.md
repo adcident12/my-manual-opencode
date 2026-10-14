@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, maintenance, opencode, reference]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: How to update/upgrade the OpenCode CLI, MCP servers, plugins, the grill-me/grilling skill, and OpenDesign, one at a time
 ---
 
@@ -57,6 +57,19 @@ Steps 3–6 are already in [`config/`](../config/README.md); [[tuning]] section 
 > OpenDesign 0.24.1 can't use OpenCode 2 as its engine — [[gotchas]] item 24. `lsp` is accepted but OpenCode 2 doesn't run language servers.
 
 ---
+
+## OpenCode 2.0.27 → 2.0.28 (2026-10-14)
+
+Update the same way: `opencode service stop`, `npm install -g @opencode/cli@2.0.28`, `opencode service start`. If npm stops with `Failed to install OpenCode`, see [[gotchas]] item 33. The config and all 6 plugins loaded unchanged, with no warnings.
+
+What is new, and what this setup does with it:
+
+| New in 2.0.28 | On this setup |
+| --- | --- |
+| **Auto-accept permissions per project** (Settings → Projects, or `mod+shift+a` in a session) | Left off. It accepts *every* permission, including reading `.env` files and folders outside the project, which this config asks about on purpose. The `external_directory` rules in [`config/opencode.jsonc`](../config/opencode.jsonc) already stop the waits seen in practice ([[gotchas]] item 28). For one long unattended run you accept the risk of, press `mod+shift+a` in that session only. |
+| **Release highlights** on the home screen once after an update | Turned off: `"highlights": false` in `~/.config/opencode/cli.json` (reopen them any time with `/highlights`). |
+| **Official WinGet packages** (`winget install --id Anomaly.OpenCode -e`) | Not used yet; this setup installs through npm and `scripts/update-opencode.mjs`. If npm downloads keep failing, switch: `npm uninstall -g @opencode/cli` first, then install with WinGet. Then check `Get-Command opencode -All`, because two installs on PATH cause the same confusion as the OpenCode 1 leftovers below. |
+| Native Windows ARM64 builds; continuous Gemini responses | Not relevant here (x64 machine, local model). |
 
 ## OpenCode 2.0.26 → 2.0.27 (2026-10-13)
 

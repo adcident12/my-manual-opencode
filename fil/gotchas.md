@@ -1,6 +1,6 @@
 ---
 tags: [project-doc, gotchas, opencode, windows, troubleshooting]
-updated: 2026-10-13
+updated: 2026-10-14
 summary: Aktwal na mga problemang naranasan habang nagse-setup ng OpenCode + MCP + Plugins sa Windows, may kumpirmadong ayos (naresolba na ang item 6 sa pamamagitan ng pagtanggal ng dahilan nito, matapos matuklasan na ang built-in na auto-refresh ng graft CLI ang gumawang redundant sa lumang hook)
 ---
 
@@ -560,3 +560,18 @@ Invoke-RestMethod "http://127.0.0.1:$port/api/mcp/install-info"   # ang sariling
 > [!important] Ayos
 > - Buksan sa VS Code ang project na ide-debug (bilang una, o tanging, window).
 > - Rule na "Debugger (debugmcp)" sa [`config/AGENTS.md`](../config/AGENTS.md): kung nasa labas ng workspace ang file, huminto at hilingin sa user na buksan ang project — huwag kailanman kumopya ng file sa ibang project.
+
+---
+
+## 33. Pumapalya ang `npm install -g @opencode/cli` na may "Failed to install OpenCode"
+
+**Epekto:** Huminto ang update sa 2.0.28 na may `npm error command … node ./postinstall.mjs` at `Failed to install OpenCode. Try manually installing "@opencode/cli-windows-x64" or "@opencode/cli-windows-x64-baseline"`. Nananatiling naka-install ang dating version.
+
+**Sanhi:** `reify failed optional dependency` lang ang ipinapakita ng npm debug log para sa parehong Windows package. Kapag in-install ang isa sa kanila nang mag-isa, lumalabas ang totoong error: `npm error code ECONNRESET`. Naputol ang koneksyon habang dina-download ng npm ang ~100 MB na binary package, kaya walang nahanap na binary ang postinstall step. Maayos ang package mismo: na-download ang parehong file gamit ang curl nang wala pang 2 segundo, tumugma ang sha512 nito sa registry, at tumakbo ito.
+
+> [!important] Ayos
+> ```powershell
+> npm cache verify
+> npm install -g @opencode/cli@<version> --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+> ```
+> Kung pumalya pa rin, ang WinGet package ang ibang daan ([[updating]], 2.0.27 → 2.0.28).
